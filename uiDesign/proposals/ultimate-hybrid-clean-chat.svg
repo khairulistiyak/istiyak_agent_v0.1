@@ -1,0 +1,148 @@
+<svg width="400" height="720" viewBox="0 0 400 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Solid Matte Pitch-Black Background (Zen Theme) -->
+  <rect width="400" height="720" rx="16" fill="#050506" stroke="#121215" stroke-width="1"/>
+
+  <!-- ==================== 1. WINDOW TITLE BAR ==================== -->
+  <g id="header">
+    <rect width="400" height="48" rx="16" fill="#020202" />
+    
+    <!-- macOS Window controls (Subtle Flat Gray) -->
+    <circle cx="20" cy="24" r="5" fill="#1c1c1f"/>
+    <circle cx="34" cy="24" r="5" fill="#1c1c1f"/>
+    <circle cx="48" cy="24" r="5" fill="#1c1c1f"/>
+
+    <!-- App Title & Status -->
+    <circle cx="78" cy="24" r="2" fill="#10b981"/>
+    <text x="88" y="27" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="9.5" fill="#ffffff" letter-spacing="0.5">ISTIYAK COMPANION</text>
+
+    <!-- Header Actions (Clean Outline Icons) -->
+    <g stroke="#55555c" stroke-width="1.2" fill="none" transform="translate(245, 15)">
+      <!-- User profile -->
+      <g transform="translate(0, 0)">
+        <circle cx="9" cy="7" r="3" />
+        <path d="M 3 15 A 6 6 0 0 1 15 15" />
+      </g>
+      
+      <!-- Telemetry wave -->
+      <path d="M 28 10 L 32 10 L 35 4 L 38 14 L 41 8 L 45 10 L 48 10" transform="translate(0, -1)"/>
+
+      <!-- Sparkles -->
+      <path d="M 64 6 L 66 10 L 70 11 L 66 12 L 64 16 L 62 12 L 58 11 L 62 10 Z" />
+
+      <!-- Columns split -->
+      <rect x="82" y="2" width="12" height="12" rx="1.5" />
+      <line x1="88" y1="2" x2="88" y2="14" />
+
+      <!-- History Clock -->
+      <circle cx="109" cy="8" r="6" />
+      <path d="M 109 5 V 8 H 112" />
+    </g>
+  </g>
+
+
+  <!-- ==================== 2. CHAT STREAM (Sleek, Minimalist & Zen Flat Layout) ==================== -->
+  <g id="chat-messages" transform="translate(0, 48)">
+    
+    <!-- User Message 1: "hello" (Flat, Borderless Matte Gray Bubble) -->
+    <g transform="translate(15, 25)">
+      <rect x="265" y="4" width="105" height="32" rx="10" fill="#0e0e12"/>
+      <text x="317" y="24" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="11" fill="#ffffff" text-anchor="middle">hello</text>
+    </g>
+
+    <!-- Assistant Message 1: "Hello there..." (No avatar, text starts directly on left edge) -->
+    <g transform="translate(15, 80)">
+      <!-- Text flows cleanly from left margin -->
+      <g transform="translate(0, 5)" font-family="-apple-system, BlinkMacSystemFont, sans-serif">
+        <text x="0" y="16" font-family="monospace" font-size="8.5" fill="#55555c" font-weight="bold" letter-spacing="0.5">COMPANION</text>
+        <text x="0" y="34" font-size="11.5" fill="#e2e8f0" font-weight="500">Hello there! How can I help you today?</text>
+        
+        <!-- Muted Telemetry Cost beneath message -->
+        <text x="0" y="58" font-family="monospace" font-size="9" fill="#55555c" font-weight="normal">cost: $0.000197  |  tokens: 2601 (2591 in / 10 out)</text>
+      </g>
+    </g>
+
+    <!-- User Message 2: "hello" -->
+    <g transform="translate(15, 170)">
+      <rect x="265" y="4" width="105" height="32" rx="10" fill="#0e0e12"/>
+      <text x="317" y="24" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="11" fill="#ffffff" text-anchor="middle">hello</text>
+    </g>
+
+    <!-- Assistant Message 2: "Hello! Is there something specific..." -->
+    <g transform="translate(15, 225)">
+      <!-- Text flows cleanly from left margin -->
+      <g transform="translate(0, 5)" font-family="-apple-system, BlinkMacSystemFont, sans-serif">
+        <text x="0" y="16" font-family="monospace" font-size="8.5" fill="#55555c" font-weight="bold" letter-spacing="0.5">COMPANION</text>
+        <text x="0" y="34" font-size="11.5" fill="#e2e8f0" font-weight="500">Hello! Is there something specific you'd like to discuss</text>
+        <text x="0" y="50" font-size="11.5" fill="#e2e8f0" font-weight="500">or need help with? I'm here and ready to assist!</text>
+        
+        <!-- Muted Cost beneath message -->
+        <text x="0" y="74" font-family="monospace" font-size="9" fill="#55555c" font-weight="normal">cost: $0.000198  |  tokens: 2616 (2601 in / 15 out)</text>
+      </g>
+    </g>
+
+    <!-- ==================== 3. ACTIVE WORKFLOW CHECKS PANEL ==================== -->
+    <g transform="translate(15, 345)">
+      <!-- Clean, borderless panel, aligned flush to the left, matching input box width -->
+      <rect width="370" height="120" rx="8" fill="#08080a" stroke="#121215" stroke-width="0.8"/>
+      <!-- Header -->
+      <rect width="370" height="22" rx="8" fill="#121215" opacity="0.4" />
+      <text x="12" y="14" font-family="monospace" font-size="8" font-weight="bold" fill="#55555c" letter-spacing="0.5">ACTIVE WORKFLOW EXECUTION</text>
+
+      <!-- Checklist -->
+      <g transform="translate(12, 36)" font-family="monospace" font-size="8.5" fill="#55555c" font-weight="bold">
+        <text x="0" y="12" fill="#10b981">✓ [x] Scan workspace directories</text>
+        <text x="280" y="12" fill="#55555c">0.8s</text>
+        
+        <text x="0" y="28" fill="#38bdf8">⌛ [/] Read target core files</text>
+        <text x="280" y="28" fill="#38bdf8">ACTIVE</text>
+        
+        <text x="0" y="44" fill="#333336">☐ [ ] Run terminal compilation test</text>
+      </g>
+
+      <!-- Slim 2px progress bar -->
+      <g transform="translate(12, 98)">
+        <rect width="346" height="2" fill="#121215" />
+        <rect width="208" height="2" fill="#ffffff" opacity="0.6" />
+        <text x="0" y="14" font-family="monospace" font-size="7.5" fill="#3a3a3c">Step 02/03  |  progress: 60%</text>
+      </g>
+    </g>
+  </g>
+
+
+  <!-- ==================== 4. BOTTOM INPUT BAR ==================== -->
+  <g id="input-section" transform="translate(15, 615)">
+    <!-- Thin line separator -->
+    <line x1="0" y1="0" x2="370" y2="0" stroke="#121215" stroke-width="1" />
+    
+    <!-- Input Box container -->
+    <rect y="10" width="370" height="75" rx="8" fill="#020202" stroke="#121215" stroke-width="1" />
+    
+    <!-- Placeholder Text -->
+    <text x="15" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10.5" fill="#44444a">Ask ISTIYAK to build code...</text>
+
+    <!-- Divider inside input panel -->
+    <line x1="15" y1="46" x2="355" y2="46" stroke="#0c0c0e" stroke-width="0.8" />
+
+    <!-- Bottom Controls & Action Bar -->
+    <!-- Attachment clip icon -->
+    <g stroke="#55555c" stroke-width="1.2" fill="none" transform="translate(15, 52)">
+      <path d="M 6 12 L 6 4 A 2.5 2.5 0 0 1 11 4 L 11 11 A 1.5 1.5 0 0 1 8 11 L 8 5" />
+    </g>
+
+    <!-- Terminal >_ icon -->
+    <g stroke="#55555c" stroke-width="1.2" fill="none" transform="translate(38, 52)">
+      <path d="M 2 4 L 6 7 L 2 10" />
+      <line x1="8" y1="10" x2="13" y2="10" />
+    </g>
+
+    <!-- Settings Gear icon -->
+    <g stroke="#55555c" stroke-width="1.2" fill="none" transform="translate(62, 52)">
+      <circle cx="8" cy="8" r="3" />
+      <path d="M 8 2 L 8 4 M 8 12 L 8 14 M 2 8 H 4 M 12 8 H 14" />
+    </g>
+
+    <!-- Send Button (Flat background, clean arrow) -->
+    <rect x="330" y="48" width="28" height="26" rx="4" fill="#0c0c0e" stroke="#121215" stroke-width="1" />
+    <path d="M 339 61 L 347 56 L 339 58 Z" fill="#ffffff" opacity="0.8" />
+  </g>
+</svg>

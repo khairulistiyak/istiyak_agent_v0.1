@@ -1,0 +1,176 @@
+<svg width="400" height="680" viewBox="0 0 400 680" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background Radial Gradient -->
+    <radialGradient id="bg-glow" cx="50%" cy="50%" r="55%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#12182b" />
+      <stop offset="100%" stop-color="#06080e" />
+    </radialGradient>
+
+    <!-- Neon Gradients -->
+    <linearGradient id="neon-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f2fe" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+
+    <linearGradient id="neon-purple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#ec4899" />
+    </linearGradient>
+
+    <linearGradient id="neon-green" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00ff87" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+
+    <!-- Glow filters -->
+    <filter id="glow-med" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="glow-soft" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Widget Main frame background -->
+  <rect width="400" height="680" rx="24" fill="url(#bg-glow)" stroke="#1a233d" stroke-width="2.5"/>
+
+  <!-- Interactive Grid Background Overlay (Subtle) -->
+  <g opacity="0.05" stroke="#00f2fe" stroke-width="0.8">
+    <path d="M 0 50 L 400 50 M 0 100 L 400 100 M 0 150 L 400 150 M 0 200 L 400 200 M 0 250 L 400 250 M 0 300 L 400 300 M 0 350 L 400 350 M 0 400 L 400 400 M 0 450 L 400 450 M 0 500 L 400 500 M 0 550 L 400 550 M 0 600 L 400 600" />
+    <path d="M 50 0 L 50 680 M 100 0 L 100 680 M 150 0 L 150 680 M 200 0 L 200 680 M 250 0 L 250 680 M 300 0 L 300 680 M 350 0 L 350 680" />
+  </g>
+
+  <!-- ==================== HEADER (Glassmorphic look) ==================== -->
+  <rect x="0" y="0" width="400" height="65" rx="24" fill="#0d1222" opacity="0.9" stroke="#1f2c4d" stroke-width="1.5"/>
+  <!-- Status Light -->
+  <circle cx="360" cy="32" r="5" fill="#00ff87" filter="url(#glow-med)" />
+  <!-- Logo Avatar -->
+  <circle cx="35" cy="32" r="15" fill="#05070a" stroke="url(#neon-cyan)" stroke-width="1" />
+  <circle cx="35" cy="32" r="6" fill="url(#neon-cyan)" filter="url(#glow-soft)" />
+  <text x="60" y="37" font-family="monospace" font-weight="900" font-size="12" fill="#ffffff" letter-spacing="0.5">ISTIYAK AGENT</text>
+  <text x="210" y="36" font-family="monospace" font-size="8.5" fill="#00ff87" font-weight="bold">[UI MODE]</text>
+
+  <!-- ==================== MESSAGES PANEL ==================== -->
+  <!-- 1. User Message -->
+  <g transform="translate(45, 90)">
+    <!-- Bubble -->
+    <rect width="335" height="50" rx="12" fill="#1b253b" stroke="#2a3c5e" stroke-width="1" />
+    <text x="15" y="20" font-family="sans-serif" font-size="10.5" fill="#f8fafc">Scan project folders, identify tools,</text>
+    <text x="15" y="36" font-family="sans-serif" font-size="10.5" fill="#f8fafc">and verify the execution workflow.</text>
+    <text x="290" y="14" font-family="monospace" font-size="7.5" fill="#64748b" font-weight="bold">USER</text>
+  </g>
+
+  <!-- 2. System RAG Context Note -->
+  <g transform="translate(45, 150)">
+    <rect width="335" height="35" rx="8" fill="#0c231f" stroke="#0f766e" stroke-width="0.8" opacity="0.8" />
+    <text x="12" y="16" font-family="monospace" font-size="8" font-weight="900" fill="#00ff87">🔍 AUTOMATIC RAG LOOKUP MATCH</text>
+    <text x="12" y="26" font-family="monospace" font-size="8" fill="#a7f3d0">Indexed: packages/agent-core/src/agent/AgentWorkflow.ts</text>
+  </g>
+
+  <!-- 3. Assistant Message -->
+  <g transform="translate(15, 195)">
+    <!-- Avatar -->
+    <circle cx="15" cy="18" r="12" fill="#0b0f19" stroke="url(#neon-cyan)" stroke-width="1" />
+    <circle cx="15" cy="18" r="3" fill="#00ff87" filter="url(#glow-soft)" />
+
+    <!-- Bubble -->
+    <rect x="30" y="0" width="335" height="70" rx="12" fill="#0e1324" stroke="#1c2646" stroke-width="1.2" />
+    <text x="45" y="20" font-family="sans-serif" font-size="10.5" fill="#a5b4fc">Sure! I have scanned the workspace.</text>
+    <text x="45" y="36" font-family="sans-serif" font-size="10.5" fill="#a5b4fc">I will now perform a plan review, check sandbox</text>
+    <text x="45" y="52" font-family="sans-serif" font-size="10.5" fill="#a5b4fc">policies, and compile files step-by-step.</text>
+    <text x="285" y="13" font-family="monospace" font-size="7.5" fill="#64748b" font-weight="bold">COMPANION</text>
+  </g>
+
+  <!-- ==================== ACTIVE WORKFLOW HUD CARD ==================== -->
+  <g transform="translate(45, 280)">
+    <rect width="335" height="155" rx="12" fill="#0b0d14" stroke="url(#neon-cyan)" stroke-width="1.5" filter="url(#glow-soft)" />
+    <!-- Glowing Header -->
+    <rect width="335" height="25" rx="12" fill="#00f2fe" opacity="0.1" />
+    <text x="15" y="17" font-family="monospace" font-size="9" font-weight="900" fill="#00f2fe" letter-spacing="1">🚀 ACTIVE WORKFLOW: TASK STATE</text>
+    
+    <!-- Checklist -->
+    <g transform="translate(15, 40)" font-family="monospace" font-size="9" font-weight="bold">
+      <!-- Item 1 Done -->
+      <text x="0" y="15" fill="#00ff87">✔ [x] Scan workspace directories</text>
+      <text x="230" y="15" fill="#475569">0.8s</text>
+      
+      <!-- Item 2 Active -->
+      <text x="0" y="32" fill="#00f2fe">⌛ [/] Read target core files</text>
+      <text x="230" y="32" fill="#00f2fe">ACTIVE</text>
+      
+      <!-- Item 3 Pending -->
+      <text x="0" y="49" fill="#94a3b8">☐ [ ] Run terminal compilation test</text>
+      <text x="230" y="49" fill="#475569">PENDING</text>
+    </g>
+
+    <!-- Progress loading bar -->
+    <g transform="translate(15, 105)">
+      <rect width="305" height="6" rx="3" fill="#1e293b" />
+      <rect width="180" height="6" rx="3" fill="url(#neon-cyan)" filter="url(#glow-soft)" />
+      <text x="0" y="24" font-family="monospace" font-size="8" fill="#94a3b8">Step 02/03  |  Files changed: 0</text>
+      <text x="250" y="24" font-family="monospace" font-size="8" fill="#00ff87">Progress: 60%</text>
+    </g>
+  </g>
+
+  <!-- ==================== RUN PERFORMANCE TELEMETRY CARD ==================== -->
+  <g transform="translate(45, 450)">
+    <rect width="335" height="135" rx="12" fill="#080a10" stroke="#1f2c4d" stroke-width="1.2" />
+    <text x="15" y="20" font-family="monospace" font-size="9" font-weight="900" fill="#ec4899">📊 PERFORMANCE &amp; COST METRICS</text>
+    
+    <!-- Mini bars -->
+    <g transform="translate(15, 35)" font-family="monospace" font-size="8.5" font-weight="bold" fill="#94a3b8">
+      <!-- Metric 1 -->
+      <text x="0" y="10">LLM CALL COUNT</text>
+      <rect x="110" y="2" width="120" height="8" rx="4" fill="#1e293b"/>
+      <rect x="110" y="2" width="80" height="8" rx="4" fill="url(#neon-purple)"/>
+      <text x="240" y="10" fill="#ffffff">8 calls</text>
+
+      <!-- Metric 2 -->
+      <text x="0" y="30">AVG LATENCY</text>
+      <rect x="110" y="22" width="120" height="8" rx="4" fill="#1e293b"/>
+      <rect x="110" y="22" width="95" height="8" rx="4" fill="url(#neon-purple)"/>
+      <text x="240" y="30" fill="#ffffff">410ms</text>
+
+      <!-- Metric 3 -->
+      <text x="0" y="50">AVG MODEL SPEED</text>
+      <rect x="110" y="42" width="120" height="8" rx="4" fill="#1e293b"/>
+      <rect x="110" y="42" width="110" height="8" rx="4" fill="url(#neon-cyan)"/>
+      <text x="240" y="50" fill="#00f2fe">42 t/s</text>
+
+      <!-- Session Cost -->
+      <rect x="0" y="65" width="305" height="22" rx="4" fill="#0b0e14" stroke="#1e293b" stroke-width="0.5"/>
+      <text x="10" y="79" fill="#e2e8f0">Cumulative Session Cost: <tspan fill="#00ff87">$0.001842 USD</tspan></text>
+    </g>
+  </g>
+
+  <!-- ==================== PROMPT INPUT FIELD ==================== -->
+  <g transform="translate(20, 600)">
+    <rect width="360" height="60" rx="14" fill="#0e1324" stroke="#1f2d4d" stroke-width="1.5"/>
+    
+    <!-- Attachment clip icon representation -->
+    <path d="M 25 38 L 25 24 M 20 30 L 30 30" stroke="#a5b4fc" stroke-width="1.5" stroke-linecap="round"/>
+    
+    <!-- Text area placeholder -->
+    <text x="45" y="28" font-family="sans-serif" font-size="10.5" fill="#475569">Type a message or slash command...</text>
+    
+    <!-- Tags -->
+    <rect x="45" y="38" width="55" height="12" rx="3.5" fill="#00f2fe" opacity="0.15"/>
+    <text x="49" y="47" font-family="monospace" font-size="7" fill="#00f2fe">Gemini-2.5</text>
+
+    <rect x="105" y="38" width="45" height="12" rx="3.5" fill="#00ff87" opacity="0.15"/>
+    <text x="109" y="47" font-family="monospace" font-size="7" fill="#00ff87">RAG: ON</text>
+
+    <!-- Glowing Send Button -->
+    <rect x="315" y="15" width="30" height="30" rx="8" fill="url(#neon-cyan)" filter="url(#glow-soft)"/>
+    <path d="M 324 30 L 334 23 L 324 26 Z" fill="#ffffff" />
+  </g>
+</svg>
