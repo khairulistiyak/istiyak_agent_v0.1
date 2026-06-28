@@ -27,8 +27,10 @@ let isAgentRunning = false;
 
 async function onTodoFound(filePath, todoText) {
   if (isAgentRunning) {
+    // NOTE: Do NOT call unlockFile here — the lock is held by the currently running agent.
+    // Releasing it prematurely would cause a race condition where the developer or another
+    // process could overwrite the file mid-execution.
     console.log(`[Auto-Pilot] Agent is already executing a task. Skipping TODO: "${todoText}" in ${filePath}`);
-    unlockFile(filePath);
     return;
   }
 

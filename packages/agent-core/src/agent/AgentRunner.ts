@@ -118,7 +118,9 @@ export async function runAgent(options: RunnerOptions) {
         options.serviceAccountPath,
         options.projectId,
         options.location,
-        () => {}
+        // Pass through the real onChunk callback so tokens stream to the UI in real-time.
+        // Previously this was () => {} which silently discarded all streaming chunks.
+        options.onChunk
       );
     } catch (err: any) {
       options.onChunk(`<agent_step step="${step}" status="error">LLM request failed: ${err.message}</agent_step>`);

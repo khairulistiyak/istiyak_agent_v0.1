@@ -31,7 +31,10 @@ export const createChatSlice: StateCreator<ChatSlice> = (set) => ({
   activeId: null,
 
   createConversation: () => {
-    const id = Date.now().toString();
+    // Use crypto.randomUUID() instead of Date.now() to guarantee unique IDs.
+    // Date.now() is millisecond-precision and can produce duplicate IDs if two
+    // conversations are created within the same millisecond (e.g., rapid clicks or automation).
+    const id = crypto.randomUUID();
     const newConversation: Conversation = {
       id,
       title: "New Chat",

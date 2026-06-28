@@ -12,6 +12,8 @@ export class SpawnSubAgentTool extends BaseTool {
   };
 
   async execute(params: { instructions: string }, context: ToolContext): Promise<string> {
-    return "Sub-agent successfully spawned and started execution.";
+    // This tool is not yet implemented. Returning an honest NOT_IMPLEMENTED response
+    // so the agent does not falsely believe a sub-agent was spawned and proceed incorrectly.
+    return "[NOT_IMPLEMENTED] Sub-agent spawning is not yet available in this version. Please execute the instructions directly without spawning a sub-agent.";
   }
 }

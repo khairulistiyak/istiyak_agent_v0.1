@@ -51,7 +51,9 @@ export class OpenAIProvider {
           await new Promise((resolve) => setTimeout(resolve, delay));
           return this.streamChat(messages, model, onChunk, retryCount + 1);
         } else {
-          console.error("OpenAI Rate limit hit. Max retries exceeded.");
+          // Max retries exhausted — throw so AgentRunner surfaces the error properly
+          // instead of silently returning undefined and causing a ghost response.
+          throw new Error("OpenAI rate limit (429) exceeded after 3 retries. Please wait a moment and try again.");
         }
       }
       throw error;

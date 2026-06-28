@@ -144,7 +144,6 @@ export class VertexProvider {
       if (done) break;
 
       const chunkStr = decoder.decode(value, { stream: true });
-      console.log(`[Vertex Debug Raw Chunk]: ${chunkStr}`);
       buffer += chunkStr;
       
       let openBraces = 0;

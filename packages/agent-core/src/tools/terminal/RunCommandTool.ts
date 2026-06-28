@@ -47,7 +47,7 @@ export class RunCommandTool extends BaseTool {
         const dockerCmd = `docker run --rm -v "${workspacePath}:/workspace" -w /workspace ${sandboxImage} sh ${tempScriptName}`;
         
         return await new Promise<string>((resolve) => {
-          exec(dockerCmd, { cwd: workspacePath }, async (error, stdout, stderr) => {
+          exec(dockerCmd, { cwd: workspacePath, timeout: 60000 }, async (error, stdout, stderr) => {
             try {
               await fs.unlink(tempScriptPath);
             } catch (e) {
@@ -65,8 +65,10 @@ export class RunCommandTool extends BaseTool {
       }
     }
 
+    // Run with a 30-second timeout to prevent infinite-running commands from
+    // blocking the agent. Docker sandbox gets 60s due to longer startup times.
     return new Promise<string>((resolve) => {
-      exec(params.command, { cwd: workspacePath }, (error, stdout, stderr) => {
+      exec(params.command, { cwd: workspacePath, timeout: 30000 }, (error, stdout, stderr) => {
         const output: string[] = [];
         if (stdout) output.push(stdout);
         if (stderr) output.push(stderr);

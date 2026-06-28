@@ -1,4 +1,33 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
+import fs from "fs";
+import path from "path";
+import os from "os";
+
+/**
+ * Reads Google CSE credentials from environment variables first,
+ * then falls back to the local config file. This is necessary because
+ * the Tauri desktop app does not load .env files, so process.env alone
+ * would never have these values set from the Settings panel.
+ */
+function getSearchCredentials(): { apiKey: string; cx: string } {
+  const envKey = process.env.GOOGLE_CSE_KEY || "";
+  const envCx = process.env.GOOGLE_CSE_CX || "";
+  if (envKey && envCx) return { apiKey: envKey, cx: envCx };
+
+  try {
+    const configPath = path.join(os.homedir(), ".istiyak_agent_config.json");
+    if (fs.existsSync(configPath)) {
+      const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+      return {
+        apiKey: config.GOOGLE_CSE_KEY || "",
+        cx: config.GOOGLE_CSE_CX || ""
+      };
+    }
+  } catch (_) {
+    // ignore config read errors
+  }
+  return { apiKey: "", cx: "" };
+}
 
 export class GoogleSearchTool extends BaseTool {
   name = "google_search";
@@ -12,10 +41,9 @@ export class GoogleSearchTool extends BaseTool {
   };
 
   async execute(params: { query: string }, context: ToolContext): Promise<string> {
-    const apiKey = process.env.GOOGLE_CSE_KEY;
-    const cx = process.env.GOOGLE_CSE_CX;
+    const { apiKey, cx } = getSearchCredentials();
     if (!apiKey || !cx) {
-      return `Google Search is disabled: Missing GOOGLE_CSE_KEY or GOOGLE_CSE_CX environment variables.`;
+      return `Google Search is disabled: GOOGLE_CSE_KEY and GOOGLE_CSE_CX are not configured. Set them in Settings or in the config file.`;
     }
 
     try {

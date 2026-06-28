@@ -2,9 +2,12 @@ import { BaseTool, ToolContext } from "@istiyak/agent-tools";
 import fs from "fs/promises";
 import path from "path";
 
+// Module-level lock set to prevent concurrent edits on the same file path.
+const locks = new Set<string>();
+
 export class ASTEditTool extends BaseTool {
   name = "ast_edit";
-  description = "Edits code structures cleanly based on matching patterns.";
+  description = "Edits code structures cleanly based on matching patterns. Replaces ALL occurrences of the pattern.";
   parameterSchema = {
     type: "object",
     required: ["relPath", "pattern", "replacement"],
@@ -21,13 +24,25 @@ export class ASTEditTool extends BaseTool {
       throw new Error("Security Violation: Access denied outside workspace path.");
     }
 
-    const content = await fs.readFile(fullPath, "utf-8");
-    if (!content.includes(params.pattern)) {
-      throw new Error(`Pattern not found in file: ${params.relPath}`);
+    if (locks.has(fullPath)) {
+      throw new Error(`File Locking Violation: File is currently being edited by another process: ${params.relPath}`);
     }
 
-    const updated = content.replace(params.pattern, params.replacement);
-    await fs.writeFile(fullPath, updated, "utf-8");
-    return `AST edit on ${params.relPath} succeeded.`;
+    locks.add(fullPath);
+    try {
+      const content = await fs.readFile(fullPath, "utf-8");
+      if (!content.includes(params.pattern)) {
+        throw new Error(`Pattern not found in file: ${params.relPath}`);
+      }
+
+      // Use split/join instead of .replace() to substitute ALL occurrences.
+      // String.prototype.replace() with a string argument only replaces the FIRST match.
+      const occurrences = content.split(params.pattern).length - 1;
+      const updated = content.split(params.pattern).join(params.replacement);
+      await fs.writeFile(fullPath, updated, "utf-8");
+      return `AST edit on ${params.relPath} succeeded. Replaced ${occurrences} occurrence(s).`;
+    } finally {
+      locks.delete(fullPath);
+    }
   }
 }

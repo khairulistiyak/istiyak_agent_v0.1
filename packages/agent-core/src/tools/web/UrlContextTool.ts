@@ -12,8 +12,11 @@ export class UrlContextTool extends BaseTool {
   };
 
   async execute(params: { url: string }, context: ToolContext): Promise<string> {
+    // Abort after 10 seconds to prevent agent from hanging on slow/unresponsive URLs.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
-      const res = await fetch(params.url);
+      const res = await fetch(params.url, { signal: controller.signal });
       if (!res.ok) {
         return `Failed to fetch URL: ${res.statusText}`;
       }
@@ -26,7 +29,12 @@ export class UrlContextTool extends BaseTool {
         .trim();
       return clean.substring(0, 10000);
     } catch (e: any) {
+      if (e.name === "AbortError") {
+        return `Failed to get URL context: Request timed out after 10 seconds for URL: ${params.url}`;
+      }
       return `Failed to get URL context: ${e.message}`;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 }

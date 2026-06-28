@@ -6,6 +6,8 @@ export class ReflectTool extends BaseTool {
   parameterSchema = {};
 
   async execute(params: any, context: ToolContext): Promise<string> {
-    return "Self-reflection complete. Ready to proceed.";
+    // Not yet implemented — return an honest response so the agent does not
+    // falsely believe self-reflection occurred and proceed on wrong assumptions.
+    return "[NOT_IMPLEMENTED] Automated self-reflection is not yet available. Continue executing the task directly based on current context.";
   }
 }

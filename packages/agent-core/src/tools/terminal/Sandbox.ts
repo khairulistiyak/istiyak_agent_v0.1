@@ -12,6 +12,8 @@ export class Sandbox extends BaseTool {
   };
 
   async execute(params: { command: string }, context: ToolContext): Promise<string> {
-    return `Sandbox execution of [${params.command}] succeeded (simulated sandbox).`;
+    // Not yet implemented — this tool simulates sandbox execution without actually running
+    // anything in Docker. Return honest response so the agent uses run_command instead.
+    return `[NOT_IMPLEMENTED] Isolated sandbox execution is not yet available. Use the 'run_command' tool for direct command execution instead.`;
   }
 }

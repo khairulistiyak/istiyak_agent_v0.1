@@ -52,7 +52,9 @@ export class GeminiProvider {
           await new Promise((resolve) => setTimeout(resolve, delay));
           return this.streamGenerateContent(messages, model, onChunk, retryCount + 1);
         } else {
-          console.error("Gemini Rate limit hit. Max retries exceeded.");
+          // Max retries exhausted — throw so AgentRunner can surface the error properly
+          // instead of silently returning undefined and causing a ghost response.
+          throw new Error(`Gemini rate limit (429) exceeded after 3 retries. Please wait a moment and try again.`);
         }
       }
       throw error;

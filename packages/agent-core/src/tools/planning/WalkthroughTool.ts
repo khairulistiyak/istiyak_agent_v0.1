@@ -6,6 +6,8 @@ export class WalkthroughTool extends BaseTool {
   parameterSchema = {};
 
   async execute(params: any, context: ToolContext): Promise<string> {
-    return "Walkthrough validation verification complete.";
+    // Not yet implemented — return an honest response so the agent does not
+    // falsely believe a walkthrough validation was performed.
+    return "[NOT_IMPLEMENTED] Automated walkthrough validation is not yet available. Describe your results directly in the task summary instead.";
   }
 }

@@ -6,6 +6,8 @@ export class SummarizeMemoryTool extends BaseTool {
   parameterSchema = {};
 
   async execute(params: any, context: ToolContext): Promise<string> {
-    return "Memory summary generated successfully.";
+    // Not yet implemented — return an honest response so the agent does not
+    // falsely believe a memory summary was generated.
+    return "[NOT_IMPLEMENTED] Memory summarization is not yet available in this version. Proceed with the task directly without summarizing memory.";
   }
 }

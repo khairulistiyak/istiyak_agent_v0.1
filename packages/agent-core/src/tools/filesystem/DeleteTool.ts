@@ -21,6 +21,14 @@ export class DeleteTool extends BaseTool {
       throw new Error("Security Violation: Access denied outside workspace path.");
     }
 
+    // Prevent deletion of the workspace root itself or any first-level critical entry
+    // by ensuring the target is at least 1 directory level deep inside the workspace.
+    const relPath = path.relative(cwd, target);
+    const depth = relPath.split(path.sep).filter(Boolean).length;
+    if (depth < 1 || target === cwd) {
+      throw new Error("Security Violation: Cannot delete the workspace root directory.");
+    }
+
     await fs.rm(target, { recursive: true, force: true });
     return `Successfully deleted: ${params.relPath}`;
   }

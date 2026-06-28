@@ -143,7 +143,15 @@ function ensureGitignoreSecurity(workspacePath) {
       content = fs.readFileSync(gitignorePath, "utf-8");
     }
 
-    const requiredIgnores = ["credentials/", "*.json", ".env"];
+    // Only ignore agent-specific sensitive files — NOT all *.json, as that would
+    // accidentally gitignore package.json, tsconfig.json, turbo.json, etc.
+    const requiredIgnores = [
+      "credentials/",
+      ".istiyak_agent_config.json",
+      ".istiyak_rag_cache.json",
+      ".istiyak_sqlite_memory.json",
+      ".env"
+    ];
     let updated = false;
 
     const lines = content.split(/\r?\n/).map(l => l.trim());

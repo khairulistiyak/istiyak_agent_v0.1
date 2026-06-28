@@ -4,7 +4,11 @@ import { ToolRegistry } from "../tools/registry/ToolRegistry.js";
 export class PromptBuilder {
   static buildSystemPrompt(): string {
     const tools = ToolRegistry.getAll();
-    const toolDeclarations = tools.map(t => `- Name: ${t.name}\n  Description: ${t.description}\n  Parameters: ${JSON.stringify(t.parameterSchema)}`).join("\n\n");
+    // Filter out stub/unimplemented tools so they don't appear as available to the AI.
+    // Showing unimplemented tools causes the AI to attempt using them and then receive
+    // [NOT_IMPLEMENTED] responses, wasting steps and causing confusion.
+    const implementedTools = tools.filter(t => !t.description.includes("[NOT_IMPLEMENTED]"));
+    const toolDeclarations = implementedTools.map(t => `- Name: ${t.name}\n  Description: ${t.description}\n  Parameters: ${JSON.stringify(t.parameterSchema)}`).join("\n\n");
     return `${SystemPrompt}\n\n### Available Tools:\n${toolDeclarations}`;
   }
 
