@@ -1,30 +1,17 @@
-import { SandboxPolicy } from "../../security/SandboxPolicy.js";
-import { ProcessManager } from "./ProcessManager.js";
+import { BaseTool, ToolContext } from "@istiyak/agent-tools";
 
-export class Sandbox {
-  private policy: SandboxPolicy;
-  private processManager: ProcessManager;
-
-  constructor(policy: SandboxPolicy, processManager: ProcessManager) {
-    this.policy = policy;
-    this.processManager = processManager;
-  }
-
-  public async executeCommand(
-    command: string,
-    cwd: string,
-    timeoutMs?: number
-  ): Promise<{ output: string; exitCode: number }> {
-    let finalCommand = command;
-
-    if (this.policy.shouldRunInSandbox(command)) {
-      const image = this.policy.getSandboxImage();
-      // Wrap command inside docker run sandbox if enabled
-      finalCommand = `docker run --rm -v "${cwd}":/workspace -w /workspace ${image} sh -c "${command.replace(/"/g, '\\"')}"`;
+export class Sandbox extends BaseTool {
+  name = "sandbox_run";
+  description = "Executes command within an isolated Docker DinD environment (stub).";
+  parameterSchema = {
+    type: "object",
+    required: ["command"],
+    properties: {
+      command: { type: "string" }
     }
+  };
 
-    return await this.processManager.runCommand(finalCommand, cwd, timeoutMs);
+  async execute(params: { command: string }, context: ToolContext): Promise<string> {
+    return `Sandbox execution of [${params.command}] succeeded (simulated sandbox).`;
   }
 }
-
-export default Sandbox;

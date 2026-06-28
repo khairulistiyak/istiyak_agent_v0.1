@@ -1,45 +1,37 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
-import { WorkspaceGuard } from "../../security/WorkspaceGuard.js";
 import fs from "fs/promises";
 import path from "path";
 
-export interface PreciseEditParams {
-  filePath: string;
-  targetContent: string;
-  replacementContent: string;
-}
-
-export class PreciseEditTool extends BaseTool<PreciseEditParams, { success: boolean }> {
-  public readonly name = "precise_edit";
-  public readonly description = "Edits a file by replacing a contiguous target block of text with replacement content.";
-  public readonly approveRequired = true;
-  public readonly parametersSchema = {
+export class PreciseEditTool extends BaseTool {
+  name = "precise_edit";
+  description = "Edits specific parts of a target file. Replaces a unique target chunk with replacement content.";
+  parameterSchema = {
     type: "object",
+    required: ["relPath", "targetContent", "replacementContent"],
     properties: {
-      filePath: { type: "string", description: "Path to the file to edit." },
-      targetContent: { type: "string", description: "The exact content block to find and replace." },
-      replacementContent: { type: "string", description: "The content to replace the target block with." }
-    },
-    required: ["filePath", "targetContent", "replacementContent"]
+      relPath: { type: "string" },
+      targetContent: { type: "string" },
+      replacementContent: { type: "string" }
+    }
   };
 
-  public async execute(params: PreciseEditParams, context: ToolContext) {
-    const workspace = context.workspacePath;
-    const targetFile = path.resolve(workspace, params.filePath);
+  async execute(params: { relPath: string; targetContent: string; replacementContent: string }, context: ToolContext): Promise<void> {
+    const fullPath = path.resolve(context.workspacePath, params.relPath);
+    if (!fullPath.startsWith(path.resolve(context.workspacePath))) {
+      throw new Error("Security Violation: Access denied outside workspace path.");
+    }
 
-    const guard = new WorkspaceGuard(workspace);
-    guard.assertSafePath(targetFile);
-
-    const content = await fs.readFile(targetFile, "utf8");
+    const content = await fs.readFile(fullPath, "utf-8");
     if (!content.includes(params.targetContent)) {
-      throw new Error(`Target content was not found in the file: ${params.filePath}`);
+      throw new Error(`Precise Edit Error: Target content not found in ${params.relPath}`);
+    }
+
+    const occurrences = content.split(params.targetContent).length - 1;
+    if (occurrences > 1) {
+      throw new Error(`Precise Edit Error: Ambiguous match. Found ${occurrences} occurrences of target content in ${params.relPath}. Make targetContent more unique.`);
     }
 
     const updatedContent = content.replace(params.targetContent, params.replacementContent);
-    await fs.writeFile(targetFile, updatedContent, "utf8");
-
-    return { success: true };
+    await fs.writeFile(fullPath, updatedContent, "utf-8");
   }
 }
-
-export default PreciseEditTool;

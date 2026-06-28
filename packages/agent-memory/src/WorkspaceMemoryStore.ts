@@ -2,26 +2,26 @@ import { SQLiteMemoryStore } from "./SQLiteMemoryStore.js";
 
 export class WorkspaceMemoryStore {
   private store: SQLiteMemoryStore;
+  private workspacePath: string;
 
   constructor(workspacePath: string) {
-    this.store = new SQLiteMemoryStore(workspacePath);
+    this.store = new SQLiteMemoryStore();
+    this.workspacePath = workspacePath;
   }
 
-  public getWorkspaceRules(): string[] {
-    return this.store.get("workspace_rules") || [];
+  private getWorkspaceKey(key: string): string {
+    return `${this.workspacePath}:${key}`;
   }
 
-  public setWorkspaceRules(rules: string[]): void {
-    this.store.set("workspace_rules", rules);
+  async getRule(key: string): Promise<any> {
+    return this.store.get(this.getWorkspaceKey(key));
   }
 
-  public saveStepResult(step: number, action: string, output: string): void {
-    const history = this.store.get("execution_history") || [];
-    history.push({ step, action, output, timestamp: Date.now() });
-    this.store.set("execution_history", history);
+  async setRule(key: string, value: any): Promise<void> {
+    await this.store.set(this.getWorkspaceKey(key), value);
   }
 
-  public getExecutionHistory(): any[] {
-    return this.store.get("execution_history") || [];
+  async deleteRule(key: string): Promise<void> {
+    await this.store.delete(this.getWorkspaceKey(key));
   }
 }

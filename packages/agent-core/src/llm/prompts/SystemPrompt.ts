@@ -1,7 +1,2 @@
-import { SYSTEM_PERSONA_TEMPLATE } from "@istiyak/agent-prompts";
-
-export function getSystemPrompt(workspacePath: string): string {
-  return SYSTEM_PERSONA_TEMPLATE.replace("{{workspacePath}}", workspacePath);
-}
-
-export default getSystemPrompt;
+import { AGENT_SYSTEM_PROMPT } from "@istiyak/agent-prompts";
+export const SystemPrompt = AGENT_SYSTEM_PROMPT;

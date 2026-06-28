@@ -1,39 +1,29 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
-import { WorkspaceGuard } from "../../security/WorkspaceGuard.js";
 import fs from "fs/promises";
 import path from "path";
 
-export interface MoveParams {
-  sourcePath: string;
-  destPath: string;
-}
-
-export class MoveTool extends BaseTool<MoveParams, { success: boolean }> {
-  public readonly name = "move_file";
-  public readonly description = "Moves a file or directory to a different location within the workspace.";
-  public readonly approveRequired = true;
-  public readonly parametersSchema = {
+export class MoveTool extends BaseTool {
+  name = "move_file";
+  description = "Moves an existing file or directory to a new location.";
+  parameterSchema = {
     type: "object",
+    required: ["srcPath", "destPath"],
     properties: {
-      sourcePath: { type: "string", description: "The path to the file/directory to move." },
-      destPath: { type: "string", description: "The destination path." }
-    },
-    required: ["sourcePath", "destPath"]
+      srcPath: { type: "string" },
+      destPath: { type: "string" }
+    }
   };
 
-  public async execute(params: MoveParams, context: ToolContext) {
-    const workspace = context.workspacePath;
-    const srcAbs = path.resolve(workspace, params.sourcePath);
-    const destAbs = path.resolve(workspace, params.destPath);
+  async execute(params: { srcPath: string; destPath: string }, context: ToolContext): Promise<string> {
+    const cwd = path.resolve(context.workspacePath);
+    const src = path.resolve(cwd, params.srcPath);
+    const dest = path.resolve(cwd, params.destPath);
 
-    const guard = new WorkspaceGuard(workspace);
-    guard.assertSafePath(srcAbs);
-    guard.assertSafePath(destAbs);
+    if (!src.startsWith(cwd) || !dest.startsWith(cwd)) {
+      throw new Error("Security Violation: Access denied outside workspace path.");
+    }
 
-    await fs.mkdir(path.dirname(destAbs), { recursive: true });
-    await fs.rename(srcAbs, destAbs);
-    return { success: true };
+    await fs.rename(src, dest);
+    return `Successfully moved ${params.srcPath} to ${params.destPath}`;
   }
 }
-
-export default MoveTool;

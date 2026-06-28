@@ -1,7 +1,2 @@
-import { PLANNING_TEMPLATE } from "@istiyak/agent-prompts";
-
-export function getPlanningPrompt(taskDescription: string): string {
-  return PLANNING_TEMPLATE + `\nTask to plan:\n${taskDescription}`;
-}
-
-export default getPlanningPrompt;
+import { PLANNING_PROMPT_TEMPLATE } from "@istiyak/agent-prompts";
+export const PlanningPrompt = PLANNING_PROMPT_TEMPLATE;

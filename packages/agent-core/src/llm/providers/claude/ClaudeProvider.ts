@@ -1,87 +1,67 @@
-import { LlmProvider, LlmRequest, LlmResponse } from "../../ProviderManager.js";
-import { ProviderType } from "../../../config/Providers.js";
-import { TokenCounter } from "../../TokenCounter.js";
+import { Message } from "@istiyak/shared-types";
 
-export class ClaudeProvider implements LlmProvider {
-  public readonly id: ProviderType = "claude";
+export class ClaudeProvider {
   private apiKey: string;
-  private modelName: string;
 
-  constructor(config?: { apiKey?: string; modelName?: string }) {
-    this.apiKey = config?.apiKey || process.env.ANTHROPIC_API_KEY || "";
-    this.modelName = config?.modelName || "claude-3.5-sonnet";
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
   }
 
-  private getHeaders(): Record<string, string> {
-    const key = this.apiKey || process.env.ANTHROPIC_API_KEY || "";
-    if (!key) {
-      throw new Error("Anthropic API key is not configured. Please set ANTHROPIC_API_KEY.");
+  async streamChat(
+    messages: Message[],
+    model: string,
+    onChunk?: (text: string) => void,
+    retryCount = 0
+  ): Promise<string> {
+    if (!this.apiKey) {
+      throw new Error("Claude API key is missing");
     }
-    return {
-      "x-api-key": key,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json"
-    };
-  }
+    const targetModel = model || "claude-3-5-sonnet-20241022";
+    const apiMessages = messages
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
 
-  public async generateText(request: LlmRequest): Promise<LlmResponse> {
+    const systemMessages = messages.filter((m) => m.role === "system");
+    const systemPrompt = systemMessages.map((m) => m.content).join("\n\n");
+
+    const requestBody: any = {
+      model: targetModel,
+      messages: apiMessages,
+      max_tokens: 4096,
+      stream: true,
+    };
+
+    if (systemPrompt) {
+      requestBody.system = systemPrompt;
+    }
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: this.getHeaders(),
-      body: JSON.stringify({
-        model: this.modelName,
-        system: request.systemPrompt,
-        messages: [{ role: "user", content: request.userMessage }],
-        max_tokens: request.maxTokens ?? 4096,
-        temperature: request.temperature ?? 0.2
-      })
+      headers: {
+        "x-api-key": this.apiKey,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
+      if (response.status === 429 && retryCount < 3) {
+        const delay = Math.pow(2, retryCount) * 1000;
+        console.warn(`Claude Rate limit hit. Retrying in ${delay / 1000} seconds...`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        return this.streamChat(messages, model, onChunk, retryCount + 1);
+      }
       const errText = await response.text();
       throw new Error(`Claude API error: ${response.status} ${errText}`);
     }
 
-    const data: any = await response.json();
-    const text = data.content?.[0]?.text || "";
+    if (!response.body) return "";
 
-    const inputTokens = data.usage?.input_tokens ?? TokenCounter.countTokens(request.systemPrompt + request.userMessage);
-    const outputTokens = data.usage?.output_tokens ?? TokenCounter.countTokens(text);
-
-    return {
-      content: text,
-      inputTokens,
-      outputTokens
-    };
-  }
-
-  public async generateStream(
-    request: LlmRequest,
-    onChunk: (text: string) => void
-  ): Promise<LlmResponse> {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: this.getHeaders(),
-      body: JSON.stringify({
-        model: this.modelName,
-        system: request.systemPrompt,
-        messages: [{ role: "user", content: request.userMessage }],
-        max_tokens: request.maxTokens ?? 4096,
-        temperature: request.temperature ?? 0.2,
-        stream: true
-      })
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Claude API stream error: ${response.status} ${errText}`);
-    }
-
-    const reader = response.body?.getReader();
-    if (!reader) {
-      throw new Error("Claude response body is not readable for streaming.");
-    }
-
+    const reader = response.body.getReader();
     const decoder = new TextDecoder("utf-8");
     let accumulatedText = "";
     let buffer = "";
@@ -92,7 +72,8 @@ export class ClaudeProvider implements LlmProvider {
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
+      const lastLine = lines.pop();
+      buffer = lastLine !== undefined ? lastLine : "";
 
       for (const line of lines) {
         const cleanLine = line.trim();
@@ -104,25 +85,15 @@ export class ClaudeProvider implements LlmProvider {
         try {
           const parsed = JSON.parse(dataStr);
           if (parsed.type === "content_block_delta" && parsed.delta?.text) {
-            const chunkText = parsed.delta.text;
-            accumulatedText += chunkText;
-            onChunk(chunkText);
+            const text = parsed.delta.text;
+            accumulatedText += text;
+            if (onChunk) onChunk(text);
           }
         } catch (e) {
-          // Ignore JSON parse errors for incomplete lines
+          // ignore
         }
       }
     }
-
-    const inputTokens = TokenCounter.countTokens(request.systemPrompt + request.userMessage);
-    const outputTokens = TokenCounter.countTokens(accumulatedText);
-
-    return {
-      content: accumulatedText,
-      inputTokens,
-      outputTokens
-    };
+    return accumulatedText;
   }
 }
-
-export default ClaudeProvider;

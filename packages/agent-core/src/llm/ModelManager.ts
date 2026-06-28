@@ -1,35 +1,19 @@
-import { MODELS, ModelMetadata } from "../config/Models.js";
-import { ProviderType } from "../config/Providers.js";
 
-export class ModelManager {
-  private activeModelId: string = "gemini-2.5-flash";
+export function classifyAndRoute(content: string, provider: string): string {
+  const complexityKeywords = [
+    "refactor", "optimize", "debug", "error", "write tests", "implement", "fix bug", 
+    "architecture", "race condition", "memory leak", "performance", "class", "database"
+  ];
 
-  public getModelMetadata(modelId: string): ModelMetadata {
-    const meta = MODELS[modelId];
-    if (!meta) {
-      // Return a dynamic metadata config for custom models
-      return {
-        id: modelId,
-        name: modelId,
-        provider: "custom",
-        contextWindow: 128_000,
-        maxOutputTokens: 4096,
-        pricing: { inputCostPer1M: 0, outputCostPer1M: 0 }
-      };
-    }
-    return meta;
+  const isComplex = complexityKeywords.some(keyword => content.toLowerCase().includes(keyword)) || content.length > 1200;
+  const p = provider.toLowerCase();
+
+  if (p === "gemini") {
+    return isComplex ? "gemini-2.5-pro" : "gemini-2.5-flash";
+  } else if (p === "openai") {
+    return isComplex ? "gpt-4o" : "gpt-4o-mini";
+  } else if (p === "claude" || p === "anthropic") {
+    return isComplex ? "claude-3-5-sonnet-latest" : "claude-3-5-haiku-latest";
   }
-
-  public getActiveModel(): ModelMetadata {
-    return this.getModelMetadata(this.activeModelId);
-  }
-
-  public setActiveModel(modelId: string): void {
-    this.activeModelId = modelId;
-  }
-
-  public getModelsByProvider(provider: ProviderType): ModelMetadata[] {
-    return Object.values(MODELS).filter(m => m.provider === provider);
-  }
+  return "gemini-2.5-flash";
 }
-export default ModelManager;

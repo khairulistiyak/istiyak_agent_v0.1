@@ -1,2 +1,2 @@
-export * from "./Connection.js";
 export * from "./Client.js";
+export * from "./Connection.js";

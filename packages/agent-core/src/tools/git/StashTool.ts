@@ -1,29 +1,39 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
-import { exec } from "child_process";
+import { execFile } from "child_process";
+import { promisify } from "util";
 
-export interface StashParams {
-  action?: "push" | "pop" | "list";
-}
+const execFilePromise = promisify(execFile);
 
-export class StashTool extends BaseTool<StashParams, string> {
-  public readonly name = "git_stash";
-  public readonly description = "Stashes uncommitted changes or pops the latest stash item.";
-  public readonly parametersSchema = {
+export class StashTool extends BaseTool {
+  name = "git_stash";
+  description = "Runs git stash commands (save, pop, list).";
+  parameterSchema = {
     type: "object",
+    required: ["action"],
     properties: {
-      action: { type: "string", description: "The action to perform: push, pop, or list. Defaults to list." }
+      action: { type: "string", enum: ["save", "pop", "list"] },
+      message: { type: "string" }
     }
   };
 
-  public execute(params: StashParams, context: ToolContext): Promise<string> {
-    return new Promise((resolve) => {
-      const act = params.action || "list";
-      const command = act === "push" ? "git stash push" : act === "pop" ? "git stash pop" : "git stash list";
-      exec(command, { cwd: context.workspacePath }, (err: any, stdout: string, stderr: string) => {
-        resolve(stdout + stderr);
-      });
-    });
+  async execute(params: { action: "save" | "pop" | "list"; message?: string }, context: ToolContext): Promise<string> {
+    const cwd = context.workspacePath;
+    try {
+      let args: string[] = [];
+      if (params.action === "save") {
+        args = ["stash", "push"];
+        if (params.message) {
+          args.push("-m", params.message);
+        }
+      } else if (params.action === "pop") {
+        args = ["stash", "pop"];
+      } else {
+        args = ["stash", "list"];
+      }
+      const { stdout, stderr } = await execFilePromise("git", args, { cwd });
+      return stdout || stderr || `Success executing: git ${args.join(" ")}`;
+    } catch (error: any) {
+      return error.stdout || error.stderr || error.message;
+    }
   }
 }
-
-export default StashTool;

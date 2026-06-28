@@ -1,38 +1,29 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
-import { WorkspaceGuard } from "../../security/WorkspaceGuard.js";
 import fs from "fs/promises";
 import path from "path";
 
-export interface RenameParams {
-  oldPath: string;
-  newPath: string;
-}
-
-export class RenameTool extends BaseTool<RenameParams, { success: boolean }> {
-  public readonly name = "rename_file";
-  public readonly description = "Renames a file or directory inside the workspace.";
-  public readonly approveRequired = true;
-  public readonly parametersSchema = {
+export class RenameTool extends BaseTool {
+  name = "rename_file";
+  description = "Renames an existing file or directory.";
+  parameterSchema = {
     type: "object",
+    required: ["oldPath", "newPath"],
     properties: {
-      oldPath: { type: "string", description: "The original file path." },
-      newPath: { type: "string", description: "The new file path." }
-    },
-    required: ["oldPath", "newPath"]
+      oldPath: { type: "string" },
+      newPath: { type: "string" }
+    }
   };
 
-  public async execute(params: RenameParams, context: ToolContext) {
-    const workspace = context.workspacePath;
-    const oldAbs = path.resolve(workspace, params.oldPath);
-    const newAbs = path.resolve(workspace, params.newPath);
+  async execute(params: { oldPath: string; newPath: string }, context: ToolContext): Promise<string> {
+    const cwd = path.resolve(context.workspacePath);
+    const src = path.resolve(cwd, params.oldPath);
+    const dest = path.resolve(cwd, params.newPath);
 
-    const guard = new WorkspaceGuard(workspace);
-    guard.assertSafePath(oldAbs);
-    guard.assertSafePath(newAbs);
+    if (!src.startsWith(cwd) || !dest.startsWith(cwd)) {
+      throw new Error("Security Violation: Access denied outside workspace path.");
+    }
 
-    await fs.rename(oldAbs, newAbs);
-    return { success: true };
+    await fs.rename(src, dest);
+    return `Successfully renamed ${params.oldPath} to ${params.newPath}`;
   }
 }
-
-export default RenameTool;

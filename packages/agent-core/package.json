@@ -2,18 +2,23 @@
   "name": "@istiyak/agent-core",
   "version": "1.0.0",
   "private": true,
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "openai": "^4.76.0",
     "@istiyak/shared-types": "*",
     "@istiyak/shared-utils": "*",
     "@istiyak/agent-tools": "*",
     "@istiyak/agent-memory": "*",
-    "@istiyak/agent-prompts": "*",
-    "@google/generative-ai": "^0.24.1",
-    "openai": "^4.76.0"
+    "@istiyak/agent-prompts": "*"
   },
   "devDependencies": {
-    "@types/node": "^20.11.0"
+    "@types/node": "^20.12.12",
+    "typescript": "^5.4.5"
   }
 }

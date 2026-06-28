@@ -1,5 +1,5 @@
 import express from "express";
-import { indexWorkspace } from "../engine/rag.js";
+import { indexWorkspace } from "@istiyak/agent-memory";
 
 const router = express.Router();
 

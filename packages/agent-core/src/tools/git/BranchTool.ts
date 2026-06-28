@@ -1,37 +1,31 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
 import { exec } from "child_process";
 
-export interface BranchParams {
-  branchName?: string;
-  create?: boolean;
-}
-
-export class BranchTool extends BaseTool<BranchParams, string> {
-  public readonly name = "git_branch";
-  public readonly description = "Lists, creates, or manages git branches.";
-  public readonly parametersSchema = {
+export class BranchTool extends BaseTool {
+  name = "git_branch";
+  description = "Lists all local branches or creates a new branch if requested.";
+  parameterSchema = {
     type: "object",
     properties: {
-      branchName: { type: "string", description: "Name of branch to create or manage." },
-      create: { type: "boolean", description: "Create branch if set to true." }
+      createNew: { type: "boolean" },
+      branchName: { type: "string" }
     }
   };
 
-  public execute(params: BranchParams, context: ToolContext): Promise<string> {
+  async execute(params: { createNew?: boolean; branchName?: string }, context: ToolContext): Promise<string> {
+    const cwd = context.workspacePath;
+    if (params.createNew && params.branchName) {
+      const sanitized = params.branchName.replace(/[^a-zA-Z0-9_/-]/g, "");
+      return new Promise((resolve) => {
+        exec(`git branch "${sanitized}"`, { cwd }, (error, stdout, stderr) => {
+          resolve(stdout || stderr || (error ? error.message : `Created branch: ${sanitized}`));
+        });
+      });
+    }
     return new Promise((resolve) => {
-      let command = "git branch";
-      if (params.branchName) {
-        if (params.create) {
-          command = `git branch ${params.branchName}`;
-        } else {
-          command = `git branch -d ${params.branchName}`;
-        }
-      }
-      exec(command, { cwd: context.workspacePath }, (err: any, stdout: string, stderr: string) => {
-        resolve(stdout + stderr);
+      exec("git branch", { cwd }, (error, stdout, stderr) => {
+        resolve(stdout || stderr || (error ? error.message : "Success"));
       });
     });
   }
 }
-
-export default BranchTool;

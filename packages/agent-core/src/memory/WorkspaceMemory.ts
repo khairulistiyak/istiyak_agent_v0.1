@@ -7,23 +7,11 @@ export class WorkspaceMemory {
     this.store = new WorkspaceMemoryStore(workspacePath);
   }
 
-  public getRules(): string[] {
-    return this.store.getWorkspaceRules();
+  async getRule(key: string): Promise<any> {
+    return this.store.getRule(key);
   }
 
-  public addRule(rule: string): void {
-    const rules = this.getRules();
-    rules.push(rule);
-    this.store.setWorkspaceRules(rules);
-  }
-
-  public logStep(step: number, action: string, output: string): void {
-    this.store.saveStepResult(step, action, output);
-  }
-
-  public getHistory(): any[] {
-    return this.store.getExecutionHistory();
+  async setRule(key: string, value: any): Promise<void> {
+    await this.store.setRule(key, value);
   }
 }
-
-export default WorkspaceMemory;

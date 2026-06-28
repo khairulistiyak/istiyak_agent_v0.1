@@ -1,39 +1,38 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
-import { WorkspaceGuard } from "../../security/WorkspaceGuard.js";
 import fs from "fs/promises";
 import path from "path";
 
-export interface WriteFileParams {
-  filePath: string;
-  content: string;
-}
+const locks = new Set<string>();
 
-export class WriteFileTool extends BaseTool<WriteFileParams, { success: boolean; filePath: string }> {
-  public readonly name = "write_file";
-  public readonly description = "Creates or overwrites a file with new content.";
-  public readonly approveRequired = true;
-  public readonly parametersSchema = {
+export class WriteFileTool extends BaseTool {
+  name = "write_file";
+  description = "Writes entire contents to a file cleanly. Overwrites if file exists.";
+  parameterSchema = {
     type: "object",
+    required: ["relPath", "content"],
     properties: {
-      filePath: { type: "string", description: "Path to the file to write (relative or absolute)." },
-      content: { type: "string", description: "The content to write into the file." }
-    },
-    required: ["filePath", "content"]
+      relPath: { type: "string" },
+      content: { type: "string" }
+    }
   };
 
-  public async execute(params: WriteFileParams, context: ToolContext) {
-    const workspace = context.workspacePath;
-    const targetFile = path.resolve(workspace, params.filePath);
+  async execute(params: { relPath: string; content: string }, context: ToolContext): Promise<void> {
+    const fullPath = path.resolve(context.workspacePath, params.relPath);
+    if (!fullPath.startsWith(path.resolve(context.workspacePath))) {
+      throw new Error("Security Violation: Access denied outside workspace path.");
+    }
 
-    const guard = new WorkspaceGuard(workspace);
-    guard.assertSafePath(targetFile);
+    if (locks.has(fullPath)) {
+      throw new Error(`File Locking Violation: File is locked by another process: ${params.relPath}`);
+    }
 
-    // Ensure parent directory exists
-    await fs.mkdir(path.dirname(targetFile), { recursive: true });
-    await fs.writeFile(targetFile, params.content, "utf8");
-
-    return { success: true, filePath: params.filePath };
+    locks.add(fullPath);
+    try {
+      const parent = path.dirname(fullPath);
+      await fs.mkdir(parent, { recursive: true });
+      await fs.writeFile(fullPath, params.content, "utf-8");
+    } finally {
+      locks.delete(fullPath);
+    }
   }
 }
-
-export default WriteFileTool;

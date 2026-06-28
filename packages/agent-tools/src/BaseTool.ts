@@ -1,13 +1,9 @@
 import { ToolContext } from "./ToolContext.js";
 
-export abstract class BaseTool<TParams = any, TResult = any> {
-  public abstract readonly name: string;
-  public abstract readonly description: string;
-  public abstract readonly parametersSchema: Record<string, any>;
-  public readonly approveRequired: boolean = false;
+export abstract class BaseTool<P = any, R = any> {
+  abstract name: string;
+  abstract description: string;
+  abstract parameterSchema: Record<string, any>;
 
-  public abstract execute(
-    params: TParams,
-    context: ToolContext
-  ): Promise<TResult>;
+  abstract execute(params: P, context: ToolContext): Promise<R>;
 }

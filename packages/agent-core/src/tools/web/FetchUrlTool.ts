@@ -1,45 +1,25 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
 
-export interface FetchUrlParams {
-  url: string;
-}
-
-export class FetchUrlTool extends BaseTool<FetchUrlParams, string> {
-  public readonly name = "fetch_url";
-  public readonly description = "Fetches content from a URL and parses HTML to clean text.";
-  public readonly parametersSchema = {
+export class FetchUrlTool extends BaseTool {
+  name = "fetch_url";
+  description = "Fetches the raw string content of any web page.";
+  parameterSchema = {
     type: "object",
+    required: ["url"],
     properties: {
-      url: { type: "string", description: "The HTTP/HTTPS URL to fetch." }
-    },
-    required: ["url"]
+      url: { type: "string" }
+    }
   };
 
-  public async execute(params: FetchUrlParams, context: ToolContext): Promise<string> {
+  async execute(params: { url: string }, context: ToolContext): Promise<string> {
     try {
-      const response = await fetch(params.url, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; IstiyakAgent/1.0;)"
-        }
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`);
+      const res = await fetch(params.url);
+      if (!res.ok) {
+        return `Fetch error: ${res.status} ${res.statusText}`;
       }
-      const html = await response.text();
-      
-      // Clean HTML tags quickly
-      let text = html
-        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
-        .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
-        .replace(/<[^>]+>/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-
-      return text.slice(0, 50000); // cap size
-    } catch (error: any) {
-      throw new Error(`FetchUrl Error: ${error.message}`);
+      return await res.text();
+    } catch (e: any) {
+      return `Fetch error: ${e.message}`;
     }
   }
 }
-
-export default FetchUrlTool;

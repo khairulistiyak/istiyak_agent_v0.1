@@ -2,9 +2,11 @@
   "name": "istiyak-companion-backend",
   "version": "0.1.0",
   "type": "module",
-  "main": "src/server.js",
+  "main": "dist/server.js",
   "scripts": {
-    "start": "node src/server.js"
+    "build": "tsc",
+    "dev": "tsc && node dist/server.js",
+    "start": "node dist/server.js"
   },
   "dependencies": {
     "@istiyak/database": "*",
@@ -15,6 +17,20 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.8.2",
+    "passport": "^0.7.0",
+    "passport-github2": "^0.1.12",
+    "passport-google-oauth20": "^2.0.0",
     "stripe": "^22.2.3"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.12.12",
+    "@types/passport": "^1.0.16",
+    "@types/passport-github2": "^1.2.9",
+    "@types/passport-google-oauth20": "^2.0.16",
+    "typescript": "^5.4.5"
   }
 }

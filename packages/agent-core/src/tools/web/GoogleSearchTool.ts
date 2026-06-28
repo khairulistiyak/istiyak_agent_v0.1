@@ -1,56 +1,34 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
 
-export interface GoogleSearchParams {
-  query: string;
-}
-
-export class GoogleSearchTool extends BaseTool<GoogleSearchParams, Array<{ title: string; link: string; snippet: string }>> {
-  public readonly name = "google_search";
-  public readonly description = "Performs a Google search for the specified query.";
-  public readonly parametersSchema = {
+export class GoogleSearchTool extends BaseTool {
+  name = "google_search";
+  description = "Searches Google using Custom Search Engine (CSE) API key.";
+  parameterSchema = {
     type: "object",
+    required: ["query"],
     properties: {
-      query: { type: "string", description: "The search query query." }
-    },
-    required: ["query"]
+      query: { type: "string" }
+    }
   };
 
-  public async execute(params: GoogleSearchParams, context: ToolContext) {
-    const serperKey = process.env.SERPER_API_KEY;
-    
-    if (serperKey) {
-      try {
-        const response = await fetch("https://google.serper.dev/search", {
-          method: "POST",
-          headers: {
-            "X-API-KEY": serperKey,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ q: params.query })
-        });
-        if (response.ok) {
-          const data: any = await response.json();
-          const results = data.organic || [];
-          return results.map((r: any) => ({
-            title: r.title || "",
-            link: r.link || "",
-            snippet: r.snippet || ""
-          }));
-        }
-      } catch (err) {
-        console.error("Serper API error: ", err);
-      }
+  async execute(params: { query: string }, context: ToolContext): Promise<string> {
+    const apiKey = process.env.GOOGLE_CSE_KEY;
+    const cx = process.env.GOOGLE_CSE_CX;
+    if (!apiKey || !cx) {
+      return `Google Search is disabled: Missing GOOGLE_CSE_KEY or GOOGLE_CSE_CX environment variables.`;
     }
 
-    // Default simulated results
-    return [
-      {
-        title: `Search Result for ${params.query}`,
-        link: `https://www.google.com/search?q=${encodeURIComponent(params.query)}`,
-        snippet: `This is a simulated search result for query: "${params.query}". Configure SERPER_API_KEY to retrieve live web results.`
+    try {
+      const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(params.query)}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        return `Search failed with status: ${res.statusText}`;
       }
-    ];
+      const data = await res.json() as any;
+      const items = data.items || [];
+      return items.map((item: any) => `Title: ${item.title}\nLink: ${item.link}\nSnippet: ${item.snippet}`).join("\n\n");
+    } catch (e: any) {
+      return `Search failed: ${e.message}`;
+    }
   }
 }
-
-export default GoogleSearchTool;

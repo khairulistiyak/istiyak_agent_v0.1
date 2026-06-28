@@ -1,25 +1,20 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
-import { SQLiteMemoryStore } from "@istiyak/agent-memory";
+import { WorkspaceMemoryStore } from "@istiyak/agent-memory";
 
-export interface ReadMemoryParams {
-  key: string;
-}
-
-export class ReadMemoryTool extends BaseTool<ReadMemoryParams, any> {
-  public readonly name = "read_memory";
-  public readonly description = "Reads a value from the persistent agent memory by key.";
-  public readonly parametersSchema = {
+export class ReadMemoryTool extends BaseTool {
+  name = "read_memory";
+  description = "Reads a specific persistent key-value from workspace memory.";
+  parameterSchema = {
     type: "object",
+    required: ["key"],
     properties: {
-      key: { type: "string", description: "The memory key to retrieve." }
-    },
-    required: ["key"]
+      key: { type: "string" }
+    }
   };
 
-  public async execute(params: ReadMemoryParams, context: ToolContext): Promise<any> {
-    const store = new SQLiteMemoryStore(context.workspacePath);
-    return store.get(params.key);
+  async execute(params: { key: string }, context: ToolContext): Promise<string> {
+    const store = new WorkspaceMemoryStore(context.workspacePath);
+    const value = await store.getRule(params.key);
+    return value ? String(value) : `Key [${params.key}] not found in memory.`;
   }
 }
-
-export default ReadMemoryTool;

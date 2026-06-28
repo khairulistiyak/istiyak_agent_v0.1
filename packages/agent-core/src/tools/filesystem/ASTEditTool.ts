@@ -1,50 +1,33 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
-import { WorkspaceGuard } from "../../security/WorkspaceGuard.js";
 import fs from "fs/promises";
 import path from "path";
 
-export interface ASTEditParams {
-  filePath: string;
-  targetSymbol: string;
-  replacementContent: string;
-}
-
-export class ASTEditTool extends BaseTool<ASTEditParams, { success: boolean }> {
-  public readonly name = "ast_edit";
-  public readonly description = "Modifies functions or declarations structurally inside a source code file.";
-  public readonly approveRequired = true;
-  public readonly parametersSchema = {
+export class ASTEditTool extends BaseTool {
+  name = "ast_edit";
+  description = "Edits code structures cleanly based on matching patterns.";
+  parameterSchema = {
     type: "object",
+    required: ["relPath", "pattern", "replacement"],
     properties: {
-      filePath: { type: "string", description: "Path to the file to edit." },
-      targetSymbol: { type: "string", description: "Name of class, function, or symbol to replace/modify." },
-      replacementContent: { type: "string", description: "New content for the target symbol." }
-    },
-    required: ["filePath", "targetSymbol", "replacementContent"]
+      relPath: { type: "string" },
+      pattern: { type: "string" },
+      replacement: { type: "string" }
+    }
   };
 
-  public async execute(params: ASTEditParams, context: ToolContext) {
-    const workspace = context.workspacePath;
-    const targetFile = path.resolve(workspace, params.filePath);
-
-    const guard = new WorkspaceGuard(workspace);
-    guard.assertSafePath(targetFile);
-
-    const fileContent = await fs.readFile(targetFile, "utf8");
-
-    // Fallback: search for symbol block and replace
-    // Find declaration: e.g. function targetSymbol, class targetSymbol, targetSymbol =
-    const regex = new RegExp(`(function\\s+${params.targetSymbol}\\b[^{]*{([\\s\\S]*?)}|class\\s+${params.targetSymbol}\\b[^{]*{([\\s\\S]*?)}|const\\s+${params.targetSymbol}\\b[\\s\\S]*?;)`, "g");
-    
-    if (!regex.test(fileContent)) {
-      throw new Error(`Symbol '${params.targetSymbol}' could not be located in ${params.filePath}`);
+  async execute(params: { relPath: string; pattern: string; replacement: string }, context: ToolContext): Promise<string> {
+    const fullPath = path.resolve(context.workspacePath, params.relPath);
+    if (!fullPath.startsWith(path.resolve(context.workspacePath))) {
+      throw new Error("Security Violation: Access denied outside workspace path.");
     }
 
-    const updatedContent = fileContent.replace(regex, params.replacementContent);
-    await fs.writeFile(targetFile, updatedContent, "utf8");
+    const content = await fs.readFile(fullPath, "utf-8");
+    if (!content.includes(params.pattern)) {
+      throw new Error(`Pattern not found in file: ${params.relPath}`);
+    }
 
-    return { success: true };
+    const updated = content.replace(params.pattern, params.replacement);
+    await fs.writeFile(fullPath, updated, "utf-8");
+    return `AST edit on ${params.relPath} succeeded.`;
   }
 }
-
-export default ASTEditTool;

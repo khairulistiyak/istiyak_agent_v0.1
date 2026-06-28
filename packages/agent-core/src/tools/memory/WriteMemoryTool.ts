@@ -1,28 +1,21 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
-import { SQLiteMemoryStore } from "@istiyak/agent-memory";
+import { WorkspaceMemoryStore } from "@istiyak/agent-memory";
 
-export interface WriteMemoryParams {
-  key: string;
-  value: any;
-}
-
-export class WriteMemoryTool extends BaseTool<WriteMemoryParams, { success: boolean }> {
-  public readonly name = "write_memory";
-  public readonly description = "Writes a value to the persistent agent memory by key.";
-  public readonly parametersSchema = {
+export class WriteMemoryTool extends BaseTool {
+  name = "write_memory";
+  description = "Writes a specific persistent key-value to workspace memory.";
+  parameterSchema = {
     type: "object",
+    required: ["key", "value"],
     properties: {
-      key: { type: "string", description: "The memory key under which to save." },
-      value: { type: "any", description: "The value data to save (primitive, object, array, etc.)." }
-    },
-    required: ["key", "value"]
+      key: { type: "string" },
+      value: { type: "string" }
+    }
   };
 
-  public async execute(params: WriteMemoryParams, context: ToolContext) {
-    const store = new SQLiteMemoryStore(context.workspacePath);
-    store.set(params.key, params.value);
-    return { success: true };
+  async execute(params: { key: string; value: string }, context: ToolContext): Promise<string> {
+    const store = new WorkspaceMemoryStore(context.workspacePath);
+    await store.setRule(params.key, params.value);
+    return `Successfully saved [${params.key}] to workspace memory.`;
   }
 }
-
-export default WriteMemoryTool;

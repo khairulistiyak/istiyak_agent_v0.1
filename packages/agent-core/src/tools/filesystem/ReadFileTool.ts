@@ -1,32 +1,23 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
-import { WorkspaceGuard } from "../../security/WorkspaceGuard.js";
 import fs from "fs/promises";
 import path from "path";
 
-export interface ReadFileParams {
-  filePath: string;
-}
-
-export class ReadFileTool extends BaseTool<ReadFileParams, string> {
-  public readonly name = "read_file";
-  public readonly description = "Reads the content of a file in the workspace.";
-  public readonly parametersSchema = {
+export class ReadFileTool extends BaseTool {
+  name = "read_file";
+  description = "Reads the content of a target file.";
+  parameterSchema = {
     type: "object",
+    required: ["relPath"],
     properties: {
-      filePath: { type: "string", description: "Path to the file to read (relative to workspace or absolute)." }
-    },
-    required: ["filePath"]
+      relPath: { type: "string" }
+    }
   };
 
-  public async execute(params: ReadFileParams, context: ToolContext): Promise<string> {
-    const workspace = context.workspacePath;
-    const targetFile = path.resolve(workspace, params.filePath);
-
-    const guard = new WorkspaceGuard(workspace);
-    guard.assertSafePath(targetFile);
-
-    return await fs.readFile(targetFile, "utf8");
+  async execute(params: { relPath: string }, context: ToolContext): Promise<string> {
+    const fullPath = path.resolve(context.workspacePath, params.relPath);
+    if (!fullPath.startsWith(path.resolve(context.workspacePath))) {
+      throw new Error("Security Violation: Access denied outside workspace path.");
+    }
+    return await fs.readFile(fullPath, "utf-8");
   }
 }
-
-export default ReadFileTool;

@@ -1,26 +1,16 @@
-import { LlmProvider, LlmRequest, LlmResponse } from "../../ProviderManager.js";
-import { ProviderType } from "../../../config/Providers.js";
-import { TokenCounter } from "../../TokenCounter.js";
 import fs from "fs";
 import crypto from "crypto";
+import { Message } from "@istiyak/shared-types";
 
-export class VertexProvider implements LlmProvider {
-  public readonly id: ProviderType = "vertex";
+export class VertexProvider {
   private serviceAccountPath: string;
   private projectId: string;
   private location: string;
-  private modelName: string;
 
-  constructor(config?: {
-    serviceAccountPath?: string;
-    projectId?: string;
-    location?: string;
-    modelName?: string;
-  }) {
-    this.serviceAccountPath = config?.serviceAccountPath || process.env.VERTEX_SERVICE_ACCOUNT_PATH || "";
-    this.projectId = config?.projectId || process.env.VERTEX_PROJECT_ID || "";
-    this.location = config?.location || process.env.VERTEX_LOCATION || "us-central1";
-    this.modelName = config?.modelName || "gemini-1.5-pro";
+  constructor(serviceAccountPath: string, projectId: string, location: string) {
+    this.serviceAccountPath = serviceAccountPath;
+    this.projectId = projectId;
+    this.location = location || "us-central1";
   }
 
   private async getAccessToken(): Promise<string> {
@@ -92,79 +82,47 @@ export class VertexProvider implements LlmProvider {
     return data.access_token;
   }
 
-  public async generateText(request: LlmRequest): Promise<LlmResponse> {
+  async streamGenerate(
+    messages: Message[],
+    model: string,
+    onChunk?: (text: string) => void
+  ): Promise<string> {
     const accessToken = await this.getAccessToken();
     const host = this.location === "global" ? "aiplatform.googleapis.com" : `${this.location}-aiplatform.googleapis.com`;
-    const endpoint = `https://${host}/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${this.modelName}:generateContent`;
+    const targetModel = model || "gemini-2.5-flash";
+    const endpoint = `https://${host}/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${targetModel}:streamGenerateContent`;
 
-    const contents = [
-      {
-        role: "user",
-        parts: [{ text: `System Prompt:\n${request.systemPrompt}\n\nUser Message:\n${request.userMessage}` }]
+    const contents = messages
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => {
+        const role = m.role === "assistant" ? "model" : m.role;
+        return {
+          role,
+          parts: [{ text: m.content }],
+        };
+      });
+
+    const systemMessage = messages.find((m) => m.role === "system");
+    const payload: any = {
+      contents,
+      generationConfig: {
+        temperature: 0.2,
+        maxOutputTokens: 8192
       }
-    ];
-
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          temperature: request.temperature ?? 0.2,
-          maxOutputTokens: request.maxTokens ?? 4096
-        }
-      })
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Vertex AI error: ${response.status} ${errText}`);
+    };
+    if (systemMessage) {
+      payload.systemInstruction = {
+        parts: [{ text: systemMessage.content }]
+      };
     }
 
-    const result: any = await response.json();
-    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-    const inputTokens = TokenCounter.countTokens(request.systemPrompt + request.userMessage);
-    const outputTokens = TokenCounter.countTokens(text);
-
-    return {
-      content: text,
-      inputTokens,
-      outputTokens
-    };
-  }
-
-  public async generateStream(
-    request: LlmRequest,
-    onChunk: (text: string) => void
-  ): Promise<LlmResponse> {
-    const accessToken = await this.getAccessToken();
-    const host = this.location === "global" ? "aiplatform.googleapis.com" : `${this.location}-aiplatform.googleapis.com`;
-    const endpoint = `https://${host}/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${this.modelName}:streamGenerateContent`;
-
-    const contents = [
-      {
-        role: "user",
-        parts: [{ text: `System Prompt:\n${request.systemPrompt}\n\nUser Message:\n${request.userMessage}` }]
-      }
-    ];
-
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${accessToken}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          temperature: request.temperature ?? 0.2,
-          maxOutputTokens: request.maxTokens ?? 4096
-        }
-      })
+      body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
@@ -185,7 +143,9 @@ export class VertexProvider implements LlmProvider {
       const { done, value } = await reader.read();
       if (done) break;
 
-      buffer += decoder.decode(value, { stream: true });
+      const chunkStr = decoder.decode(value, { stream: true });
+      console.log(`[Vertex Debug Raw Chunk]: ${chunkStr}`);
+      buffer += chunkStr;
       
       let openBraces = 0;
       let startIdx = -1;
@@ -221,7 +181,7 @@ export class VertexProvider implements LlmProvider {
                 const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text || "";
                 if (text) {
                   accumulatedText += text;
-                  onChunk(text);
+                  if (onChunk) onChunk(text);
                 }
               } catch (e) {
                 // Ignore incomplete JSON chunks
@@ -235,15 +195,6 @@ export class VertexProvider implements LlmProvider {
       }
     }
 
-    const inputTokens = TokenCounter.countTokens(request.systemPrompt + request.userMessage);
-    const outputTokens = TokenCounter.countTokens(accumulatedText);
-
-    return {
-      content: accumulatedText,
-      inputTokens,
-      outputTokens
-    };
+    return accumulatedText;
   }
 }
-
-export default VertexProvider;

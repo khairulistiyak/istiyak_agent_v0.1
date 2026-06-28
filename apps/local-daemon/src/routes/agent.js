@@ -1,5 +1,5 @@
 import express from "express";
-import { pendingPermissions } from "../engine/runner.js";
+import { pendingPermissions } from "@istiyak/agent-core";
 
 const router = express.Router();
 

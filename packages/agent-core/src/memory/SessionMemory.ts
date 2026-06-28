@@ -1,19 +1,17 @@
-import { ChatMessage } from "@istiyak/shared-types";
+import { Message } from "@istiyak/shared-types";
 
 export class SessionMemory {
-  private messages: ChatMessage[] = [];
+  private messages: Message[] = [];
 
-  public addMessage(message: ChatMessage): void {
-    this.messages.push(message);
+  addMessage(msg: Message) {
+    this.messages.push(msg);
   }
 
-  public getMessages(): ChatMessage[] {
+  getMessages(): Message[] {
     return this.messages;
   }
 
-  public clear(): void {
+  clear() {
     this.messages = [];
   }
 }
-
-export default SessionMemory;

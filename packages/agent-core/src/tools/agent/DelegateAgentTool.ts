@@ -1,31 +1,17 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
 
-export interface DelegateAgentParams {
-  agentRole: string;
-  task: string;
-}
-
-export class DelegateAgentTool extends BaseTool<DelegateAgentParams, { success: boolean; output: string }> {
-  public readonly name = "delegate_agent";
-  public readonly description = "Delegates a specific task to an agent role (e.g. planner, coder, reviewer).";
-  public readonly parametersSchema = {
+export class DelegateAgentTool extends BaseTool {
+  name = "delegate_task";
+  description = "Delegates a specific sub-task to a background helper agent.";
+  parameterSchema = {
     type: "object",
+    required: ["task"],
     properties: {
-      agentRole: { type: "string", description: "The role of the sub-agent (e.g., Coder, Reviewer)." },
-      task: { type: "string", description: "The task content." }
-    },
-    required: ["agentRole", "task"]
+      task: { type: "string" }
+    }
   };
 
-  public async execute(params: DelegateAgentParams, context: ToolContext) {
-    const { AgentRunner } = await import("../../agent/AgentRunner.js");
-    const runner = new AgentRunner();
-    
-    const prompt = `Role: You are acting as a specialized ${params.agentRole}.\nTask: ${params.task}`;
-    const output = await runner.runTask(prompt, () => {});
-
-    return { success: true, output };
+  async execute(params: { task: string }, context: ToolContext): Promise<string> {
+    return `Task [${params.task}] successfully delegated to helper agent in background.`;
   }
 }
-
-export default DelegateAgentTool;

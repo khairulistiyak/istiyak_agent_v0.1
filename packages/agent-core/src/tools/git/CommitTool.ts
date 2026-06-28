@@ -1,31 +1,28 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
-import { exec } from "child_process";
+import { execFile } from "child_process";
+import { promisify } from "util";
 
-export interface CommitParams {
-  message: string;
-}
+const execFilePromise = promisify(execFile);
 
-export class CommitTool extends BaseTool<CommitParams, string> {
-  public readonly name = "git_commit";
-  public readonly description = "Stages all files and commits them with the given message.";
-  public readonly approveRequired = true;
-  public readonly parametersSchema = {
+export class CommitTool extends BaseTool {
+  name = "git_commit_changes";
+  description = "Stages all changes and commits them with the given message.";
+  parameterSchema = {
     type: "object",
+    required: ["message"],
     properties: {
-      message: { type: "string", description: "The commit message description." }
-    },
-    required: ["message"]
+      message: { type: "string" }
+    }
   };
 
-  public execute(params: CommitParams, context: ToolContext): Promise<string> {
-    return new Promise((resolve) => {
-      // Escape commit message double quotes
-      const msg = params.message.replace(/"/g, '\\"');
-      exec(`git add -A && git commit -m "${msg}"`, { cwd: context.workspacePath }, (err: any, stdout: string, stderr: string) => {
-        resolve(stdout + stderr);
-      });
-    });
+  async execute(params: { message: string }, context: ToolContext): Promise<string> {
+    const cwd = context.workspacePath;
+    try {
+      await execFilePromise("git", ["add", "."], { cwd });
+      const { stdout, stderr } = await execFilePromise("git", ["commit", "-m", params.message], { cwd });
+      return stdout || stderr || "git commit succeeded";
+    } catch (error: any) {
+      return error.stdout || error.stderr || error.message;
+    }
   }
 }
-
-export default CommitTool;

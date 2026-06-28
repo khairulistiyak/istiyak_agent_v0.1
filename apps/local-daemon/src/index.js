@@ -1,8 +1,7 @@
 import readline from "readline";
 import dotenv from "dotenv";
 import { startDaemon } from "./daemon.js";
-import { runAgent } from "./engine/runner.js";
-import { calculateCost } from "./engine/costTracker.js";
+import { runAgent, calculateCost } from "@istiyak/agent-core";
 
 dotenv.config();
 
@@ -57,24 +56,24 @@ function startTerminalMode() {
 
       try {
         let responseBuffer = "";
-        const agentResult = await runAgent(
+        const agentResult = await runAgent({
           messages,
           provider,
           model,
-          "apiKey",
+          authMethod: "apiKey",
           apiKey,
-          "",
-          "",
-          "",
-          process.cwd(),
-          false,
-          (chunk) => {
+          serviceAccountPath: "",
+          projectId: "",
+          location: "",
+          workspacePath: process.cwd(),
+          googleSearchEnabled: false,
+          onChunk: (chunk) => {
             responseBuffer += chunk;
             process.stdout.write(chunk);
           },
-          false,
-          ""
-        );
+          cloudSandboxEnabled: false,
+          token: ""
+        });
 
         messages.push({ role: "assistant", content: responseBuffer });
 

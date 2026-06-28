@@ -6,6 +6,14 @@ import { IGNORED_DIRS } from "../constants.js";
 let watcher = null;
 let activeWorkspacePath = null;
 
+// Initialization status and callback registry
+let isInitialized = false;
+let todoCallback = null;
+
+export function setTodoCallback(callback) {
+  todoCallback = callback;
+}
+
 // Map of filePath -> Array of { line: number, text: string }
 const todosMap = new Map();
 
@@ -46,6 +54,7 @@ function scanFileForTodos(filePath) {
   }
 
   try {
+    const previousTodos = todosMap.get(filePath) || [];
     const content = fs.readFileSync(filePath, "utf-8");
     const lines = content.split(/\r?\n/);
     const fileTodos = [];
@@ -62,6 +71,23 @@ function scanFileForTodos(filePath) {
           line: i + 1,
           text: todoText
         });
+      }
+    }
+
+    // Trigger todo callback if initialized and a new TODO instruction is detected
+    if (isInitialized && todoCallback) {
+      for (const current of fileTodos) {
+        const exists = previousTodos.some((prev) => prev.text === current.text);
+        if (!exists) {
+          console.log(`[Watcher] New TODO detected in ${filePath}: "${current.text}"`);
+          // Lock the file for agent editing immediately
+          if (lockFile(filePath, "agent")) {
+            // Defer execution slightly to allow lock state to propagate
+            setTimeout(() => {
+              todoCallback(filePath, current.text);
+            }, 50);
+          }
+        }
       }
     }
 
@@ -164,6 +190,7 @@ export function startWatcher(workspacePath) {
 
   // 1. Initial workspace scan
   scanDirectoryRecursively(absPath);
+  isInitialized = true;
 
   // 2. Setup dynamic FS watcher
   try {
@@ -214,6 +241,7 @@ export function stopWatcher() {
   }
   activeWorkspacePath = null;
   todosMap.clear();
+  isInitialized = false;
 }
 
 /**

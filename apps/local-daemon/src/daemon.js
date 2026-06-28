@@ -1,19 +1,108 @@
 import express from "express";
 import cors from "cors";
+import fs from "fs";
+import path from "path";
+import os from "os";
 import commandRouter from "./routes/command.js";
 import agentRouter from "./routes/agent.js";
 import ragRouter from "./routes/rag.js";
 import watcherRouter from "./routes/watcher.js";
-import { getStats } from "./engine/telemetry.js";
-import { runAgent } from "./engine/runner.js";
-import { calculateCost } from "./engine/costTracker.js";
+import { getStats, runAgent, calculateCost, pendingPermissions } from "@istiyak/agent-core";
+import { setTodoCallback, unlockFile } from "./watcher/watcher.js";
+
+function loadLocalConfig() {
+  try {
+    const home = os.homedir();
+    const configPath = path.join(home, ".istiyak_agent_config.json");
+    if (fs.existsSync(configPath)) {
+      return JSON.parse(fs.readFileSync(configPath, "utf-8"));
+    }
+  } catch (err) {
+    console.error("[Config Loader] Failed to load config:", err.message);
+  }
+  return {};
+}
+
+let isAgentRunning = false;
+
+async function onTodoFound(filePath, todoText) {
+  if (isAgentRunning) {
+    console.log(`[Auto-Pilot] Agent is already executing a task. Skipping TODO: "${todoText}" in ${filePath}`);
+    unlockFile(filePath);
+    return;
+  }
+
+  isAgentRunning = true;
+  console.log(`[Auto-Pilot] Initializing background task to resolve TODO in ${filePath}...`);
+
+  try {
+    const config = loadLocalConfig();
+    const workspacePath = config.WORKSPACE_PATH || process.cwd();
+    const relativePath = path.relative(workspacePath, filePath);
+
+    const messages = [
+      {
+        role: "user",
+        content: `Please resolve the following TODO comment in the file [${relativePath}]:\n"${todoText}"\n\nModify the file in-place and remove the TODO comment once complete.`
+      }
+    ];
+
+    console.log(`[Auto-Pilot] Running Agent for ${relativePath}...`);
+
+    await runAgent({
+      messages,
+      provider: config.PROVIDER || "gemini",
+      model: config.SELECTED_MODEL || "gemini-2.5-flash",
+      authMethod: config.AUTH_METHOD || "apiKey",
+      apiKey: config.API_KEY || "",
+      serviceAccountPath: config.SERVICE_ACCOUNT_PATH || "",
+      projectId: config.PROJECT_ID || "",
+      location: config.LOCATION || "global",
+      workspacePath,
+      googleSearchEnabled: !!config.GOOGLE_SEARCH_ENABLED,
+      onChunk: (chunk) => {
+        process.stdout.write(chunk);
+      },
+      cloudSandboxEnabled: !!config.CLOUD_SANDBOX_ENABLED,
+      token: config.TOKEN || ""
+    });
+    console.log(`[Auto-Pilot] Successfully resolved TODO in ${relativePath}.`);
+  } catch (err) {
+    console.error(`[Auto-Pilot] Failed to resolve TODO in ${filePath}:`, err.message);
+  } finally {
+    unlockFile(filePath);
+    isAgentRunning = false;
+  }
+}
 
 export function startDaemon() {
+  // Register the todo callback for Auto-Pilot
+  setTodoCallback(onTodoFound);
   const app = express();
   const PORT = process.env.PORT || 3001;
 
-  app.use(cors({ origin: "*" }));
-  app.use(express.json());
+  const allowedOrigins = [
+    "tauri://localhost",
+    "https://tauri.localhost",
+    "http://localhost:1420",
+    "http://localhost:5173",
+  ];
+
+  app.use(cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      const isLocalhost = origin.startsWith("http://localhost:") || 
+                          origin.startsWith("https://localhost:") || 
+                          origin === "http://localhost" || 
+                          origin === "https://localhost";
+      if (allowedOrigins.includes(origin) || isLocalhost) {
+        return callback(null, true);
+      } else {
+        return callback(null, false);
+      }
+    }
+  }));
+  app.use(express.json({ limit: "50mb" }));
 
   // Health check
   app.get("/api/health", (req, res) => {
@@ -59,24 +148,29 @@ export function startDaemon() {
     try {
       let currentOutput = "";
       
-      const agentResult = await runAgent(
+      const agentResult = await runAgent({
         messages,
-        provider || "gemini",
-        model || "gemini-2.5-flash",
-        authMethod || "apiKey",
+        provider: provider || "gemini",
+        model: model || "gemini-2.5-flash",
+        authMethod: authMethod || "apiKey",
         apiKey,
         serviceAccountPath,
         projectId,
         location,
         workspacePath,
         googleSearchEnabled,
-        (chunk) => {
+        onChunk: (chunk) => {
           currentOutput += chunk;
           res.write(chunk);
         },
         cloudSandboxEnabled,
-        token
-      );
+        token,
+        requestPermission: (reqId, command) => {
+          return new Promise((resolve) => {
+            pendingPermissions.set(reqId, resolve);
+          });
+        }
+      });
 
       // Append metadata at the end of the stream
       const totalTokens = agentResult.inputTokens + agentResult.outputTokens;

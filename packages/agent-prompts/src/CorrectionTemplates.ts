@@ -1,6 +1,3 @@
-export const CORRECTION_TEMPLATE = `
-The previous step failed with the following error:
-{{error}}
-
-Analyze the error logs, locate the source of the issue, and create a plan to correct the problem.
+export const SELF_CORRECTION_TEMPLATE = `You are running a self-correction loop. 
+If the previous action returned an error, analyse the error output carefully, double check syntax or import paths, and correct the files using write_file in the next turn.
 `;

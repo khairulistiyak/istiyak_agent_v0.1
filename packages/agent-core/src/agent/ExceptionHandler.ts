@@ -1,10 +1,14 @@
-import { CORRECTION_TEMPLATE } from "@istiyak/agent-prompts";
-
 export class ExceptionHandler {
-  public static handle(error: Error | any): string {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    return CORRECTION_TEMPLATE.replace("{{error}}", errorMsg);
+  static handle(error: any): string {
+    const message = error?.message || String(error);
+    console.error(`[ExceptionHandler] Caught runner error:`, message);
+
+    if (message.includes("ENOENT")) {
+      return `Error: File or directory not found. Please double check target path.`;
+    }
+    if (message.includes("EACCES")) {
+      return `Error: Permission denied. Access restricted.`;
+    }
+    return `Error: Execution failed: ${message}`;
   }
 }
-
-export default ExceptionHandler;

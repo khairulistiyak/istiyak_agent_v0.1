@@ -7,12 +7,14 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "test": "vitest run"
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.210",
     "@google/generative-ai": "^0.24.1",
     "@monaco-editor/react": "^4.7.0",
+    "@istiyak/shared-types": "*",
     "@sentry/react": "^10.60.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
@@ -20,6 +22,7 @@
     "lucide-react": "^1.21.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
@@ -31,6 +34,7 @@
     "postcss": "^8.5.15",
     "tailwindcss": "^3.4.19",
     "typescript": "~5.8.3",
-    "vite": "^7.0.4"
+    "vite": "^7.0.4",
+    "vitest": "^2.1.8"
   }
 }

@@ -1,21 +1,19 @@
-import { maskSecrets } from "./mask.js";
-
 export class Logger {
-  private context: string;
+  private prefix: string;
 
-  constructor(context: string) {
-    this.context = context;
+  constructor(prefix: string) {
+    this.prefix = prefix;
   }
 
-  public info(message: string, ...args: any[]): void {
-    console.log(`[INFO] [${this.context}] ${maskSecrets(message)}`, ...args.map(a => typeof a === 'string' ? maskSecrets(a) : a));
+  info(msg: string, ...args: any[]) {
+    console.log(`[${this.prefix}] [INFO] ${msg}`, ...args);
   }
 
-  public warn(message: string, ...args: any[]): void {
-    console.warn(`[WARN] [${this.context}] ${maskSecrets(message)}`, ...args.map(a => typeof a === 'string' ? maskSecrets(a) : a));
+  warn(msg: string, ...args: any[]) {
+    console.warn(`[${this.prefix}] [WARN] ${msg}`, ...args);
   }
 
-  public error(message: string, ...args: any[]): void {
-    console.error(`[ERROR] [${this.context}] ${maskSecrets(message)}`, ...args.map(a => typeof a === 'string' ? maskSecrets(a) : a));
+  error(msg: string, ...args: any[]) {
+    console.error(`[${this.prefix}] [ERROR] ${msg}`, ...args);
   }
 }

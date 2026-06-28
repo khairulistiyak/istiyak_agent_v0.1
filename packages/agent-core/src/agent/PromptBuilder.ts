@@ -1,19 +1,17 @@
-import { getSystemPrompt } from "../llm/prompts/SystemPrompt.js";
-import { getPlanningPrompt } from "../llm/prompts/PlanningPrompt.js";
-import { getReflectionPrompt } from "../llm/prompts/ReflectionPrompt.js";
+import { SystemPrompt } from "../llm/prompts/SystemPrompt.js";
+import { ToolRegistry } from "../tools/registry/ToolRegistry.js";
 
 export class PromptBuilder {
-  public static buildSystemPrompt(workspacePath: string): string {
-    return getSystemPrompt(workspacePath);
+  static buildSystemPrompt(): string {
+    const tools = ToolRegistry.getAll();
+    const toolDeclarations = tools.map(t => `- Name: ${t.name}\n  Description: ${t.description}\n  Parameters: ${JSON.stringify(t.parameterSchema)}`).join("\n\n");
+    return `${SystemPrompt}\n\n### Available Tools:\n${toolDeclarations}`;
   }
 
-  public static buildPlanningPrompt(task: string): string {
-    return getPlanningPrompt(task);
-  }
-
-  public static buildReflectionPrompt(task: string, planStatus: string, lastAction: string, lastResult: string): string {
-    return getReflectionPrompt(task, planStatus, lastAction, lastResult);
+  static buildUserPrompt(task: string, matches: any[]): string {
+    if (matches.length === 0) return task;
+    const contextText = "\n\n[System RAG Context]\n" + 
+      matches.map(m => `File: ${m.relativePath} (Lines ${m.startLine}-${m.endLine})\n\`\`\`\n${m.text}\n\`\`\``).join("\n\n");
+    return `${task}${contextText}`;
   }
 }
-
-export default PromptBuilder;

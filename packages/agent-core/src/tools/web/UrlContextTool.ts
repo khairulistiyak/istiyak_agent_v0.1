@@ -1,49 +1,32 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
 
-export interface UrlContextParams {
-  url: string;
-}
-
-export class UrlContextTool extends BaseTool<UrlContextParams, { title: string; headers: Record<string, string>; size: number }> {
-  public readonly name = "url_context";
-  public readonly description = "Fetches a URL and retrieves metadata, page title, and headers context.";
-  public readonly parametersSchema = {
+export class UrlContextTool extends BaseTool {
+  name = "url_context";
+  description = "Fetches plain text content from a URL, stripping HTML tags.";
+  parameterSchema = {
     type: "object",
+    required: ["url"],
     properties: {
-      url: { type: "string", description: "The URL to inspect." }
-    },
-    required: ["url"]
+      url: { type: "string" }
+    }
   };
 
-  public async execute(params: UrlContextParams, context: ToolContext) {
+  async execute(params: { url: string }, context: ToolContext): Promise<string> {
     try {
-      const response = await fetch(params.url, { method: "HEAD" });
-      const headers: Record<string, string> = {};
-      response.headers.forEach((value, key) => {
-        headers[key] = value;
-      });
-
-      // Get page title by fetching a small chunk if HTML
-      let title = "Unknown Title";
-      const contentType = response.headers.get("content-type") || "";
-      if (contentType.includes("text/html")) {
-        const getResp = await fetch(params.url);
-        const html = await getResp.text();
-        const titleMatch = html.match(/<title>([\s\S]*?)<\/title>/i);
-        if (titleMatch && titleMatch[1]) {
-          title = titleMatch[1].trim();
-        }
+      const res = await fetch(params.url);
+      if (!res.ok) {
+        return `Failed to fetch URL: ${res.statusText}`;
       }
-
-      return {
-        title,
-        headers,
-        size: Number(response.headers.get("content-length") || "0")
-      };
-    } catch (error: any) {
-      throw new Error(`UrlContext Error: ${error.message}`);
+      const html = await res.text();
+      const clean = html
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+        .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+        .replace(/<\/?[^>]+(>|$)/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      return clean.substring(0, 10000);
+    } catch (e: any) {
+      return `Failed to get URL context: ${e.message}`;
     }
   }
 }
-
-export default UrlContextTool;

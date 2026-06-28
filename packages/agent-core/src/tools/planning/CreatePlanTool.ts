@@ -1,32 +1,21 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
-import { SQLiteMemoryStore } from "@istiyak/agent-memory";
 import fs from "fs/promises";
 import path from "path";
 
-export interface CreatePlanParams {
-  planContent: string;
-}
-
-export class CreatePlanTool extends BaseTool<CreatePlanParams, { success: boolean; filePath: string }> {
-  public readonly name = "create_plan";
-  public readonly description = "Creates a new implementation plan in the workspace and persists it in memory.";
-  public readonly parametersSchema = {
+export class CreatePlanTool extends BaseTool {
+  name = "create_plan";
+  description = "Creates a markdown planning checklist named [workspace_plan.md] in the workspace root.";
+  parameterSchema = {
     type: "object",
+    required: ["content"],
     properties: {
-      planContent: { type: "string", description: "The plan content in Markdown format." }
-    },
-    required: ["planContent"]
+      content: { type: "string" }
+    }
   };
 
-  public async execute(params: CreatePlanParams, context: ToolContext) {
-    const store = new SQLiteMemoryStore(context.workspacePath);
-    store.set("implementation_plan", params.planContent);
-
-    const planPath = path.join(context.workspacePath, "implementation_plan.md");
-    await fs.writeFile(planPath, params.planContent, "utf8");
-
-    return { success: true, filePath: "implementation_plan.md" };
+  async execute(params: { content: string }, context: ToolContext): Promise<string> {
+    const targetPath = path.resolve(context.workspacePath, "workspace_plan.md");
+    await fs.writeFile(targetPath, params.content, "utf-8");
+    return "workspace_plan.md created successfully.";
   }
 }
-
-export default CreatePlanTool;

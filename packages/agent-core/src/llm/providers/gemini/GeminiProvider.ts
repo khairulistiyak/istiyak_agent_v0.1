@@ -1,91 +1,61 @@
-import { LlmProvider, LlmRequest, LlmResponse } from "../../ProviderManager.js";
-import { ProviderType } from "../../../config/Providers.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { TokenCounter } from "../../TokenCounter.js";
+import { Message } from "@istiyak/shared-types";
 
-export class GeminiProvider implements LlmProvider {
-  public readonly id: ProviderType = "gemini";
+export class GeminiProvider {
   private apiKey: string;
-  private modelName: string;
 
-  constructor(config?: { apiKey?: string; modelName?: string }) {
-    this.apiKey = config?.apiKey || process.env.GEMINI_API_KEY || "";
-    this.modelName = config?.modelName || "gemini-2.5-flash";
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
   }
 
-  private getClient(): GoogleGenerativeAI {
+  async streamGenerateContent(
+    messages: Message[],
+    model: string,
+    onChunk?: (text: string) => void,
+    retryCount = 0
+  ): Promise<string> {
     if (!this.apiKey) {
-      this.apiKey = process.env.GEMINI_API_KEY || "";
+      throw new Error("Gemini API key is missing");
     }
-    if (!this.apiKey) {
-      throw new Error("Gemini API key is not configured. Please set GEMINI_API_KEY or provide it in configuration.");
-    }
-    return new GoogleGenerativeAI(this.apiKey);
-  }
-
-  public async generateText(request: LlmRequest): Promise<LlmResponse> {
-    const client = this.getClient();
-    const model = client.getGenerativeModel({
-      model: this.modelName,
-      generationConfig: {
-        temperature: request.temperature ?? 0.2,
-        maxOutputTokens: request.maxTokens ?? 4096,
-      }
+    const genAI = new GoogleGenerativeAI(this.apiKey);
+    const targetModel = model || "gemini-2.5-flash";
+    const systemMessage = messages.find((m) => m.role === "system");
+    const modelInstance = genAI.getGenerativeModel({ 
+      model: targetModel,
+      systemInstruction: systemMessage?.content 
     });
 
-    const contents = [
-      { role: "user", parts: [{ text: `System Prompt:\n${request.systemPrompt}\n\nUser Message:\n${request.userMessage}` }] }
-    ];
+    const contents = messages
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => {
+        const role = m.role === "assistant" ? "model" : m.role;
+        return {
+          role,
+          parts: [{ text: m.content }],
+        };
+      });
 
-    const result = await model.generateContent({ contents });
-    const response = await result.response;
-    const text = response.text() || "";
-
-    const inputTokens = TokenCounter.countTokens(request.systemPrompt + request.userMessage);
-    const outputTokens = TokenCounter.countTokens(text);
-
-    return {
-      content: text,
-      inputTokens,
-      outputTokens
-    };
-  }
-
-  public async generateStream(
-    request: LlmRequest,
-    onChunk: (text: string) => void
-  ): Promise<LlmResponse> {
-    const client = this.getClient();
-    const model = client.getGenerativeModel({
-      model: this.modelName,
-      generationConfig: {
-        temperature: request.temperature ?? 0.2,
-        maxOutputTokens: request.maxTokens ?? 4096,
+    try {
+      const result = await modelInstance.generateContentStream({ contents });
+      let accumulatedText = "";
+      for await (const chunk of result.stream) {
+        const text = chunk.text();
+        accumulatedText += text;
+        if (onChunk) onChunk(text);
       }
-    });
-
-    const contents = [
-      { role: "user", parts: [{ text: `System Prompt:\n${request.systemPrompt}\n\nUser Message:\n${request.userMessage}` }] }
-    ];
-
-    const result = await model.generateContentStream({ contents });
-    let accumulatedText = "";
-
-    for await (const chunk of result.stream) {
-      const chunkText = chunk.text();
-      accumulatedText += chunkText;
-      onChunk(chunkText);
+      return accumulatedText;
+    } catch (error: any) {
+      if (error.status === 429) {
+        if (retryCount < 3) {
+          const delay = Math.pow(2, retryCount) * 1000;
+          console.warn(`Gemini Rate limit hit. Retrying in ${delay / 1000} seconds...`);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          return this.streamGenerateContent(messages, model, onChunk, retryCount + 1);
+        } else {
+          console.error("Gemini Rate limit hit. Max retries exceeded.");
+        }
+      }
+      throw error;
     }
-
-    const inputTokens = TokenCounter.countTokens(request.systemPrompt + request.userMessage);
-    const outputTokens = TokenCounter.countTokens(accumulatedText);
-
-    return {
-      content: accumulatedText,
-      inputTokens,
-      outputTokens
-    };
   }
 }
-
-export default GeminiProvider;

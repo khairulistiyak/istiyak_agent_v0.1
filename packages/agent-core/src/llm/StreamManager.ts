@@ -1,18 +1,15 @@
-export type ChunkCallback = (chunk: string) => void;
-
 export class StreamManager {
-  private activeStreams: Set<string> = new Set();
+  private chunks: string[] = [];
 
-  public registerStream(id: string): void {
-    this.activeStreams.add(id);
+  append(chunk: string) {
+    this.chunks.push(chunk);
   }
 
-  public endStream(id: string): void {
-    this.activeStreams.delete(id);
+  getOutput(): string {
+    return this.chunks.join("");
   }
 
-  public isStreaming(id: string): boolean {
-    return this.activeStreams.has(id);
+  clear() {
+    this.chunks = [];
   }
 }
-export default StreamManager;

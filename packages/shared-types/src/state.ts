@@ -1,40 +1,23 @@
-export interface SettingsState {
-  provider: "gemini" | "openai" | "claude" | "ollama" | "custom";
-  authMethod: "apiKey" | "serviceAccount";
-  apiKey: string;
-  serviceAccountPath: string;
-  projectId: string;
-  location: string;
-  selectedModel: string;
-  customModel: string;
-  workspacePath: string;
-  googleSearchEnabled: boolean;
-  dockerSandboxEnabled: boolean;
-  cloudSandboxEnabled: boolean;
-  sandboxImage: string;
-  token: string | null;
-  userEmail: string | null;
-  activeTheme: string;
-  installedPrompts: Array<{ title: string; prompt: string }>;
-  installedExtensions: Array<{
-    id: string;
-    name: string;
-    description: string;
-    commands: Array<{ name: string; command: string }>;
-    prompts: Array<{ title: string; prompt: string }>;
-  }>;
+import { Message, LocalConfig } from "./api.js";
+
+export interface LogEntry {
+  time: string;
+  message: string;
+  type: "info" | "error" | "success";
 }
 
-export interface ChatState {
-  conversations: Array<{
-    id: string;
-    title: string;
-    messages: Array<{
-      id: string;
-      role: "system" | "user" | "assistant";
-      content: string;
-      timestamp: number;
-    }>;
-  }>;
-  activeId: string | null;
+export interface ChatStoreState {
+  messages: Message[];
+  isStreaming: boolean;
+  addMessage: (msg: Message) => void;
+  setMessages: (msgs: Message[]) => void;
+  clearChat: () => void;
+}
+
+export interface SettingsStoreState {
+  config: LocalConfig;
+  loadConfig: () => Promise<void>;
+  saveConfig: (updates: Partial<LocalConfig>) => Promise<void>;
+  workspacePath: string | null;
+  setWorkspacePath: (path: string | null) => void;
 }

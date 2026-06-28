@@ -1,28 +1,22 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
 import { exec } from "child_process";
 
-export interface LogParams {
-  limit?: number;
-}
-
-export class LogTool extends BaseTool<LogParams, string> {
-  public readonly name = "git_log";
-  public readonly description = "Displays git commit history logs.";
-  public readonly parametersSchema = {
+export class LogTool extends BaseTool {
+  name = "git_log";
+  description = "Runs git log in the workspace directory to read commit history.";
+  parameterSchema = {
     type: "object",
     properties: {
-      limit: { type: "number", description: "Number of commits to retrieve. Defaults to 10." }
+      limit: { type: "number" }
     }
   };
 
-  public execute(params: LogParams, context: ToolContext): Promise<string> {
+  async execute(params: { limit?: number }, context: ToolContext): Promise<string> {
+    const limit = params.limit || 10;
     return new Promise((resolve) => {
-      const limit = params.limit ?? 10;
-      exec(`git log -n ${limit}`, { cwd: context.workspacePath }, (err: any, stdout: string, stderr: string) => {
-        resolve(stdout + stderr);
+      exec(`git log -n ${limit} --oneline`, { cwd: context.workspacePath }, (error, stdout, stderr) => {
+        resolve(stdout || stderr || (error ? error.message : "Empty log"));
       });
     });
   }
 }
-
-export default LogTool;

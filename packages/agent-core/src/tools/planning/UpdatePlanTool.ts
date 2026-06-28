@@ -1,32 +1,21 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
-import { SQLiteMemoryStore } from "@istiyak/agent-memory";
 import fs from "fs/promises";
 import path from "path";
 
-export interface UpdatePlanParams {
-  updatedContent: string;
-}
-
-export class UpdatePlanTool extends BaseTool<UpdatePlanParams, { success: boolean }> {
-  public readonly name = "update_plan";
-  public readonly description = "Updates the implementation plan with revised instructions.";
-  public readonly parametersSchema = {
+export class UpdatePlanTool extends BaseTool {
+  name = "update_plan";
+  description = "Updates the [workspace_plan.md] checklist file in the workspace.";
+  parameterSchema = {
     type: "object",
+    required: ["content"],
     properties: {
-      updatedContent: { type: "string", description: "The full updated plan content." }
-    },
-    required: ["updatedContent"]
+      content: { type: "string" }
+    }
   };
 
-  public async execute(params: UpdatePlanParams, context: ToolContext) {
-    const store = new SQLiteMemoryStore(context.workspacePath);
-    store.set("implementation_plan", params.updatedContent);
-
-    const planPath = path.join(context.workspacePath, "implementation_plan.md");
-    await fs.writeFile(planPath, params.updatedContent, "utf8");
-
-    return { success: true };
+  async execute(params: { content: string }, context: ToolContext): Promise<string> {
+    const targetPath = path.resolve(context.workspacePath, "workspace_plan.md");
+    await fs.writeFile(targetPath, params.content, "utf-8");
+    return "workspace_plan.md updated successfully.";
   }
 }
-
-export default UpdatePlanTool;

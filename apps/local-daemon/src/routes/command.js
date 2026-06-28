@@ -1,5 +1,5 @@
 import express from "express";
-import { runCommand } from "../tools/index.js";
+import { ToolRegistry } from "@istiyak/agent-core";
 
 const router = express.Router();
 
@@ -9,7 +9,7 @@ router.post("/run-command", async (req, res) => {
     return res.status(400).json({ error: "workspacePath and command are required" });
   }
   try {
-    const output = await runCommand(workspacePath, command);
+    const output = await ToolRegistry.execute("run_command", { command }, { workspacePath });
     res.json({ output });
   } catch (err) {
     res.status(500).json({ error: err.message });

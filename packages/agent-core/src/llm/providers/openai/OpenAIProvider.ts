@@ -1,90 +1,60 @@
-import { LlmProvider, LlmRequest, LlmResponse } from "../../ProviderManager.js";
-import { ProviderType } from "../../../config/Providers.js";
 import OpenAI from "openai";
-import { TokenCounter } from "../../TokenCounter.js";
+import { Message } from "@istiyak/shared-types";
 
-export class OpenAIProvider implements LlmProvider {
-  public readonly id: ProviderType = "openai";
+export class OpenAIProvider {
   private apiKey: string;
-  private modelName: string;
-  private baseURL?: string;
 
-  constructor(config?: { apiKey?: string; modelName?: string; baseURL?: string }) {
-    this.apiKey = config?.apiKey || process.env.OPENAI_API_KEY || "";
-    this.modelName = config?.modelName || "gpt-4o";
-    this.baseURL = config?.baseURL || process.env.OPENAI_BASE_URL;
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
   }
 
-  private getClient(): OpenAI {
+  async streamChat(
+    messages: Message[],
+    model: string,
+    onChunk?: (text: string) => void,
+    retryCount = 0
+  ): Promise<string> {
     if (!this.apiKey) {
-      this.apiKey = process.env.OPENAI_API_KEY || "";
+      throw new Error("OpenAI API key is missing");
     }
-    if (!this.apiKey) {
-      throw new Error("OpenAI API key is not configured. Please set OPENAI_API_KEY.");
-    }
-    return new OpenAI({
-      apiKey: this.apiKey,
-      baseURL: this.baseURL
-    });
-  }
+    const openai = new OpenAI({ apiKey: this.apiKey });
+    const targetModel = model || "gpt-4o";
 
-  public async generateText(request: LlmRequest): Promise<LlmResponse> {
-    const client = this.getClient();
-    const response = await client.chat.completions.create({
-      model: this.modelName,
-      messages: [
-        { role: "system", content: request.systemPrompt },
-        { role: "user", content: request.userMessage }
-      ],
-      temperature: request.temperature ?? 0.2,
-      max_tokens: request.maxTokens ?? 4096
-    });
+    const apiMessages = messages
+      .filter((m) => m.role === "user" || m.role === "assistant" || m.role === "system")
+      .map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
 
-    const text = response.choices[0]?.message?.content || "";
-    const inputTokens = response.usage?.prompt_tokens ?? TokenCounter.countTokens(request.systemPrompt + request.userMessage);
-    const outputTokens = response.usage?.completion_tokens ?? TokenCounter.countTokens(text);
+    try {
+      const stream = await openai.chat.completions.create({
+        model: targetModel,
+        messages: apiMessages,
+        stream: true,
+      });
 
-    return {
-      content: text,
-      inputTokens,
-      outputTokens
-    };
-  }
-
-  public async generateStream(
-    request: LlmRequest,
-    onChunk: (text: string) => void
-  ): Promise<LlmResponse> {
-    const client = this.getClient();
-    const stream = await client.chat.completions.create({
-      model: this.modelName,
-      messages: [
-        { role: "system", content: request.systemPrompt },
-        { role: "user", content: request.userMessage }
-      ],
-      temperature: request.temperature ?? 0.2,
-      max_tokens: request.maxTokens ?? 4096,
-      stream: true
-    });
-
-    let accumulatedText = "";
-    for await (const chunk of stream) {
-      const chunkText = chunk.choices[0]?.delta?.content || "";
-      if (chunkText) {
-        accumulatedText += chunkText;
-        onChunk(chunkText);
+      let accumulatedText = "";
+      for await (const chunk of stream) {
+        const text = chunk.choices[0]?.delta?.content || "";
+        if (text) {
+          accumulatedText += text;
+          if (onChunk) onChunk(text);
+        }
       }
+      return accumulatedText;
+    } catch (error: any) {
+      if (error.status === 429) {
+        if (retryCount < 3) {
+          const delay = Math.pow(2, retryCount) * 1000;
+          console.warn(`OpenAI Rate limit hit. Retrying in ${delay / 1000} seconds...`);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          return this.streamChat(messages, model, onChunk, retryCount + 1);
+        } else {
+          console.error("OpenAI Rate limit hit. Max retries exceeded.");
+        }
+      }
+      throw error;
     }
-
-    const inputTokens = TokenCounter.countTokens(request.systemPrompt + request.userMessage);
-    const outputTokens = TokenCounter.countTokens(accumulatedText);
-
-    return {
-      content: accumulatedText,
-      inputTokens,
-      outputTokens
-    };
   }
 }
-
-export default OpenAIProvider;

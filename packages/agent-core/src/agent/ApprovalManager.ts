@@ -1,24 +1,10 @@
-import { generateUUID } from "@istiyak/shared-utils";
-
 export class ApprovalManager {
-  private pendingResolvers: Map<string, (approved: boolean) => void> = new Map();
-
-  public requestPermission(command: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      const requestId = generateUUID();
-      this.pendingResolvers.set(requestId, resolve);
-      
-      // Fire event to listener bus for UI notifications
-      console.log(`[Permission Request] ID: ${requestId} Command: ${command}`);
-    });
-  }
-
-  public resolvePermission(requestId: string, approved: boolean): boolean {
-    const resolver = this.pendingResolvers.get(requestId);
-    if (resolver) {
-      resolver(approved);
-      this.pendingResolvers.delete(requestId);
-      return true;
+  static requiresApproval(action: string, params: any): boolean {
+    if (action === "run_command") {
+      const cmd = (params?.command || "").toLowerCase();
+      if (cmd.includes("rm") || cmd.includes("delete") || cmd.includes("sudo") || cmd.includes("kill")) {
+        return true;
+      }
     }
     return false;
   }

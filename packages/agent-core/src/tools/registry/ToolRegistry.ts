@@ -1,25 +1,25 @@
-import { BaseTool } from "@istiyak/agent-tools";
+import { BaseTool, ToolContext } from "@istiyak/agent-tools";
 
 export class ToolRegistry {
-  private tools: Map<string, BaseTool> = new Map();
+  private static tools = new Map<string, BaseTool>();
 
-  public register(tool: BaseTool): void {
+  static register(tool: BaseTool) {
     this.tools.set(tool.name, tool);
   }
 
-  public getTool(name: string): BaseTool | undefined {
+  static get(name: string): BaseTool | undefined {
     return this.tools.get(name);
   }
 
-  public getAllTools(): BaseTool[] {
+  static getAll(): BaseTool[] {
     return Array.from(this.tools.values());
   }
 
-  public getDeclarations(): Array<{ name: string; description: string; parameters: any }> {
-    return this.getAllTools().map(t => ({
-      name: t.name,
-      description: t.description,
-      parameters: t.parametersSchema
-    }));
+  static async execute(name: string, params: any, context: ToolContext): Promise<any> {
+    const tool = this.get(name);
+    if (!tool) {
+      throw new Error(`Tool Registry Error: Tool not found: ${name}`);
+    }
+    return await tool.execute(params, context);
   }
 }
