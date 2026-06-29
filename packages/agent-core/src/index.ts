@@ -55,3 +55,6 @@ export * from "./shared/types/index.js";
 export * from "./shared/interfaces/index.js";
 export * from "./shared/schemas/index.js";
 export * from "./shared/helpers/index.js";
+
+// Cost tracking
+export { getSessionCost, setCostBudget, resetSessionCost } from "./llm/CostTracker.js";

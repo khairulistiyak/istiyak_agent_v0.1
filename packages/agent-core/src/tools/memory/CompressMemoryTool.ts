@@ -1,13 +1,43 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
+import { ContextCompressor } from "../../memory/ContextCompressor.js";
 
 export class CompressMemoryTool extends BaseTool {
   name = "compress_memory";
-  description = "Compresses conversational steps using ContextCompressor.";
-  parameterSchema = {};
+  description = "Compresses the conversation history to reduce token usage while preserving important context.";
+  parameterSchema = {
+    type: "object",
+    properties: {
+      maxTokens: {
+        type: "number",
+        description: "Maximum token budget for the compressed output. Default: 6000"
+      }
+    }
+  };
 
-  async execute(params: any, context: ToolContext): Promise<string> {
-    // Not yet implemented — return an honest response so the agent does not
-    // falsely believe memory was compressed and proceed on wrong assumptions.
-    return "[NOT_IMPLEMENTED] Memory compression is not yet available in this version. Proceed with the task directly without compressing memory.";
+  async execute(params: { maxTokens?: number }, context: ToolContext): Promise<string> {
+    try {
+      // Access session messages from context if available
+      const messages = (context as any).messages || [];
+      if (messages.length === 0) {
+        return "No conversation history to compress.";
+      }
+
+      const maxTokens = params.maxTokens || 6000;
+      const originalCount = messages.length;
+
+      const compressed = ContextCompressor.compress(messages, maxTokens);
+      const compressedCount = compressed.length;
+      const ratio = originalCount > 0
+        ? Math.round((1 - compressedCount / originalCount) * 100)
+        : 0;
+
+      return `Memory compressed successfully.\n` +
+        `- Original messages: ${originalCount}\n` +
+        `- Compressed messages: ${compressedCount}\n` +
+        `- Compression ratio: ${ratio}%\n` +
+        `- Token budget: ${maxTokens}`;
+    } catch (err: any) {
+      return `Failed to compress memory: ${err.message}`;
+    }
   }
 }

@@ -4,6 +4,8 @@ import { OpenAIProvider } from "./providers/openai/OpenAIProvider.js";
 import { ClaudeProvider } from "./providers/claude/ClaudeProvider.js";
 import { OllamaProvider } from "./providers/ollama/OllamaProvider.js";
 import { VertexProvider } from "./providers/vertex/VertexProvider.js";
+import { DeepseekProvider } from "./providers/deepseek/DeepseekProvider.js";
+import { CustomProvider } from "./providers/custom/CustomProvider.js";
 import { classifyAndRoute } from "./ModelManager.js";
 
 export let mockStreamLLMFn: any = null;
@@ -54,7 +56,16 @@ export async function streamLLM(
   } else if (p === "ollama") {
     const ollama = new OllamaProvider();
     return await ollama.streamChat(messages, targetModel, onChunk);
+  } else if (p === "deepseek") {
+    const deepseek = new DeepseekProvider(apiKey);
+    return await deepseek.streamChat(messages, targetModel, onChunk);
+  } else if (p === "custom") {
+    const custom = new CustomProvider({
+      baseUrl: apiKey.includes("://") ? apiKey : `http://${apiKey}`,
+      apiKey: apiKey.includes("://") ? undefined : apiKey,
+    });
+    return await custom.streamChat(messages, targetModel, onChunk);
   } else {
-    throw new Error(`Unsupported provider: ${provider}`);
+    throw new Error(`Unsupported provider: ${provider}. Supported: gemini, openai, claude, ollama, deepseek, custom`);
   }
 }
