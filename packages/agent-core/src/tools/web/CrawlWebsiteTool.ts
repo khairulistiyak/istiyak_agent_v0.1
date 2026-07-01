@@ -23,20 +23,24 @@ export class CrawlWebsiteTool extends BaseTool {
   };
 
   async execute(params: { url: string; maxDepth?: number; maxPages?: number }, context: ToolContext): Promise<string> {
+    let targetUrl = params.url.trim();
+    if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
+      targetUrl = "https://" + targetUrl;
+    }
     const maxDepth = Math.min(params.maxDepth || 2, 3);
     const maxPages = Math.min(params.maxPages || 5, 10);
     const visited = new Set<string>();
     const results: Array<{ url: string; title: string; content: string }> = [];
 
-    const baseDomain = this.extractDomain(params.url);
+    const baseDomain = this.extractDomain(targetUrl);
     if (!baseDomain) {
-      return `Error: Invalid URL: ${params.url}`;
+      return `Error: Invalid URL: ${targetUrl}`;
     }
 
-    await this.crawlPage(params.url, baseDomain, 0, maxDepth, maxPages, visited, results);
+    await this.crawlPage(targetUrl, baseDomain, 0, maxDepth, maxPages, visited, results);
 
     if (results.length === 0) {
-      return `No pages could be crawled from ${params.url}`;
+      return `No pages could be crawled from ${targetUrl}`;
     }
 
     const output = results.map((r, i) =>

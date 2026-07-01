@@ -34,20 +34,41 @@ export function parseResponse(text: string): AgentResponse {
     }
   }
 
-  // Strategy 3: Find first { ... } block that contains "action"
+  // Strategy 3: Find first { ... } block that contains "action" using a state machine
   const jsonBlocks: string[] = [];
   let depth = 0;
   let start = -1;
+  let inString = false;
+  let escaped = false;
 
   for (let i = 0; i < cleanText.length; i++) {
-    if (cleanText[i] === "{") {
-      if (depth === 0) start = i;
-      depth++;
-    } else if (cleanText[i] === "}") {
-      depth--;
-      if (depth === 0 && start >= 0) {
-        jsonBlocks.push(cleanText.substring(start, i + 1));
-        start = -1;
+    const char = cleanText[i];
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      escaped = true;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (!inString) {
+      if (char === "{") {
+        if (depth === 0) start = i;
+        depth++;
+      } else if (char === "}") {
+        depth--;
+        if (depth === 0 && start >= 0) {
+          jsonBlocks.push(cleanText.substring(start, i + 1));
+          start = -1;
+        }
       }
     }
   }
@@ -65,14 +86,11 @@ export function parseResponse(text: string): AgentResponse {
   }
 
   // Strategy 4: Try to fix common JSON issues
-  // Remove trailing commas before } or ]
-  const fixedText = cleanText
-    .replace(/,\s*}/g, "}")
-    .replace(/,\s*]/g, "]");
-
   for (const block of jsonBlocks) {
     try {
-      const fixedBlock = block.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
+      const fixedBlock = block
+        .replace(/,\s*}/g, "}")
+        .replace(/,\s*]/g, "]");
       const parsed = JSON.parse(fixedBlock);
       if (parsed && typeof parsed === "object" && parsed.action) {
         return parsed as AgentResponse;

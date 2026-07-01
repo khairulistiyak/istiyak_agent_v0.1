@@ -44,10 +44,10 @@ export const DEFAULT_GEMINI_CONFIG: Omit<GeminiConfig, "apiKey"> = {
     dangerousContentThreshold: "BLOCK_ONLY_HIGH",
   },
   generationConfig: {
-    temperature: 0.2,
+    temperature: 0.3,
     topP: 0.95,
     topK: 40,
-    maxOutputTokens: 8192,
+    maxOutputTokens: 65536,
   },
 };
 

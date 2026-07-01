@@ -1,6 +1,6 @@
 export interface AgentStep {
   step: number;
-  status: "thought" | "action" | "success" | "error";
+  status: 'thought' | 'action' | 'success' | 'error' | 'reflecting' | 'aborted';
   content: string;
   actionName?: string;
   params?: { [key: string]: string };
@@ -8,8 +8,23 @@ export interface AgentStep {
 
 export interface PermissionRequest {
   id: string;
-  type: "run_command";
+  type: 'run_command' | string;
   command: string;
+  reason?: string;
+}
+
+export interface CostMeta {
+  cost: string;
+  tokens: string;
+  tokensIn: string;
+  tokensOut: string;
+}
+
+export interface ParsedAgentMessage {
+  steps: AgentStep[];
+  permissionRequests: PermissionRequest[];
+  cleanText: string;
+  costMeta: CostMeta | null;
 }
 
 export interface WorkspaceTodo {
@@ -37,4 +52,17 @@ export interface TelemetryStats {
   totalTokensIn: number;
   totalTokensOut: number;
   history: TelemetryMetric[];
+}
+
+export interface TerminalLog {
+  time: string;
+  message: string;
+  type: 'info' | 'error' | 'success';
+}
+
+export interface FileNode {
+  name: string;
+  path: string;
+  isDir: boolean;
+  children: FileNode[];
 }

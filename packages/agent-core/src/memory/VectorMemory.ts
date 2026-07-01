@@ -5,7 +5,7 @@ export class VectorMemory {
     return indexWorkspace(workspacePath);
   }
 
-  static search(query: string, limit = 5): SearchResult[] {
-    return searchWorkspace(query, limit);
+  static search(query: string, limit = 5, workspacePath?: string): SearchResult[] {
+    return searchWorkspace(query, limit, workspacePath);
   }
 }

@@ -65,10 +65,10 @@ export class RunCommandTool extends BaseTool {
       }
     }
 
-    // Run with a 30-second timeout to prevent infinite-running commands from
+    // Run with a 120-second timeout to prevent infinite-running commands from
     // blocking the agent. Docker sandbox gets 60s due to longer startup times.
     return new Promise<string>((resolve) => {
-      exec(params.command, { cwd: workspacePath, timeout: 30000 }, (error, stdout, stderr) => {
+      exec(params.command, { cwd: workspacePath, timeout: 120000, maxBuffer: 5 * 1024 * 1024 }, (error, stdout, stderr) => {
         const output: string[] = [];
         if (stdout) output.push(stdout);
         if (stderr) output.push(stderr);

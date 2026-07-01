@@ -7,7 +7,14 @@ import commandRouter from "./routes/command.js";
 import agentRouter from "./routes/agent.js";
 import ragRouter from "./routes/rag.js";
 import watcherRouter from "./routes/watcher.js";
-import { getStats, runAgent, calculateCost, pendingPermissions } from "@istiyak/agent-core";
+import gitRouter from "./routes/git.js";
+import {
+  getStats,
+  runAgent,
+  calculateCost,
+  pendingPermissions,
+  resetSessionCost,
+} from "@istiyak/agent-core";
 import { setTodoCallback, unlockFile } from "./watcher/watcher.js";
 
 function loadLocalConfig() {
@@ -24,13 +31,16 @@ function loadLocalConfig() {
 }
 
 let isAgentRunning = false;
+let currentAbortController = null;
 
 async function onTodoFound(filePath, todoText) {
   if (isAgentRunning) {
     // NOTE: Do NOT call unlockFile here — the lock is held by the currently running agent.
     // Releasing it prematurely would cause a race condition where the developer or another
     // process could overwrite the file mid-execution.
-    console.log(`[Auto-Pilot] Agent is already executing a task. Skipping TODO: "${todoText}" in ${filePath}`);
+    console.log(
+      `[Auto-Pilot] Agent is already executing a task. Skipping TODO: "${todoText}" in ${filePath}`
+    );
     return;
   }
 
@@ -45,8 +55,8 @@ async function onTodoFound(filePath, todoText) {
     const messages = [
       {
         role: "user",
-        content: `Please resolve the following TODO comment in the file [${relativePath}]:\n"${todoText}"\n\nModify the file in-place and remove the TODO comment once complete.`
-      }
+        content: `Please resolve the following TODO comment in the file [${relativePath}]:\n"${todoText}"\n\nModify the file in-place and remove the TODO comment once complete.`,
+      },
     ];
 
     console.log(`[Auto-Pilot] Running Agent for ${relativePath}...`);
@@ -66,7 +76,7 @@ async function onTodoFound(filePath, todoText) {
         process.stdout.write(chunk);
       },
       cloudSandboxEnabled: !!config.CLOUD_SANDBOX_ENABLED,
-      token: config.TOKEN || ""
+      token: config.TOKEN || "",
     });
     console.log(`[Auto-Pilot] Successfully resolved TODO in ${relativePath}.`);
   } catch (err) {
@@ -90,20 +100,23 @@ export function startDaemon() {
     "http://localhost:5173",
   ];
 
-  app.use(cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      const isLocalhost = origin.startsWith("http://localhost:") || 
-                          origin.startsWith("https://localhost:") || 
-                          origin === "http://localhost" || 
-                          origin === "https://localhost";
-      if (allowedOrigins.includes(origin) || isLocalhost) {
-        return callback(null, true);
-      } else {
-        return callback(null, false);
-      }
-    }
-  }));
+  app.use(
+    cors({
+      origin: function (origin, callback) {
+        if (!origin) return callback(null, true);
+        const isLocalhost =
+          origin.startsWith("http://localhost:") ||
+          origin.startsWith("https://localhost:") ||
+          origin === "http://localhost" ||
+          origin === "https://localhost";
+        if (allowedOrigins.includes(origin) || isLocalhost) {
+          return callback(null, true);
+        } else {
+          return callback(null, false);
+        }
+      },
+    })
+  );
   app.use(express.json({ limit: "50mb" }));
 
   // Health check
@@ -116,6 +129,7 @@ export function startDaemon() {
   app.use("/api/agent", agentRouter);
   app.use("/api/rag", ragRouter);
   app.use("/api/watcher", watcherRouter);
+  app.use("/api/git", gitRouter);
 
   // Telemetry Stats route
   app.get("/api/telemetry/stats", (req, res) => {
@@ -124,32 +138,48 @@ export function startDaemon() {
 
   // Chat endpoint (streams response back to React)
   app.post("/api/chat", async (req, res) => {
-    const { 
-      messages, 
-      provider, 
-      model, 
-      authMethod, 
-      apiKey, 
-      serviceAccountPath, 
-      projectId, 
-      location, 
-      workspacePath, 
+    if (currentAbortController) {
+      console.log("[daemon] Aborting previous agent run for new request.");
+      currentAbortController.abort();
+      currentAbortController = null;
+    }
+
+    resetSessionCost();
+    // Create abort controller for this chat session
+    currentAbortController = new globalThis.AbortController();
+
+    const {
+      messages,
+      provider,
+      model,
+      authMethod,
+      apiKey,
+      serviceAccountPath,
+      projectId,
+      location,
+      workspacePath,
       googleSearchEnabled,
       cloudSandboxEnabled,
-      token
+      dockerSandboxEnabled,
+      sandboxImage,
+      token,
+      agentMode,
     } = req.body;
 
     if (!messages || !Array.isArray(messages)) {
+      currentAbortController = null;
       return res.status(400).json({ error: "Invalid messages list" });
     }
 
-    // Set streaming headers
+    // Set streaming headers — do NOT manually set Transfer-Encoding for HTTP/2 compatibility
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.setHeader("Transfer-Encoding", "chunked");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
 
     try {
       let currentOutput = "";
-      
+
       const agentResult = await runAgent({
         messages,
         provider: provider || "gemini",
@@ -166,25 +196,71 @@ export function startDaemon() {
           res.write(chunk);
         },
         cloudSandboxEnabled,
+        dockerSandboxEnabled,
+        sandboxImage,
         token,
+        agentMode,
+        abortSignal: currentAbortController.signal,
         requestPermission: (reqId, command) => {
           return new Promise((resolve) => {
             pendingPermissions.set(reqId, resolve);
+            // Auto-reject after 5 minutes if user doesn't respond
+            setTimeout(
+              () => {
+                if (pendingPermissions.has(reqId)) {
+                  console.warn(
+                    `[daemon] Permission request ${reqId} timed out after 5 minutes. Auto-rejecting.`
+                  );
+                  pendingPermissions.delete(reqId);
+                  resolve(false);
+                }
+              },
+              5 * 60 * 1000
+            );
           });
-        }
+        },
       });
 
       // Append metadata at the end of the stream
       const totalTokens = agentResult.inputTokens + agentResult.outputTokens;
-      const cost = calculateCost(provider || "gemini", agentResult.inputTokens, agentResult.outputTokens);
-      
-      res.write(`\n\n---\n*Session Cost: $${cost.toFixed(6)} | Tokens: ${totalTokens} (${agentResult.inputTokens} in / ${agentResult.outputTokens} out)*`);
+      const cost = calculateCost(
+        provider || "gemini",
+        agentResult.inputTokens,
+        agentResult.outputTokens
+      );
+
+      res.write(
+        `\n\n---\n*Session Cost: $${cost.toFixed(6)} | Tokens: ${totalTokens} (${agentResult.inputTokens} in / ${agentResult.outputTokens} out)*`
+      );
       res.end();
     } catch (error) {
       console.error("[daemon.js] Error in chat execution:", error);
-      res.write(`\n\n[Engine Error: ${error.message || error}]`);
+      res.write(
+        `\n\n<agent_step step="0" status="error">Engine Error: ${(error.message || error).replace(/</g, "&lt;").replace(/>/g, "&gt;")}</agent_step>`
+      );
       res.end();
+    } finally {
+      currentAbortController = null;
     }
+  });
+
+  // Abort running agent
+  app.post("/api/agent/abort", (req, res) => {
+    if (currentAbortController) {
+      currentAbortController.abort();
+      currentAbortController = null;
+      res.json({ success: true, message: "Agent execution aborted." });
+    } else {
+      res.json({ success: false, message: "No agent is currently running." });
+    }
+  });
+
+  // Check if agent is running
+  app.get("/api/agent/status", (req, res) => {
+    res.json({
+      running: !!currentAbortController,
+      message: currentAbortController ? "Agent is currently executing a task." : "Agent is idle.",
+    });
   });
 
   app.listen(PORT, () => {

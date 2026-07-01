@@ -41,6 +41,10 @@ export class GoogleSearchTool extends BaseTool {
   };
 
   async execute(params: { query: string }, context: ToolContext): Promise<string> {
+    if ((context as any).googleSearchEnabled === false) {
+      return "Google Search is currently disabled in Settings. Enable it to use this tool.";
+    }
+
     const { apiKey, cx } = getSearchCredentials();
     if (!apiKey || !cx) {
       return `Google Search is disabled: GOOGLE_CSE_KEY and GOOGLE_CSE_CX are not configured. Set them in Settings or in the config file.`;

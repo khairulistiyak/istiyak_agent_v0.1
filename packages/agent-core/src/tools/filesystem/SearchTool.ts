@@ -14,6 +14,6 @@ export class SearchTool extends BaseTool {
   };
 
   async execute(params: { query: string; limit?: number }, context: ToolContext): Promise<any> {
-    return searchWorkspace(params.query, params.limit || 5);
+    return searchWorkspace(params.query, params.limit || 5, context.workspacePath);
   }
 }

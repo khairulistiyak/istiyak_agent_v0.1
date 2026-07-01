@@ -1,0 +1,440 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" fill="none">
+  <defs>
+    <!-- Background gradients -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#05060a"/>
+      <stop offset="50%" stop-color="#080a10"/>
+      <stop offset="100%" stop-color="#090b12"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10131b"/>
+      <stop offset="100%" stop-color="#07080d"/>
+    </linearGradient>
+    <linearGradient id="chatBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a0d14"/>
+      <stop offset="100%" stop-color="#0a0d14"/>
+    </linearGradient>
+    <linearGradient id="aiAvatarGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="headerGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d111a"/>
+      <stop offset="100%" stop-color="#0a0d14"/>
+    </linearGradient>
+
+    <!-- Glows -->
+    <filter id="glow-cyan">
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#22d3ee" flood-opacity="0.15"/>
+    </filter>
+    <filter id="glow-purple">
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#8b5cf6" flood-opacity="0.12"/>
+    </filter>
+    <filter id="shadow-card">
+      <feDropShadow dx="0" dy="4" stdDeviation="16" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+    <filter id="shadow-sm">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+    <filter id="glow-input">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#22d3ee" flood-opacity="0.08"/>
+    </filter>
+    <filter id="glow-btn">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#22d3ee" flood-opacity="0.3"/>
+    </filter>
+
+    <!-- Mode-specific gradients -->
+    <linearGradient id="chatMode" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.02"/>
+    </linearGradient>
+    <linearGradient id="planMode" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.02"/>
+    </linearGradient>
+    <linearGradient id="assistMode" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.02"/>
+    </linearGradient>
+    <linearGradient id="agentMode" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0.02"/>
+    </linearGradient>
+
+    <linearGradient id="safetyGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0.02"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ==================== BACKGROUND ==================== -->
+  <rect width="1440" height="900" fill="url(#bgGrad)"/>
+
+  <!-- Subtle grid pattern -->
+  <g opacity="0.03">
+    <line x1="0" y1="100" x2="1440" y2="100" stroke="#22d3ee" stroke-width="0.5"/>
+    <line x1="0" y1="200" x2="1440" y2="200" stroke="#22d3ee" stroke-width="0.5"/>
+    <line x1="0" y1="300" x2="1440" y2="300" stroke="#22d3ee" stroke-width="0.5"/>
+    <line x1="0" y1="400" x2="1440" y2="400" stroke="#22d3ee" stroke-width="0.5"/>
+    <line x1="0" y1="500" x2="1440" y2="500" stroke="#22d3ee" stroke-width="0.5"/>
+    <line x1="0" y1="600" x2="1440" y2="600" stroke="#22d3ee" stroke-width="0.5"/>
+    <line x1="0" y1="700" x2="1440" y2="700" stroke="#22d3ee" stroke-width="0.5"/>
+    <line x1="0" y1="800" x2="1440" y2="800" stroke="#22d3ee" stroke-width="0.5"/>
+  </g>
+
+  <!-- ==================== TITLE BAR ==================== -->
+  <rect x="20" y="20" width="1400" height="52" rx="16" fill="#0d111a" stroke="#1a1f2e" stroke-width="1"/>
+  <rect x="20" y="20" width="1400" height="52" rx="16" fill="url(#headerGrad)"/>
+
+  <!-- macOS traffic light dots -->
+  <circle cx="48" cy="46" r="6" fill="#22242a"/>
+  <circle cx="68" cy="46" r="6" fill="#22242a"/>
+  <circle cx="88" cy="46" r="6" fill="#22242a"/>
+
+  <!-- Traffic light hover glows (muted) -->
+  <circle cx="48" cy="46" r="6" fill="#ff5f56" opacity="0.8"/>
+  <circle cx="68" cy="46" r="6" fill="#ffbd2e" opacity="0.8"/>
+  <circle cx="88" cy="46" r="6" fill="#27c93f" opacity="0.8"/>
+
+  <!-- Traffic light icons -->
+  <text x="48" y="49" text-anchor="middle" fill="#4c0002" font-size="8" font-weight="bold" opacity="0">×</text>
+  <text x="68" y="49" text-anchor="middle" fill="#5c3e00" font-size="8" font-weight="bold" opacity="0">−</text>
+  <text x="88" y="49" text-anchor="middle" fill="#024d00" font-size="8" font-weight="bold" opacity="0">+</text>
+
+  <!-- Centered Title -->
+  <g transform="translate(720, 46)">
+    <!-- Status dot (green - online) -->
+    <circle cx="-48" cy="0" r="3" fill="#10b981"/>
+    <circle cx="-48" cy="0" r="3" fill="#10b981" opacity="0.4">
+      <animate attributeName="r" values="3;6;3" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <text x="-42" y="4" text-anchor="start" fill="#88888c" font-size="9" font-weight="800" letter-spacing="2">ISTIYAK COMPANION</text>
+  </g>
+
+  <!-- Right action icons -->
+  <g transform="translate(1342, 37)">
+    <!-- User icon -->
+    <rect x="0" y="0" width="22" height="22" rx="6" fill="none"/>
+    <circle cx="11" cy="8" r="3" fill="#88888c"/>
+    <path d="M4 18c0-3.5 3.5-5 7-5s7 1.5 7 5" stroke="#88888c" stroke-width="1.2" fill="none"/>
+  </g>
+  <g transform="translate(1314, 37)">
+    <!-- Settings icon -->
+    <rect x="0" y="0" width="22" height="22" rx="6" fill="none"/>
+    <circle cx="11" cy="11" r="3" stroke="#88888c" stroke-width="1.2" fill="none"/>
+    <path d="M11 4v2M11 16v2M4 11h2M16 11h2" stroke="#88888c" stroke-width="1.2" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(1286, 37)">
+    <!-- History icon -->
+    <rect x="0" y="0" width="22" height="22" rx="6" fill="none"/>
+    <circle cx="11" cy="11" r="5" stroke="#88888c" stroke-width="1.2" fill="none"/>
+    <path d="M11 8v3l2 2" stroke="#88888c" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- ==================== MAIN GRID ==================== -->
+  <!-- Left Sidebar -->
+  <rect x="20" y="84" width="252" height="796" rx="22" fill="url(#cardGrad)" stroke="#171b25" stroke-width="1" filter="url(#shadow-card)"/>
+
+  <!-- Workspace area - Left sidebar -->
+  <g transform="translate(40, 108)">
+    <!-- Avatar + name -->
+    <rect x="0" y="0" width="28" height="28" rx="14" fill="url(#aiAvatarGrad)" filter="url(#glow-cyan)"/>
+    <text x="14" y="18" text-anchor="middle" fill="white" font-size="12" font-weight="bold">I</text>
+    <text x="38" y="14" fill="white" font-size="13" font-weight="bold">Istiyak</text>
+    <text x="38" y="24" fill="#88888c" font-size="10">Current workspace</text>
+  </g>
+
+  <!-- Workspace path box -->
+  <rect x="40" y="156" width="212" height="44" rx="12" fill="#0c0f16" stroke="#1e2533" stroke-width="1"/>
+  <g transform="translate(52, 168)">
+    <text y="10" fill="#94a3b8" font-size="11" font-family="monospace">istiyak_agent_v0.1</text>
+    <text y="22" fill="#4b5563" font-size="9">~/projects/istiyak_agent_v0.1</text>
+  </g>
+
+  <!-- Mode selector label -->
+  <text x="40" y="228" fill="#88888c" font-size="10" font-weight="800" letter-spacing="2.5">MODE SELECTOR</text>
+
+  <!-- Mode buttons -->
+  <!-- Chat Mode -->
+  <rect x="40" y="242" width="212" height="52" rx="16" fill="url(#chatMode)" stroke="#22d3ee" stroke-width="1" stroke-opacity="0.5"/>
+  <circle cx="64" cy="268" r="5" fill="#22d3ee"/>
+  <text x="78" y="264" fill="white" font-size="14" font-weight="bold">Chat</text>
+  <text x="78" y="278" fill="#22d3ee" font-size="9" opacity="0.7">No tools</text>
+  <rect x="212" y="255" width="24" height="22" rx="6" fill="#22d3ee" fill-opacity="0.15" stroke="#22d3ee" stroke-width="0.5" stroke-opacity="0.3"/>
+  <text x="224" y="270" text-anchor="middle" fill="#22d3ee" font-size="8" font-weight="bold">✓</text>
+
+  <!-- Plan Mode -->
+  <rect x="40" y="302" width="212" height="52" rx="16" fill="none" stroke="#1e2533" stroke-width="1"/>
+  <circle cx="64" cy="328" r="5" fill="#475569"/>
+  <text x="78" y="324" fill="#88888c" font-size="14" font-weight="bold">Plan</text>
+  <text x="78" y="338" fill="#88888c" font-size="9">No edits</text>
+
+  <!-- Assist Mode -->
+  <rect x="40" y="362" width="212" height="52" rx="16" fill="none" stroke="#1e2533" stroke-width="1"/>
+  <circle cx="64" cy="388" r="5" fill="#475569"/>
+  <text x="78" y="384" fill="#88888c" font-size="14" font-weight="bold">Assist</text>
+  <text x="78" y="398" fill="#88888c" font-size="9">Read only</text>
+
+  <!-- Agent Mode -->
+  <rect x="40" y="422" width="212" height="52" rx="16" fill="none" stroke="#1e2533" stroke-width="1"/>
+  <circle cx="64" cy="448" r="5" fill="#475569"/>
+  <text x="78" y="444" fill="#88888c" font-size="14" font-weight="bold">Agent</text>
+  <text x="78" y="458" fill="#88888c" font-size="9">Approve</text>
+
+  <!-- Safety Guard box (bottom of left sidebar) -->
+  <g transform="translate(40, 514)">
+    <rect x="0" y="0" width="212" height="80" rx="18" fill="url(#safetyGrad)" stroke="#10b981" stroke-width="0.5" stroke-opacity="0.25"/>
+    <text x="16" y="24" fill="white" font-size="14" font-weight="bold">🛡️ Safety Guard</text>
+    <text x="16" y="46" fill="#88888c" font-size="11">Tool execution blocked until</text>
+    <text x="16" y="62" fill="#88888c" font-size="11">the selected mode allows it.</text>
+  </g>
+
+  <!-- ==================== MAIN CHAT AREA ==================== -->
+  <rect x="288" y="84" width="828" height="796" rx="22" fill="url(#chatBg)" stroke="#171b25" stroke-width="1" filter="url(#shadow-card)"/>
+
+  <!-- Chat header -->
+  <rect x="288" y="84" width="828" height="64" rx="22" fill="url(#headerGrad)" stroke="none"/>
+  <rect x="288" y="126" width="828" height="22" fill="#0a0d14"/>
+  <g transform="translate(312, 112)">
+    <text y="0" fill="white" font-size="16" font-weight="bold">Chat-first Agent</text>
+    <text y="18" fill="#88888c" font-size="11">Switch mode before giving an action.</text>
+  </g>
+
+  <!-- Mode badge -->
+  <rect x="1020" y="100" width="72" height="26" rx="13" fill="#22d3ee" fill-opacity="0.1" stroke="#22d3ee" stroke-width="0.5" stroke-opacity="0.4"/>
+  <text x="1056" y="117" text-anchor="middle" fill="#22d3ee" font-size="11" font-weight="bold">CHAT MODE</text>
+
+  <!-- ==================== MESSAGES ==================== -->
+  <clipPath id="messagesClip">
+    <rect x="288" y="148" width="828" height="540" rx="0"/>
+  </clipPath>
+
+  <g clip-path="url(#messagesClip)">
+    <!-- User Message 1 -->
+    <g transform="translate(310, 170)">
+      <rect x="80" y="0" width="380" height="48" rx="16" fill="white" fill-opacity="0.045" stroke="white" stroke-width="0.5" stroke-opacity="0.1"/>
+      <text x="100" y="20" fill="#e2e8f0" font-size="13">What is the current architecture of</text>
+      <text x="100" y="38" fill="#e2e8f0" font-size="13">our authentication system?</text>
+    </g>
+
+    <!-- Assistant Message 1 -->
+    <g transform="translate(310, 240)">
+      <!-- AI Avatar -->
+      <circle cx="14" cy="14" r="14" fill="url(#aiAvatarGrad)" filter="url(#glow-cyan)"/>
+      <text x="14" y="19" text-anchor="middle" fill="white" font-size="9" font-weight="bold">AI</text>
+
+      <!-- Agent Workflow Steps -->
+      <rect x="42" y="0" width="560" height="120" rx="14" fill="#0d111a" stroke="#1a1f2e" stroke-width="1" filter="url(#shadow-sm)"/>
+
+      <!-- Step 1 (completed) -->
+      <g transform="translate(58, 16)">
+        <circle cx="8" cy="8" r="8" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-width="1"/>
+        <path d="M4 8l3 3 5-6" stroke="#10b981" stroke-width="1.5" fill="none"/>
+        <text x="24" y="12" fill="#94a3b8" font-size="11">Read login controller</text>
+        <text x="300" y="12" fill="#6b7280" font-size="10">read_file</text>
+      </g>
+
+      <!-- Step 2 (completed) -->
+      <g transform="translate(58, 44)">
+        <circle cx="8" cy="8" r="8" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-width="1"/>
+        <path d="M4 8l3 3 5-6" stroke="#10b981" stroke-width="1.5" fill="none"/>
+        <text x="24" y="12" fill="#94a3b8" font-size="11">Analyze auth middleware</text>
+        <text x="300" y="12" fill="#6b7280" font-size="10">read_file</text>
+      </g>
+
+      <!-- Step 3 (in progress) -->
+      <g transform="translate(58, 72)">
+        <circle cx="8" cy="8" r="8" fill="#22d3ee" fill-opacity="0.15" stroke="#22d3ee" stroke-width="1.5"/>
+        <circle cx="8" cy="8" r="3" fill="#22d3ee"/>
+        <animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="1s" repeatCount="indefinite"/>
+        <text x="24" y="12" fill="#94a3b8" font-size="11">Mapping permission flow...</text>
+        <text x="300" y="12" fill="#22d3ee" font-size="10">thinking...</text>
+      </g>
+
+      <!-- Step 4 (pending) -->
+      <g transform="translate(58, 100)">
+        <circle cx="8" cy="8" r="8" fill="none" stroke="#374151" stroke-width="1"/>
+        <text x="24" y="12" fill="#6b7280" font-size="11">Generate architecture diagram</text>
+        <text x="300" y="12" fill="#6b7280" font-size="10">pending</text>
+      </g>
+    </g>
+
+    <!-- Assistant text response -->
+    <g transform="translate(310, 380)">
+      <!-- AI Avatar -->
+      <circle cx="14" cy="14" r="14" fill="url(#aiAvatarGrad)" filter="url(#glow-cyan)"/>
+      <text x="14" y="19" text-anchor="middle" fill="white" font-size="9" font-weight="bold">AI</text>
+
+      <text x="42" y="14" fill="#cbd5e1" font-size="13">Our auth system uses a layered security model:</text>
+      <text x="42" y="34" fill="#22d3ee" font-size="13" font-weight="bold">1. OAuth2 Strategy</text>
+      <text x="58" y="54" fill="#94a3b8" font-size="12">Google &amp; GitHub login via Passport.js</text>
+      <text x="42" y="74" fill="#22d3ee" font-size="13" font-weight="bold">2. JWT Token Management</text>
+      <text x="58" y="94" fill="#94a3b8" font-size="12">Access/refresh tokens stored in HttpOnly cookies</text>
+      <text x="42" y="114" fill="#22d3ee" font-size="13" font-weight="bold">3. Rate Limiting &amp; IP Tracking</text>
+      <text x="58" y="134" fill="#94a3b8" font-size="12">Per-endpoint rate limits with IP logging</text>
+
+      <!-- Code block -->
+      <rect x="42" y="148" width="460" height="120" rx="12" fill="#05060a" stroke="#1a1f2e" stroke-width="1"/>
+      <rect x="42" y="148" width="460" height="32" rx="12" fill="#0d0e10" stroke="none"/>
+      <rect x="42" y="168" width="460" height="12" fill="#0d0e10" stroke="none"/>
+      <text x="58" y="168" fill="#88888c" font-size="10" font-weight="bold" letter-spacing="1">TYPESCRIPT</text>
+      <rect x="428" y="156" width="56" height="18" rx="4" fill="#1a1b1e" stroke="#1a1f2e" stroke-width="0.5"/>
+      <text x="456" y="168" text-anchor="middle" fill="#88888c" font-size="10" font-weight="bold">Copy</text>
+
+      <text x="56" y="200" fill="#10b981" font-size="11" font-family="monospace">// auth/middleware.ts</text>
+      <text x="56" y="216" fill="#e2e8f0" font-size="11" font-family="monospace">export async function authMiddleware(</text>
+      <text x="56" y="232" fill="#e2e8f0" font-size="11" font-family="monospace">  req: Request, res: Response, next: NextFunction</text>
+      <text x="56" y="248" fill="#e2e8f0" font-size="11" font-family="monospace">): Promise&lt;void&gt; {</text>
+    </g>
+
+    <!-- User Message 2 -->
+    <g transform="translate(310, 660)">
+      <rect x="160" y="0" width="300" height="34" rx="16" fill="white" fill-opacity="0.045" stroke="white" stroke-width="0.5" stroke-opacity="0.1"/>
+      <text x="180" y="21" fill="#e2e8f0" font-size="13">Can you show me the user routes?</text>
+    </g>
+
+    <!-- Typing indicator -->
+    <g transform="translate(310, 710)">
+      <circle cx="14" cy="14" r="14" fill="url(#aiAvatarGrad)" filter="url(#glow-cyan)"/>
+      <text x="14" y="19" text-anchor="middle" fill="white" font-size="9" font-weight="bold">AI</text>
+      <rect x="42" y="0" width="72" height="28" rx="14" fill="#0d111a" stroke="#1a1f2e" stroke-width="1"/>
+      <circle cx="58" cy="14" r="3" fill="#88888c">
+        <animate attributeName="opacity" values="1;0.2;1" dur="1.2s" repeatCount="indefinite" begin="0s"/>
+      </circle>
+      <circle cx="70" cy="14" r="3" fill="#88888c">
+        <animate attributeName="opacity" values="1;0.2;1" dur="1.2s" repeatCount="indefinite" begin="0.2s"/>
+      </circle>
+      <circle cx="82" cy="14" r="3" fill="#88888c">
+        <animate attributeName="opacity" values="1;0.2;1" dur="1.2s" repeatCount="indefinite" begin="0.4s"/>
+      </circle>
+    </g>
+  </g>
+
+  <!-- ==================== CHAT INPUT ==================== -->
+  <rect x="288" y="688" width="828" height="192" fill="#0a0d14"/>
+  <rect x="310" y="706" width="784" height="148" rx="18" fill="#080a10" stroke="#1e2533" stroke-width="1"/>
+
+  <!-- Input glow on focus -->
+  <rect x="310" y="706" width="784" height="148" rx="18" fill="none" stroke="#22d3ee" stroke-width="1" stroke-opacity="0.15" filter="url(#glow-input)"/>
+
+  <!-- Textarea -->
+  <text x="330" y="740" fill="#88888c" font-size="13">Ask anything. No tools will run...</text>
+
+  <!-- Input toolbar -->
+  <rect x="310" y="822" width="784" height="32" fill="#080a10"/>
+  <rect x="310" y="822" width="784" height="1" fill="#1e2533" fill-opacity="0.7"/>
+
+  <!-- Tool buttons -->
+  <g transform="translate(330, 832)">
+    <!-- Attach button -->
+    <rect x="0" y="0" width="30" height="24" rx="8" fill="none"/>
+    <path d="M6 4v10a4 4 0 008 0V4a2 2 0 00-4 0v10a2 2 0 004 0" stroke="#88888c" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(368, 832)">
+    <!-- Terminal button -->
+    <rect x="0" y="0" width="30" height="24" rx="8" fill="none"/>
+    <polyline points="6 8 10 12 6 16" stroke="#88888c" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <line x1="14" y1="16" x2="22" y2="16" stroke="#88888c" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(406, 832)">
+    <!-- Settings button -->
+    <rect x="0" y="0" width="30" height="24" rx="8" fill="none"/>
+    <circle cx="15" cy="12" r="3" stroke="#88888c" stroke-width="1.5" fill="none"/>
+    <path d="M15 5v2M15 17v2M8 12h2M20 12h2" stroke="#88888c" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Prompts button -->
+  <rect x="442" y="832" width="72" height="24" rx="6" fill="#22d3ee" fill-opacity="0.1" stroke="#22d3ee" stroke-width="0.5" stroke-opacity="0.2"/>
+  <text x="458" y="847" fill="#22d3ee" font-size="9" font-weight="bold">Prompts</text>
+  <rect x="498" y="836" width="10" height="16" rx="8" fill="#22d3ee" fill-opacity="0.15"/>
+  <text x="503" y="848" text-anchor="middle" fill="#22d3ee" font-size="8" font-weight="bold">3</text>
+
+  <!-- Send button (disabled - no input) -->
+  <g transform="translate(1046, 830)">
+    <rect x="0" y="0" width="32" height="28" rx="8" fill="#1e2533"/>
+    <path d="M8 14h16M16 6l8 8-8 8" stroke="#4b5563" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- ==================== RIGHT SIDEBAR ==================== -->
+  <rect x="1132" y="84" width="288" height="796" rx="22" fill="url(#chatBg)" stroke="#171b25" stroke-width="1" filter="url(#shadow-card)"/>
+
+  <g transform="translate(1156, 108)">
+    <text y="0" fill="white" font-size="16" font-weight="bold">Permission Policy</text>
+    <text y="20" fill="#88888c" font-size="12">Backend-enforced rules</text>
+  </g>
+
+  <!-- Policy cards -->
+  <!-- Chat mode active -->
+  <g transform="translate(1156, 148)">
+    <rect x="0" y="0" width="240" height="80" rx="18" fill="url(#chatMode)" stroke="#22d3ee" stroke-width="0.5" stroke-opacity="0.5"/>
+    <circle cx="16" cy="20" r="5" fill="#22d3ee"/>
+    <text x="28" y="24" fill="white" font-size="13" font-weight="bold">CHAT</text>
+    <text x="16" y="48" fill="#94a3b8" font-size="11">Plain answer only. No file</text>
+    <text x="16" y="64" fill="#94a3b8" font-size="11">access or terminal tools.</text>
+  </g>
+
+  <!-- Plan mode -->
+  <g transform="translate(1156, 240)">
+    <rect x="0" y="0" width="240" height="80" rx="18" fill="none" stroke="#1e2533" stroke-width="1"/>
+    <circle cx="16" cy="20" r="5" fill="#475569"/>
+    <text x="28" y="24" fill="#88888c" font-size="13" font-weight="bold">PLAN</text>
+    <text x="16" y="48" fill="#88888c" font-size="11">Analyze and roadmap only.</text>
+    <text x="16" y="64" fill="#88888c" font-size="11">No edits or commands.</text>
+  </g>
+
+  <!-- Assist mode -->
+  <g transform="translate(1156, 332)">
+    <rect x="0" y="0" width="240" height="80" rx="18" fill="none" stroke="#1e2533" stroke-width="1"/>
+    <circle cx="16" cy="20" r="5" fill="#475569"/>
+    <text x="28" y="24" fill="#88888c" font-size="13" font-weight="bold">ASSIST</text>
+    <text x="16" y="48" fill="#88888c" font-size="11">Read/search allowed. Write</text>
+    <text x="16" y="64" fill="#88888c" font-size="11">and run blocked.</text>
+  </g>
+
+  <!-- Agent mode -->
+  <g transform="translate(1156, 424)">
+    <rect x="0" y="0" width="240" height="80" rx="18" fill="none" stroke="#1e2533" stroke-width="1"/>
+    <circle cx="16" cy="20" r="5" fill="#475569"/>
+    <text x="28" y="24" fill="#88888c" font-size="13" font-weight="bold">AGENT</text>
+    <text x="16" y="48" fill="#88888c" font-size="11">Read/write/run with approval</text>
+    <text x="16" y="64" fill="#88888c" font-size="11">gates for risky tools.</text>
+  </g>
+
+  <!-- Result box -->
+  <g transform="translate(1156, 536)">
+    <rect x="0" y="0" width="240" height="64" rx="18" fill="#111827" stroke="#1f2937" stroke-width="1"/>
+    <text x="16" y="24" fill="white" font-size="13" font-weight="bold">Result</text>
+    <text x="16" y="46" fill="#88888c" font-size="11">No accidental actions.</text>
+  </g>
+
+  <!-- ==================== ANNOTATIONS ==================== -->
+  <!-- Title annotation -->
+  <g transform="translate(20, 8)">
+    <rect x="0" y="0" width="1400" height="12" rx="6" fill="none"/>
+  </g>
+
+  <!-- Left sidebar annotation -->
+  <g transform="translate(24, 884)">
+    <rect x="0" y="-18" width="100" height="18" rx="4" fill="#1e2533"/>
+    <text x="50" y="-5" text-anchor="middle" fill="#88888c" font-size="9">Left Sidebar (236px)</text>
+  </g>
+
+  <!-- Main chat annotation -->
+  <g transform="translate(680, 884)">
+    <rect x="-60" y="-18" width="120" height="18" rx="4" fill="#1e2533"/>
+    <text x="0" y="-5" text-anchor="middle" fill="#88888c" font-size="9">Main Chat Area</text>
+  </g>
+
+  <!-- Right sidebar annotation -->
+  <g transform="translate(1276, 884)">
+    <rect x="-60" y="-18" width="120" height="18" rx="4" fill="#1e2533"/>
+    <text x="0" y="-5" text-anchor="middle" fill="#88888c" font-size="9">Right Sidebar (248px)</text>
+  </g>
+
+  <!-- Chat input annotation -->
+  <g transform="translate(704, 868)">
+    <rect x="-48" y="-18" width="96" height="18" rx="4" fill="#1e2533"/>
+    <text x="0" y="-5" text-anchor="middle" fill="#88888c" font-size="9">Chat Input Bar</text>
+  </g>
+</svg>

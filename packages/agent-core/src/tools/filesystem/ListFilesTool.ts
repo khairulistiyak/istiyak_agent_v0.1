@@ -12,12 +12,12 @@ export class ListFilesTool extends BaseTool {
     }
   };
 
-  async execute(params: { relPath?: string }, context: ToolContext): Promise<string[]> {
+  async execute(params: { relPath?: string }, context: ToolContext): Promise<string> {
     const targetDir = params.relPath ? path.resolve(context.workspacePath, params.relPath) : context.workspacePath;
     if (!targetDir.startsWith(path.resolve(context.workspacePath))) {
       throw new Error("Security Violation: Access denied outside workspace path.");
     }
     const list = await fs.readdir(targetDir);
-    return list;
+    return `Directory listing (${list.length} items):\n${list.join("\n")}`;
   }
 }

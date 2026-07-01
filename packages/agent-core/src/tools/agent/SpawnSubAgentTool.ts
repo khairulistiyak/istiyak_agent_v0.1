@@ -44,6 +44,7 @@ export class SpawnSubAgentTool extends BaseTool {
       const config = (context as any)._agentConfig || {};
 
       let subAgentOutput = "";
+      const parentOnChunk = (context as any)._agentConfig?.onChunk;
 
       const result = await runAgent({
         messages: subAgentMessages,
@@ -58,6 +59,9 @@ export class SpawnSubAgentTool extends BaseTool {
         googleSearchEnabled: false,
         onChunk: (chunk: string) => {
           subAgentOutput += chunk;
+          if (parentOnChunk) {
+            parentOnChunk(`<agent_step step="0" status="action" name="sub_agent">${chunk.replace(/</g, '&lt;').replace(/>/g, '&gt;').substring(0, 200)}</agent_step>`);
+          }
         }
       });
 

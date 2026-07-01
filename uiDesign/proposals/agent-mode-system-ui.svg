@@ -1,0 +1,139 @@
+<svg width="1120" height="760" viewBox="0 0 1120 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1120" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#05060A"/>
+      <stop offset="1" stop-color="#090B12"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10131B"/>
+      <stop offset="1" stop-color="#07080D"/>
+    </linearGradient>
+    <linearGradient id="agent" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#06B6D4"/>
+      <stop offset="1" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+    <style>
+      .title{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:700;fill:#F8FAFC}
+      .text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;fill:#CBD5E1}
+      .muted{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;fill:#64748B}
+      .mono{font-family:'SFMono-Regular',Consolas,monospace;fill:#94A3B8}
+      .chip{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:700;font-size:12px}
+    </style>
+  </defs>
+
+  <rect width="1120" height="760" rx="28" fill="url(#bg)"/>
+  <rect x="28" y="28" width="1064" height="704" rx="28" fill="#080A10" stroke="#171B25"/>
+
+  <!-- Left sidebar -->
+  <rect x="48" y="48" width="236" height="664" rx="22" fill="url(#panel)" stroke="#171B25"/>
+  <circle cx="82" cy="82" r="13" fill="url(#agent)"/>
+  <text x="106" y="86" class="title" font-size="16">Istiyak Agent</text>
+  <text x="72" y="122" class="muted" font-size="11">Current workspace</text>
+  <rect x="68" y="138" width="196" height="42" rx="12" fill="#0C0F16" stroke="#1E2533"/>
+  <text x="84" y="164" class="mono" font-size="12">istiyak_agent_v0.1</text>
+
+  <text x="68" y="218" class="muted" font-size="11">Mode selector</text>
+  <g transform="translate(68,234)">
+    <rect width="196" height="44" rx="14" fill="#0F172A" stroke="#22D3EE" stroke-opacity="0.65"/>
+    <circle cx="22" cy="22" r="7" fill="#22D3EE"/>
+    <text x="40" y="27" class="title" font-size="13">Chat</text>
+    <text x="102" y="27" class="muted" font-size="11">No tools</text>
+  </g>
+  <g transform="translate(68,288)">
+    <rect width="196" height="44" rx="14" fill="#0B0E14" stroke="#1E2533"/>
+    <circle cx="22" cy="22" r="7" fill="#A78BFA"/>
+    <text x="40" y="27" class="text" font-size="13">Plan</text>
+    <text x="102" y="27" class="muted" font-size="11">No edits</text>
+  </g>
+  <g transform="translate(68,342)">
+    <rect width="196" height="44" rx="14" fill="#0B0E14" stroke="#1E2533"/>
+    <circle cx="22" cy="22" r="7" fill="#F59E0B"/>
+    <text x="40" y="27" class="text" font-size="13">Assist</text>
+    <text x="102" y="27" class="muted" font-size="11">Read only</text>
+  </g>
+  <g transform="translate(68,396)">
+    <rect width="196" height="44" rx="14" fill="#0B0E14" stroke="#1E2533"/>
+    <circle cx="22" cy="22" r="7" fill="#10B981"/>
+    <text x="40" y="27" class="text" font-size="13">Agent</text>
+    <text x="102" y="27" class="muted" font-size="11">Approve</text>
+  </g>
+
+  <rect x="68" y="608" width="196" height="74" rx="18" fill="#07110F" stroke="#123A31"/>
+  <text x="86" y="633" class="title" font-size="13">Safety Guard</text>
+  <text x="86" y="655" class="muted" font-size="11">Tool execution blocked</text>
+  <text x="86" y="671" class="muted" font-size="11">until mode allows it.</text>
+
+  <!-- Main chat panel -->
+  <rect x="304" y="48" width="500" height="664" rx="22" fill="#0A0D14" stroke="#171B25" filter="url(#shadow)"/>
+  <rect x="304" y="48" width="500" height="62" rx="22" fill="#0D111A"/>
+  <text x="330" y="84" class="title" font-size="16">Chat-first Agent</text>
+  <rect x="664" y="65" width="112" height="28" rx="14" fill="#082F49" stroke="#155E75"/>
+  <text x="690" y="84" class="chip" fill="#67E8F9">CHAT MODE</text>
+
+  <g transform="translate(330,140)">
+    <text x="0" y="0" class="mono" font-size="11">YOU</text>
+    <rect x="0" y="14" width="420" height="74" rx="18" fill="#111827" stroke="#1F2937"/>
+    <text x="20" y="42" class="text" font-size="14">amar agent ulta palta kaj kore keno?</text>
+    <text x="20" y="64" class="text" font-size="14">just bolo, kuno kichu korbana.</text>
+  </g>
+
+  <g transform="translate(330,250)">
+    <text x="0" y="0" class="mono" font-size="11" fill="#22D3EE">AGENT</text>
+    <rect x="0" y="14" width="420" height="146" rx="18" fill="#07111A" stroke="#123248"/>
+    <text x="20" y="43" class="text" font-size="14">আমি বুঝলাম — এটা explanation request.</text>
+    <text x="20" y="67" class="text" font-size="14">তাই কোনো file read/edit বা command run হবে না।</text>
+    <rect x="20" y="92" width="158" height="30" rx="15" fill="#082F49"/>
+    <text x="39" y="112" class="chip" fill="#67E8F9">Mode: CHAT</text>
+    <rect x="190" y="92" width="190" height="30" rx="15" fill="#1A1015" stroke="#3F1D2A"/>
+    <text x="211" y="112" class="chip" fill="#FDA4AF">Tools blocked</text>
+  </g>
+
+  <g transform="translate(330,454)">
+    <rect width="420" height="68" rx="18" fill="#0B0E14" stroke="#1E2533"/>
+    <text x="20" y="29" class="muted" font-size="12">Intent Router</text>
+    <text x="20" y="50" class="title" font-size="15">CHAT → plain answer, no JSON/tool loop</text>
+  </g>
+
+  <rect x="330" y="620" width="448" height="58" rx="18" fill="#080A10" stroke="#1E2533"/>
+  <text x="352" y="655" class="muted" font-size="14">Ask anything, or switch mode before giving an action.</text>
+  <circle cx="746" cy="649" r="17" fill="url(#agent)"/>
+  <path d="M740 649H752M747 643L753 649L747 655" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Right policy panel -->
+  <rect x="824" y="48" width="248" height="664" rx="22" fill="#0A0D14" stroke="#171B25"/>
+  <text x="850" y="84" class="title" font-size="16">Permission Policy</text>
+  <text x="850" y="110" class="muted" font-size="12">Backend-enforced rules</text>
+
+  <g transform="translate(850,146)">
+    <rect width="196" height="86" rx="18" fill="#07111A" stroke="#123248"/>
+    <text x="18" y="30" class="title" font-size="14">CHAT</text>
+    <text x="18" y="55" class="muted" font-size="12">Explain only</text>
+    <text x="18" y="73" class="muted" font-size="12">No file access</text>
+  </g>
+  <g transform="translate(850,248)">
+    <rect width="196" height="86" rx="18" fill="#120F1A" stroke="#2E2354"/>
+    <text x="18" y="30" class="title" font-size="14">PLAN</text>
+    <text x="18" y="55" class="muted" font-size="12">Analyze + roadmap</text>
+    <text x="18" y="73" class="muted" font-size="12">No edits or commands</text>
+  </g>
+  <g transform="translate(850,350)">
+    <rect width="196" height="86" rx="18" fill="#181207" stroke="#4A2E0A"/>
+    <text x="18" y="30" class="title" font-size="14">ASSIST</text>
+    <text x="18" y="55" class="muted" font-size="12">Read/search allowed</text>
+    <text x="18" y="73" class="muted" font-size="12">Write/run blocked</text>
+  </g>
+  <g transform="translate(850,452)">
+    <rect width="196" height="106" rx="18" fill="#07110F" stroke="#123A31"/>
+    <text x="18" y="30" class="title" font-size="14">AGENT</text>
+    <text x="18" y="55" class="muted" font-size="12">Read/write/run</text>
+    <text x="18" y="73" class="muted" font-size="12">Risky tools require</text>
+    <text x="18" y="91" class="muted" font-size="12">explicit approval</text>
+  </g>
+
+  <rect x="850" y="600" width="196" height="62" rx="18" fill="#111827" stroke="#1F2937"/>
+  <text x="870" y="628" class="title" font-size="13">Result</text>
+  <text x="870" y="649" class="muted" font-size="12">No accidental actions.</text>
+</svg>

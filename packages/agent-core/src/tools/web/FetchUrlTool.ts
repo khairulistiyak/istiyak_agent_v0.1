@@ -12,12 +12,16 @@ export class FetchUrlTool extends BaseTool {
   };
 
   async execute(params: { url: string }, context: ToolContext): Promise<string> {
+    let targetUrl = params.url.trim();
+    if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
+      targetUrl = "https://" + targetUrl;
+    }
     // Abort after 10 seconds to prevent the agent from hanging indefinitely
     // on slow or unresponsive servers (Node.js fetch has no default timeout).
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
-      const res = await fetch(params.url, { signal: controller.signal });
+      const res = await fetch(targetUrl, { signal: controller.signal });
       if (!res.ok) {
         return `Fetch error: ${res.status} ${res.statusText}`;
       }

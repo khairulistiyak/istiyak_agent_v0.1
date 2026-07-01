@@ -9,7 +9,38 @@ export class PromptBuilder {
    */
   static buildSystemPrompt(): string {
     const tools = ToolRegistry.getAll();
-    const implementedTools = tools.filter(t => !t.description.includes("[NOT_IMPLEMENTED]"));
+    const CORE_TOOL_NAMES = [
+      "scan_project",
+      "list_files",
+      "read_file",
+      "write_file",
+      "precise_edit",
+      "search_workspace",
+      "run_command",
+      "create_plan",
+      "update_plan",
+      "walkthrough",
+      "reflect",
+      "git_status",
+      "git_diff",
+      "git_commit_changes",
+      "git_log",
+      "google_search",
+      "fetch_url",
+      "delete_file",
+      "create_directory",
+      "move_file",
+      "rename_file",
+      "ast_edit",
+      "url_context",
+      "crawl_website",
+      "delegate_task",
+      "spawn_sub_agent",
+    ];
+    const implementedTools = tools.filter(t => 
+      !t.description.includes("[NOT_IMPLEMENTED]") && 
+      CORE_TOOL_NAMES.includes(t.name)
+    );
     const toolDeclarations = implementedTools
       .map(t => `### Tool: \`${t.name}\`\n**Description:** ${t.description}\n**Parameters:**\n\`\`\`json\n${JSON.stringify(t.parameterSchema, null, 2)}\n\`\`\``)
       .join("\n\n---\n\n");

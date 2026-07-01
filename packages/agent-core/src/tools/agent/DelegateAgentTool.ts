@@ -52,6 +52,8 @@ export class DelegateAgentTool extends BaseTool {
           const config = (context as any)._agentConfig || {};
 
           let subOutput = "";
+          const parentOnChunk = (context as any)._agentConfig?.onChunk;
+
           const result = await runAgent({
             messages: [{ role: "user" as const, content: `Execute this plan step by step:\n\n${stepsFormatted}\n\nOriginal task: ${params.task}` }],
             provider: config.provider || "gemini",
@@ -63,7 +65,12 @@ export class DelegateAgentTool extends BaseTool {
             location: config.location || "global",
             workspacePath,
             googleSearchEnabled: false,
-            onChunk: (chunk: string) => { subOutput += chunk; }
+            onChunk: (chunk: string) => {
+              subOutput += chunk;
+              if (parentOnChunk) {
+                parentOnChunk(`<agent_step step="0" status="action" name="sub_agent">${chunk.replace(/</g, '&lt;').replace(/>/g, '&gt;').substring(0, 200)}</agent_step>`);
+              }
+            }
           });
 
           executionResult = `\n\n## Execution Result\n${subOutput.substring(0, 5000)}`;

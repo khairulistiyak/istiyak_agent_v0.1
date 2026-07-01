@@ -19,7 +19,7 @@ export class PreciseEditTool extends BaseTool {
     }
   };
 
-  async execute(params: { relPath: string; targetContent: string; replacementContent: string }, context: ToolContext): Promise<void> {
+  async execute(params: { relPath: string; targetContent: string; replacementContent: string }, context: ToolContext): Promise<string> {
     const fullPath = path.resolve(context.workspacePath, params.relPath);
     if (!fullPath.startsWith(path.resolve(context.workspacePath))) {
       throw new Error("Security Violation: Access denied outside workspace path.");
@@ -31,18 +31,31 @@ export class PreciseEditTool extends BaseTool {
 
     locks.add(fullPath);
     try {
-      const content = await fs.readFile(fullPath, "utf-8");
-      if (!content.includes(params.targetContent)) {
-        throw new Error(`Precise Edit Error: Target content not found in ${params.relPath}`);
+      const rawContent = await fs.readFile(fullPath, "utf-8");
+      
+      // Normalize line endings to LF (\n) to prevent CRLF mismatch issues
+      const normalizedContent = rawContent.replace(/\r\n/g, "\n");
+      const normalizedTarget = params.targetContent.replace(/\r\n/g, "\n");
+      const normalizedReplacement = params.replacementContent.replace(/\r\n/g, "\n");
+
+      if (!normalizedContent.includes(normalizedTarget)) {
+        throw new Error(`Precise Edit Error: Target content not found in ${params.relPath}. Check line endings and indentation.`);
       }
 
-      const occurrences = content.split(params.targetContent).length - 1;
+      const occurrences = normalizedContent.split(normalizedTarget).length - 1;
       if (occurrences > 1) {
         throw new Error(`Precise Edit Error: Ambiguous match. Found ${occurrences} occurrences of target content in ${params.relPath}. Make targetContent more unique.`);
       }
 
-      const updatedContent = content.replace(params.targetContent, params.replacementContent);
+      const updatedNormalized = normalizedContent.replace(normalizedTarget, normalizedReplacement);
+      
+      // Convert back to original line endings if file originally had CRLF
+      const updatedContent = rawContent.includes("\r\n") 
+        ? updatedNormalized.replace(/\n/g, "\r\n") 
+        : updatedNormalized;
+
       await fs.writeFile(fullPath, updatedContent, "utf-8");
+      return `Successfully edited ${params.relPath}. Replaced ${params.targetContent.length} chars with ${params.replacementContent.length} chars.`;
     } finally {
       locks.delete(fullPath);
     }

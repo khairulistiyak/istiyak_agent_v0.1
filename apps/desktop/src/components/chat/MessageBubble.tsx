@@ -1,17 +1,32 @@
-import { Message } from "../../store/slices/chatSlice.js";
+import React from "react";
+import { UIMessage } from "ai";
+import { MarkdownRenderer } from "./MarkdownRenderer.js";
 
-export function MessageBubble({ message }: { message: Message }) {
-  const isUser = message.role === "user";
+interface UserMessageProps {
+  msg: UIMessage;
+}
+
+const getMessageText = (msg: UIMessage): string => {
+  const rawMsg = msg as any;
+  if (rawMsg.content) return rawMsg.content;
+  if (!msg.parts) return "";
+  return msg.parts
+    .filter((part) => part.type === "text")
+    .map((part: any) => part.text)
+    .join("");
+};
+
+export const UserMessage = React.memo(({ msg }: UserMessageProps) => {
+  const text = getMessageText(msg);
+
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div className={`max-w-[70%] p-3 rounded-lg ${isUser ? "bg-cyan-600 text-white rounded-br-none" : "bg-white/5 border border-white/10 text-white/90 rounded-bl-none"}`}>
-        <p className="text-sm font-semibold mb-1 opacity-65">
-          {isUser ? "You" : "Assistant"}
-        </p>
-        <p className="whitespace-pre-wrap text-sm leading-relaxed">
-          {message.content}
-        </p>
+    <div className="flex w-full justify-end animate-slide-up">
+      <div className="max-w-[78%] rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3 text-sm leading-6 text-slate-100 shadow-sm select-text">
+        <MarkdownRenderer text={text} messageId={msg.id} />
       </div>
     </div>
   );
-}
+});
+
+UserMessage.displayName = "UserMessage";
+export { UserMessage as MessageBubble }; // Keep alias for backward compatibility if needed

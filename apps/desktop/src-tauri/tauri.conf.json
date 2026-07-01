@@ -14,8 +14,8 @@
     "windows": [
       {
         "title": "ISTIYAK AI Companion",
-        "width": 380,
-        "height": 620,
+        "width": 1120,
+        "height": 760,
         "resizable": true,
         "transparent": true,
         "decorations": false,

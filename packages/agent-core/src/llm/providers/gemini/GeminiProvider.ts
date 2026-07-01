@@ -22,7 +22,12 @@ export class GeminiProvider {
     const systemMessage = messages.find((m) => m.role === "system");
     const modelInstance = genAI.getGenerativeModel({ 
       model: targetModel,
-      systemInstruction: systemMessage?.content 
+      systemInstruction: systemMessage?.content,
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.3,
+        maxOutputTokens: 65536,
+      }
     });
 
     const contents = messages
@@ -47,8 +52,8 @@ export class GeminiProvider {
     } catch (error: any) {
       if (error.status === 429) {
         if (retryCount < 3) {
-          const delay = Math.pow(2, retryCount) * 1000;
-          console.warn(`Gemini Rate limit hit. Retrying in ${delay / 1000} seconds...`);
+          const delay = 10000 * Math.pow(2, retryCount); // 10s, 20s, 40s
+          console.warn(`[GeminiProvider] Rate limit hit. Retry ${retryCount + 1}/3 — waiting ${delay / 1000}s...`);
           await new Promise((resolve) => setTimeout(resolve, delay));
           return this.streamGenerateContent(messages, model, onChunk, retryCount + 1);
         } else {

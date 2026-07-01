@@ -1,256 +1,379 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 800" width="100%" height="100%">
-  <!-- Definitions for Gradients, Shadows and Markers -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 850" width="100%" height="100%">
   <defs>
     <!-- Background Gradient -->
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#07080d"/>
-      <stop offset="50%" stop-color="#0f111a"/>
-      <stop offset="100%" stop-color="#07080d"/>
+      <stop offset="0%" stop-color="#0a0b10"/>
+      <stop offset="50%" stop-color="#0e111a"/>
+      <stop offset="100%" stop-color="#050608"/>
     </linearGradient>
 
-    <!-- UI Component Gradient (Cyan/Blue Glow) -->
-    <linearGradient id="uiGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1e293b"/>
-      <stop offset="100%" stop-color="#0f172a"/>
+    <!-- Component Box Gradients -->
+    <linearGradient id="uiBoxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.95"/>
     </linearGradient>
     
-    <!-- Engine Component Gradient (Teal/Emerald Glow) -->
-    <linearGradient id="engineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#112240"/>
-      <stop offset="100%" stop-color="#0a192f"/>
+    <linearGradient id="engineBoxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#111c24" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#090f14" stop-opacity="0.95"/>
     </linearGradient>
 
-    <!-- External Services Gradient (Purple/Violet Glow) -->
-    <linearGradient id="extGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#2d124d"/>
-      <stop offset="100%" stop-color="#1a0b2e"/>
+    <linearGradient id="extBoxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#25163d" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#120a1f" stop-opacity="0.95"/>
     </linearGradient>
 
-    <!-- Storage Gradient -->
-    <linearGradient id="storageGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#2d3748"/>
-      <stop offset="100%" stop-color="#1a202c"/>
+    <!-- Text Header Gradient -->
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="50%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#8b5cf6" />
     </linearGradient>
 
-    <!-- Neon Glow Effects -->
-    <filter id="cyanGlow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#06b6d4" flood-opacity="0.6"/>
+    <!-- Neon Glow Filters -->
+    <filter id="glowCyan" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#06b6d4" flood-opacity="0.7"/>
     </filter>
-    <filter id="emeraldGlow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#10b981" flood-opacity="0.6"/>
+    <filter id="glowEmerald" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#10b981" flood-opacity="0.7"/>
     </filter>
-    <filter id="purpleGlow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#8b5cf6" flood-opacity="0.6"/>
+    <filter id="glowPurple" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#8b5cf6" flood-opacity="0.7"/>
     </filter>
-    <filter id="amberGlow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#f59e0b" flood-opacity="0.5"/>
+    <filter id="glowAmber" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#f59e0b" flood-opacity="0.6"/>
     </filter>
 
-    <!-- Arrow Marker -->
-    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b"/>
+    <!-- Markers -->
+    <marker id="arrCyan" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#06b6d4"/>
     </marker>
-    <marker id="arrow-cyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#06b6d4"/>
+    <marker id="arrEmerald" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#10b981"/>
     </marker>
-    <marker id="arrow-emerald" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#10b981"/>
+    <marker id="arrPurple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#8b5cf6"/>
     </marker>
-    <marker id="arrow-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#8b5cf6"/>
+    <marker id="arrGray" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#475569"/>
     </marker>
   </defs>
 
-  <!-- Background -->
-  <rect width="1000" height="800" fill="url(#bgGrad)"/>
-  <rect width="1000" height="800" fill="none" stroke="#1f2937" stroke-width="2"/>
+  <!-- CSS Styles and Keyframe Animations -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&amp;family=Fira+Code:wght@400;500;700&amp;display=swap');
+    
+    text {
+      font-family: 'Outfit', sans-serif;
+    }
+    .code-text {
+      font-family: 'Fira Code', monospace;
+    }
+    
+    /* Connection Flow Lines Animation */
+    .flow-line {
+      stroke-dasharray: 8, 12;
+      animation: flow 25s linear infinite;
+    }
+    .flow-reverse {
+      stroke-dasharray: 8, 12;
+      animation: flow-rev 25s linear infinite;
+    }
+    .flow-fast {
+      stroke-dasharray: 6, 8;
+      animation: flow 12s linear infinite;
+    }
 
-  <!-- Grid Overlay for tech aesthetic -->
-  <g opacity="0.05">
-    <path d="M 0,100 L 1000,100 M 0,200 L 1000,200 M 0,300 L 1000,300 M 0,400 L 1000,400 M 0,500 L 1000,500 M 0,600 L 1000,600 M 0,700 L 1000,700" stroke="#ffffff" stroke-width="1"/>
-    <path d="M 100,0 L 100,800 M 200,0 L 200,800 M 300,0 L 300,800 M 400,0 L 400,800 M 500,0 L 500,800 M 600,0 L 600,800 M 700,0 L 700,800 M 800,0 L 800,800 M 900,0 L 900,800" stroke="#ffffff" stroke-width="1"/>
+    @keyframes flow {
+      to {
+        stroke-dashoffset: -1000;
+      }
+    }
+    @keyframes flow-rev {
+      to {
+        stroke-dashoffset: 1000;
+      }
+    }
+
+    /* Pulse/Breath Glow effect for Main Containers */
+    .glow-box-cyan {
+      animation: pulseCyan 4s ease-in-out infinite alternate;
+    }
+    .glow-box-emerald {
+      animation: pulseEmerald 4s ease-in-out infinite alternate;
+    }
+    .glow-box-purple {
+      animation: pulsePurple 4s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulseCyan {
+      0% { stroke: #0891b2; filter: drop-shadow(0 0 2px rgba(6,182,212,0.3)); }
+      100% { stroke: #22d3ee; filter: drop-shadow(0 0 10px rgba(6,182,212,0.8)); }
+    }
+    @keyframes pulseEmerald {
+      0% { stroke: #0d9488; filter: drop-shadow(0 0 2px rgba(16,185,129,0.3)); }
+      100% { stroke: #34d399; filter: drop-shadow(0 0 10px rgba(16,185,129,0.8)); }
+    }
+    @keyframes pulsePurple {
+      0% { stroke: #6b21a8; filter: drop-shadow(0 0 2px rgba(139,92,246,0.3)); }
+      100% { stroke: #a78bfa; filter: drop-shadow(0 0 10px rgba(139,92,246,0.8)); }
+    }
+
+    /* Node Hover and Floating Effect */
+    .float-item {
+      animation: float 6s ease-in-out infinite;
+    }
+    .float-item-delayed {
+      animation: float 6s ease-in-out infinite;
+      animation-delay: 3s;
+    }
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+      100% { transform: translateY(0px); }
+    }
+
+    /* Step pulse animation */
+    .step-circle {
+      animation: stepPulse 2s ease-in-out infinite;
+    }
+    @keyframes stepPulse {
+      0% { r: 5; fill-opacity: 0.4; }
+      50% { r: 9; fill-opacity: 1; }
+      100% { r: 5; fill-opacity: 0.4; }
+    }
+  </style>
+
+  <!-- Background Base -->
+  <rect width="1100" height="850" fill="url(#bgGrad)"/>
+  <rect width="1100" height="850" fill="none" stroke="#1e293b" stroke-width="1.5"/>
+
+  <!-- Tech Grid Aesthetic -->
+  <g opacity="0.08" stroke="#f1f5f9" stroke-width="0.5">
+    <path d="M 0,50 L 1100,50 M 0,150 L 1100,150 M 0,250 L 1100,250 M 0,350 L 1100,350 M 0,450 L 1100,450 M 0,550 L 1100,550 M 0,650 L 1100,650 M 0,750 L 1100,750"/>
+    <path d="M 100,0 L 100,850 M 200,0 L 200,850 M 300,0 L 300,850 M 400,0 L 400,850 M 500,0 L 500,850 M 600,0 L 600,850 M 700,0 L 700,850 M 800,0 L 800,850 M 900,0 L 900,850 M 1000,0 L 1000,850"/>
   </g>
 
-  <!-- Title -->
-  <text x="500" y="45" text-anchor="middle" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" letter-spacing="2">
-    ISTIYAK AI COMPANION — ACTIVE ARCHITECTURE
-  </text>
-  <text x="500" y="68" text-anchor="middle" fill="#a1a1aa" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="500">
-    রিয়েল-টাইম ডাটা ফ্লো এবং মডিউলার আর্কিটেকচার ম্যাপ
-  </text>
-
-  <!-- ==================== COLUMN 1: TAURI DESKTOP GUI ==================== -->
-  <!-- Container border -->
-  <rect x="40" y="100" width="260" height="520" rx="16" fill="url(#uiGrad)" stroke="#334155" stroke-width="2" filter="url(#cyanGlow)"/>
-  <text x="170" y="130" text-anchor="middle" fill="#06b6d4" font-family="system-ui, sans-serif" font-size="15" font-weight="700" letter-spacing="1">
-    1. TAURI DESKTOP GUI
-  </text>
-
-  <!-- Chat UI Component -->
-  <g transform="translate(60, 160)">
-    <rect width="220" height="65" rx="10" fill="#0f172a" stroke="#06b6d4" stroke-width="1.5"/>
-    <text x="20" y="28" fill="#ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="600">ChatUI.tsx (React UI)</text>
-    <text x="20" y="46" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="10">মেসেজ আদান প্রদান ও স্ট্রিমিং</text>
+  <!-- Title / Headers -->
+  <g transform="translate(50, 45)">
+    <text x="0" y="0" fill="url(#headerGrad)" font-size="28" font-weight="800" letter-spacing="1.5">ISTIYAK AI COMPANION — ACTIVE SYSTEM ARCHITECTURE</text>
+    <text x="0" y="24" fill="#94a3b8" font-size="13" font-weight="500">অটোনোমাস এজেন্ট ইঞ্জিন ও রিয়েল-টাইম ডাটা ফ্লো এনিমেশন (Tauri Desktop App Monorepo)</text>
   </g>
 
-  <!-- File Explorer Component -->
-  <g transform="translate(60, 245)">
-    <rect width="220" height="65" rx="10" fill="#0f172a" stroke="#1e293b" stroke-width="1.5"/>
-    <text x="20" y="28" fill="#ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="600">File Tree Explorer</text>
-    <text x="20" y="46" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="10">প্রজেক্ট ফাইল ও Monaco Editor</text>
+  <!-- ==================== LAYER 1: TAURI FRONTEND (CYAN) ==================== -->
+  <g transform="translate(50, 110)">
+    <!-- Container Box -->
+    <rect width="280" height="560" rx="18" fill="url(#uiBoxGrad)" stroke="#06b6d4" stroke-width="2" class="glow-box-cyan" />
+    <!-- Header Indicator -->
+    <rect x="20" y="20" width="100" height="22" rx="11" fill="#06b6d4" fill-opacity="0.15" />
+    <text x="70" y="35" text-anchor="middle" fill="#06b6d4" font-size="11" font-weight="800" letter-spacing="0.5">1. DESKTOP CLIENT</text>
+    
+    <!-- Subtitle -->
+    <text x="20" y="70" fill="#f8fafc" font-size="15" font-weight="600">Tauri App (React/TS)</text>
+    <text x="20" y="88" fill="#64748b" font-size="11">ফ্লোটিং উইজেট ও ইন্টারঅ্যাক্টিভ লেআউট</text>
+
+    <!-- Component Node 1: Chat UI -->
+    <g transform="translate(20, 110)" class="float-item">
+      <rect width="240" height="75" rx="10" fill="#0b0f19" stroke="#1e293b" stroke-width="1.5" />
+      <text x="15" y="25" fill="#f1f5f9" font-size="13" font-weight="600">ChatUI.tsx</text>
+      <text x="15" y="42" fill="#94a3b8" font-size="10.5">রিয়েল-টাইম চ্যাট ও প্রম্পট ইনপুট</text>
+      <text x="15" y="58" fill="#06b6d4" font-size="10" font-weight="600" class="code-text">&lt;agent_step&gt; parser (Step 1-40)</text>
+    </g>
+
+    <!-- Component Node 2: Editor Pane -->
+    <g transform="translate(20, 205)" class="float-item-delayed">
+      <rect width="240" height="75" rx="10" fill="#0b0f19" stroke="#1e293b" stroke-width="1.5" />
+      <text x="15" y="25" fill="#f1f5f9" font-size="13" font-weight="600">Monaco Code Editor</text>
+      <text x="15" y="42" fill="#94a3b8" font-size="10.5">ফাইল ও প্রজেক্ট কোড এডিটর</text>
+      <text x="15" y="58" fill="#38bdf8" font-size="10" font-weight="600" class="code-text">scan_project &amp; file tree views</text>
+    </g>
+
+    <!-- Component Node 3: Interactive Terminal -->
+    <g transform="translate(20, 300)" class="float-item">
+      <rect width="240" height="75" rx="10" fill="#0b0f19" stroke="#1e293b" stroke-width="1.5" />
+      <text x="15" y="25" fill="#f1f5f9" font-size="13" font-weight="600">Terminal Log Console</text>
+      <text x="15" y="42" fill="#94a3b8" font-size="10.5">বিল্ড ও রান কমান্ডের লাইভ লক</text>
+      <text x="15" y="58" fill="#a5f3fc" font-size="9.5" class="code-text">$ npm run build / test logs</text>
+    </g>
+
+    <!-- Component Node 4: Settings & Prompts -->
+    <g transform="translate(20, 395)" class="float-item-delayed">
+      <rect width="240" height="75" rx="10" fill="#0b0f19" stroke="#1e293b" stroke-width="1.5" />
+      <text x="15" y="25" fill="#f1f5f9" font-size="13" font-weight="600">Global State Store</text>
+      <text x="15" y="42" fill="#94a3b8" font-size="10.5">Zustand persistent local storage</text>
+      <text x="15" y="58" fill="#67e8f9" font-size="9.5" class="code-text">Active convo index, api_keys, theme</text>
+    </g>
+    
+    <!-- Footer Tech Label -->
+    <text x="140" y="535" text-anchor="middle" fill="#64748b" font-size="10.5" font-weight="600" class="code-text">Tauri Window IPC (ipc_router.rs)</text>
   </g>
 
-  <!-- Terminal UI Component -->
-  <g transform="translate(60, 330)">
-    <rect width="220" height="65" rx="10" fill="#0f172a" stroke="#1e293b" stroke-width="1.5"/>
-    <text x="20" y="28" fill="#ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="600">Terminal Console UI</text>
-    <text x="20" y="46" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="10">লোকাল ও ডকার কমান্ড এন্ট্রি</text>
+  <!-- ==================== LAYER 2: LOCAL NODE DAEMON (EMERALD) ==================== -->
+  <g transform="translate(410, 110)">
+    <!-- Container Box -->
+    <rect width="300" height="560" rx="18" fill="url(#engineBoxGrad)" stroke="#10b981" stroke-width="2" class="glow-box-emerald" />
+    <!-- Header Indicator -->
+    <rect x="20" y="20" width="110" height="22" rx="11" fill="#10b981" fill-opacity="0.15" />
+    <text x="75" y="35" text-anchor="middle" fill="#10b981" font-size="11" font-weight="800" letter-spacing="0.5">2. LOCAL RUNNER</text>
+    
+    <!-- Subtitle -->
+    <text x="20" y="70" fill="#f8fafc" font-size="15" font-weight="600">Express Daemon (Port 3001)</text>
+    <text x="20" y="88" fill="#64748b" font-size="11">সেন্ট্রাল এজেন্ট ব্যাকগ্রাউন্ড সার্ভিস</text>
+
+    <!-- Component Node 1: Express Server API -->
+    <g transform="translate(20, 110)">
+      <rect width="260" height="58" rx="8" fill="#061f18" stroke="#10b981" stroke-width="1.2" />
+      <text x="15" y="24" fill="#f1f5f9" font-size="13" font-weight="600">Express Router (daemon.js)</text>
+      <text x="15" y="42" fill="#a7f3d0" font-size="10">Handles /api/chat, /api/agent/abort</text>
+    </g>
+
+    <!-- Component Node 2: Agent Runner Engine -->
+    <g transform="translate(20, 180)">
+      <rect width="260" height="58" rx="8" fill="#061f18" stroke="#10b981" stroke-width="1.2" />
+      <text x="15" y="24" fill="#f1f5f9" font-size="13" font-weight="600">Agent Core (AgentRunner.ts)</text>
+      <text x="15" y="42" fill="#a7f3d0" font-size="10">Main Loop: Thought → Act → Self-Correct</text>
+    </g>
+
+    <!-- Component Node 3: File System Watcher -->
+    <g transform="translate(20, 250)">
+      <rect width="260" height="58" rx="8" fill="#061f18" stroke="#047857" stroke-width="1" />
+      <text x="15" y="24" fill="#f1f5f9" font-size="12.5" font-weight="600">Auto-Pilot Watcher (watcher.js)</text>
+      <text x="15" y="42" fill="#86efac" font-size="10">সরাসরি TODO কমেন্ট রেজোলিউশন ও ফাইল লক</text>
+    </g>
+
+    <!-- Component Node 4: SQLite Database & RAG Indexer -->
+    <g transform="translate(20, 320)">
+      <rect width="260" height="58" rx="8" fill="#061f18" stroke="#047857" stroke-width="1" />
+      <text x="15" y="24" fill="#f1f5f9" font-size="12.5" font-weight="600">Memory &amp; RAG (SQLite)</text>
+      <text x="15" y="42" fill="#86efac" font-size="10">কোডবেজ সেমান্টিক ভেক্টর ইনডেক্স ও আরএজি</text>
+    </g>
+
+    <!-- Component Node 5: Commands Executor & Sandbox -->
+    <g transform="translate(20, 390)">
+      <rect width="260" height="58" rx="8" fill="#061f18" stroke="#047857" stroke-width="1" />
+      <text x="15" y="24" fill="#f1f5f9" font-size="12.5" font-weight="600">CLI &amp; Docker (tools/terminal)</text>
+      <text x="15" y="42" fill="#86efac" font-size="10">লোকাল টার্মিনাল রান ও ডকার স্যান্ডবক্স গেট</text>
+    </g>
+
+    <!-- Component Node 6: Telemetry Tracker -->
+    <g transform="translate(20, 460)">
+      <rect width="260" height="58" rx="8" fill="#061f18" stroke="#047857" stroke-width="1" />
+      <text x="15" y="24" fill="#f1f5f9" font-size="12.5" font-weight="600">Telemetry (CostTracker.ts)</text>
+      <text x="15" y="42" fill="#86efac" font-size="10">মডেল প্রাইসিং, latency ও রিয়েল-টাইম কস্ট</text>
+    </g>
+    
+    <!-- Footer Tech Label -->
+    <text x="150" y="535" text-anchor="middle" fill="#64748b" font-size="10.5" font-weight="600" class="code-text">Shared Core Engine Packages</text>
   </g>
 
-  <!-- Settings UI Component -->
-  <g transform="translate(60, 415)">
-    <rect width="220" height="65" rx="10" fill="#0f172a" stroke="#1e293b" stroke-width="1.5"/>
-    <text x="20" y="28" fill="#ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="600">Settings &amp; Theme Modal</text>
-    <text x="20" y="46" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="10">এপিআই কি ও মডেল কনফিগারেশন</text>
+  <!-- ==================== LAYER 3: EXTERNAL SERVICES (PURPLE) ==================== -->
+  <g transform="translate(770, 110)">
+    <!-- Container Box -->
+    <rect width="280" height="560" rx="18" fill="url(#extBoxGrad)" stroke="#8b5cf6" stroke-width="2" class="glow-box-purple" />
+    <!-- Header Indicator -->
+    <rect x="20" y="20" width="120" height="22" rx="11" fill="#8b5cf6" fill-opacity="0.15" />
+    <text x="80" y="35" text-anchor="middle" fill="#a78bfa" font-size="11" font-weight="800" letter-spacing="0.5">3. EXTERNAL APIS</text>
+    
+    <!-- Subtitle -->
+    <text x="20" y="70" fill="#f8fafc" font-size="15" font-weight="600">Cloud Integrations</text>
+    <text x="20" y="88" fill="#64748b" font-size="11">এআই ক্লাউড সার্ভিস ও ব্যাকএন্ড গেটওয়ে</text>
+
+    <!-- Component Node 1: AI Router API -->
+    <g transform="translate(20, 110)">
+      <rect width="240" height="70" rx="10" fill="#180e29" stroke="#8b5cf6" stroke-width="1.2" />
+      <text x="15" y="25" fill="#f1f5f9" font-size="13" font-weight="600">LLM Router (llm.ts)</text>
+      <text x="15" y="42" fill="#c084fc" font-size="10">মডেল রাউটিং ও স্ট্রিম ট্রান্সপোর্ট</text>
+      <text x="15" y="55" fill="#a78bfa" font-size="9.5">ProviderManager.ts gateway</text>
+    </g>
+
+    <!-- Component Node 2: Foundation Models Catalog -->
+    <g transform="translate(20, 195)">
+      <rect width="240" height="110" rx="10" fill="#180e29" stroke="#581c87" stroke-width="1" />
+      <text x="15" y="25" fill="#ffffff" font-size="13" font-weight="600">Foundation Models</text>
+      <text x="15" y="46" fill="#e9d5ff" font-size="10.5">● Google Gemini 2.5 Flash / Pro</text>
+      <text x="15" y="66" fill="#c084fc" font-size="10.5">● Anthropic Claude 3.5 Sonnet</text>
+      <text x="15" y="86" fill="#c084fc" font-size="10.5">● OpenAI GPT-4o &amp; Deepseek</text>
+    </g>
+
+    <!-- Component Node 3: SaaS Auth Server -->
+    <g transform="translate(20, 320)">
+      <rect width="240" height="70" rx="10" fill="#180e29" stroke="#581c87" stroke-width="1" />
+      <text x="15" y="25" fill="#f1f5f9" font-size="13" font-weight="600">SaaS License &amp; Auth (3002)</text>
+      <text x="15" y="42" fill="#c084fc" font-size="10.5">Google / GitHub OAuth 2.0</text>
+      <text x="15" y="58" fill="#d8b4fe" font-size="10">Active license verified &amp; token sync</text>
+    </g>
+
+    <!-- Component Node 4: Sentry Metrics -->
+    <g transform="translate(20, 405)">
+      <rect width="240" height="70" rx="10" fill="#180e29" stroke="#581c87" stroke-width="1" />
+      <text x="15" y="25" fill="#f1f5f9" font-size="13" font-weight="600">OTA Update &amp; Crash Report</text>
+      <text x="15" y="42" fill="#c084fc" font-size="10.5">ক্র্যাশ ট্র্যাকিং ও Tauri রিলিজ আপডেট</text>
+      <text x="15" y="58" fill="#d8b4fe" font-size="10">Sentry.io integration</text>
+    </g>
   </g>
+
+  <!-- ==================== LOCAL PERMANENT CONFIG FILE ==================== -->
+  <g transform="translate(410, 690)">
+    <rect width="300" height="65" rx="12" fill="url(#uiBoxGrad)" stroke="#eab308" stroke-width="1.5" filter="url(#glowAmber)"/>
+    <!-- File Icon -->
+    <path d="M 25,18 L 38,18 L 44,24 L 44,45 L 25,45 Z" fill="none" stroke="#eab308" stroke-width="2"/>
+    <text x="58" y="30" fill="#ffffff" font-size="12.5" font-weight="700">~/.istiyak_agent_config.json</text>
+    <text x="58" y="46" fill="#fef08a" font-size="10.5">গোপন API কী, টোকেন ও প্রজেক্ট সেটিংস স্টোরেজ</text>
+  </g>
+
+
+  <!-- ==================== ELEGANT CONNECTIVE DATAFLOW LINES ==================== -->
   
-  <text x="170" y="605" text-anchor="middle" fill="#64748b" font-family="system-ui, sans-serif" font-size="11" font-weight="600">Tauri Client (React/TS)</text>
+  <!-- Flow 1: Client UI -> Local Express API (HTTP Request / Stream) -->
+  <path d="M 330,290 C 375,290 365,245 410,245" fill="none" stroke="#06b6d4" stroke-width="3.5" marker-end="url(#arrCyan)" />
+  <path d="M 330,290 C 375,290 365,245 410,245" fill="none" stroke="#22d3ee" stroke-width="1.5" class="flow-line flow-fast" />
+  <rect x="348" y="222" width="46" height="18" rx="4" fill="#0a0b10" stroke="#06b6d4" stroke-width="1"/>
+  <text x="371" y="234" text-anchor="middle" fill="#06b6d4" font-size="9" font-weight="800" class="code-text">SSE Stream</text>
 
+  <!-- Flow 2: Local Daemon -> Client Terminal Console (Terminal log broadcast) -->
+  <path d="M 410,480 C 360,480 370,445 330,445" fill="none" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrEmerald)" />
+  <path d="M 410,480 C 360,480 370,445 330,445" fill="none" stroke="#34d399" stroke-width="1" class="flow-reverse" />
+  <text x="370" y="475" text-anchor="middle" fill="#10b981" font-size="9.5" font-weight="700">IPC Logs</text>
 
-  <!-- ==================== COLUMN 2: LOCAL NODE.JS ENGINE ==================== -->
-  <!-- Container border -->
-  <rect x="360" y="100" width="280" height="520" rx="16" fill="url(#engineGrad)" stroke="#115e59" stroke-width="2" filter="url(#emeraldGlow)"/>
-  <text x="500" y="130" text-anchor="middle" fill="#10b981" font-family="system-ui, sans-serif" font-size="15" font-weight="700" letter-spacing="1">
-    2. NODE.JS LOCAL ENGINE
-  </text>
+  <!-- Flow 3: Local Daemon -> External LLM Router gateway (LLM API Request) -->
+  <path d="M 710,265 C 740,265 740,250 770,250" fill="none" stroke="#10b981" stroke-width="3" marker-end="url(#arrEmerald)" />
+  <path d="M 710,265 C 740,265 740,250 770,250" fill="none" stroke="#34d399" stroke-width="1" class="flow-line" />
+  <text x="740" y="240" text-anchor="middle" fill="#10b981" font-size="9.5" font-weight="700">POST</text>
 
-  <!-- Express API Server -->
-  <g transform="translate(380, 150)">
-    <rect width="240" height="55" rx="8" fill="#022c22" stroke="#10b981" stroke-width="1.5"/>
-    <text x="15" y="25" fill="#ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="600">Express API (agent2.js)</text>
-    <text x="15" y="42" fill="#a7f3d0" font-family="system-ui, sans-serif" font-size="9.5">Port 3001 - সেন্ট্রাল গেটওয়ে রাউটার</text>
+  <!-- Flow 4: LLM Router -> Local Daemon (Stream response chunks) -->
+  <path d="M 770,290 C 740,290 740,305 710,305" fill="none" stroke="#8b5cf6" stroke-width="3" marker-end="url(#arrPurple)" />
+  <path d="M 770,290 C 740,290 740,305 710,305" fill="none" stroke="#a78bfa" stroke-width="1" class="flow-reverse" />
+  <text x="740" y="315" text-anchor="middle" fill="#a78bfa" font-size="9.5" font-weight="700">XML Chunks</text>
+
+  <!-- Flow 5: Local Daemon -> Config file updates -->
+  <path d="M 560,518 L 560,690" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arrGray)" />
+
+  <!-- Flow 6: Local Settings to Config File directly -->
+  <path d="M 190,670 C 190,725 360,725 410,725" fill="none" stroke="#eab308" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#arrGray)" />
+  <text x="280" y="740" text-anchor="middle" fill="#eab308" font-size="10" font-weight="700">Write Secrets &amp; Keys</text>
+
+  <!-- Flow 7: Local Daemon to SaaS Authentication Check -->
+  <path d="M 710,200 C 750,200 740,400 770,400" fill="none" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrPurple)" />
+  <path d="M 710,200 C 750,200 740,400 770,400" fill="none" stroke="#a78bfa" stroke-width="0.5" class="flow-line" />
+  <text x="740" y="360" text-anchor="middle" fill="#c084fc" font-size="8.5" font-weight="700">License Verification</text>
+
+  <!-- ==================== LOOP SYSTEM STEP ANIMATIONS ==================== -->
+  <g transform="translate(10, 0)">
+    <!-- Node circles for steps visual -->
+    <circle cx="560" cy="290" r="6" fill="#10b981" class="step-circle"/>
+    <circle cx="210" cy="220" r="6" fill="#06b6d4" class="step-circle"/>
+    <circle cx="910" cy="220" r="6" fill="#8b5cf6" class="step-circle"/>
   </g>
 
-  <!-- Agent Request Handler / runner.js -->
-  <g transform="translate(380, 220)">
-    <rect width="240" height="55" rx="8" fill="#022c22" stroke="#10b981" stroke-width="1.5"/>
-    <text x="15" y="25" fill="#ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="600">Agent Runner (runner.js)</text>
-    <text x="15" y="42" fill="#a7f3d0" font-family="system-ui, sans-serif" font-size="9.5">চ্যাট মেসেজ প্রসেসিং ও কনটেক্সট</text>
+  <!-- ==================== BENGALI EXPLANATORY LABELS ==================== -->
+  <g transform="translate(50, 770)" fill="#94a3b8" font-size="11.5" line-spacing="1.4">
+    <text x="0" y="0" font-weight="bold" fill="#ffffff">এজেন্ট লুপের মূল কার্যপ্রণালী:</text>
+    <text x="0" y="20">১. ইউজার চ্যাট প্যানেলে কোনো নির্দেশ দিলে Tauri UI থেকে local daemon API-তে POST request পাঠানো হয়।</text>
+    <text x="0" y="38">২. Local engine (runner.js) শুরু হয় এবং RAG এর মাধ্যমে workspace থেকে relevant কোড Context এ যুক্ত করে।</text>
+    <text x="0" y="56">৩. prompt-টি llm.js গেটওয়ে দিয়ে external Gemini/Claude এপিআই-তে পাঠানো হয়। রেসপন্স XML ও JSON আকারে প্রসেস করা হয়।</text>
+    <text x="540" y="20">৪. এআই কোনো ক্ষতিকর টার্মিনাল কমান্ড রান করতে চাইলে Approval Manager পারমিশন modal পপ-আপ করে।</text>
+    <text x="540" y="38">৫. এআই সরাসরি `precise_edit` টুল দিয়ে ফাইল এডিট করে এবং `run_command` দিয়ে বিল্ড টেস্ট করে তা কনফার্ম করে।</text>
+    <text x="540" y="56">৬. টেস্ট বা বিল্ড এরর আসলে Self-Correction লুপ পুনরায় শুরু হয় এবং সফল বিল্ড না হওয়া পর্যন্ত সর্বোচ্চ ৪০ বার চলতে পারে।</text>
   </g>
-
-  <!-- File Watcher / watcher.js -->
-  <g transform="translate(380, 290)">
-    <rect width="240" height="55" rx="8" fill="#022c22" stroke="#047857" stroke-width="1.2"/>
-    <text x="15" y="25" fill="#ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="600">FS Watcher (watcher.js)</text>
-    <text x="15" y="42" fill="#a7f3d0" font-family="system-ui, sans-serif" font-size="9.5">TODO কমেন্ট স্ক্যান ও ফাইল লক ট্র্যাকিং</text>
-  </g>
-
-  <!-- Codebase Indexer / rag.js -->
-  <g transform="translate(380, 360)">
-    <rect width="240" height="55" rx="8" fill="#022c22" stroke="#047857" stroke-width="1.2"/>
-    <text x="15" y="25" fill="#ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="600">Vector RAG (rag.js)</text>
-    <text x="15" y="42" fill="#a7f3d0" font-family="system-ui, sans-serif" font-size="9.5">কোডবেজ সার্চ ও রিলেভেন্ট কোড ফাইন্ডার</text>
-  </g>
-
-  <!-- Local CLI Exec / tools/index.js -->
-  <g transform="translate(380, 430)">
-    <rect width="240" height="55" rx="8" fill="#022c22" stroke="#047857" stroke-width="1.2"/>
-    <text x="15" y="25" fill="#ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="600">Tools Bridge (tools/index.js)</text>
-    <text x="15" y="42" fill="#a7f3d0" font-family="system-ui, sans-serif" font-size="9.5">ফাইল রাইটার ও ডকার রানার মেকানিজম</text>
-  </g>
-
-  <!-- Telemetry & Cost Tracker -->
-  <g transform="translate(380, 500)">
-    <rect width="240" height="55" rx="8" fill="#022c22" stroke="#047857" stroke-width="1.2"/>
-    <text x="15" y="25" fill="#ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="600">Metrics Tracker &amp; Cost</text>
-    <text x="15" y="42" fill="#a7f3d0" font-family="system-ui, sans-serif" font-size="9.5">টোকেন স্পিড, রেসপন্স টাইম ও কস্ট ক্যালকুলেটর</text>
-  </g>
-  
-  <text x="500" y="605" text-anchor="middle" fill="#0d9488" font-family="system-ui, sans-serif" font-size="11" font-weight="600">Local Daemon (Node.js Express)</text>
-
-
-  <!-- ==================== COLUMN 3: EXTERNAL SERVICES ==================== -->
-  <!-- Container border -->
-  <rect x="700" y="100" width="260" height="520" rx="16" fill="url(#extGrad)" stroke="#581c87" stroke-width="2" filter="url(#purpleGlow)"/>
-  <text x="830" y="130" text-anchor="middle" fill="#a855f7" font-family="system-ui, sans-serif" font-size="15" font-weight="700" letter-spacing="1">
-    3. EXTERNAL SERVICES
-  </text>
-
-  <!-- LLM Gateway -->
-  <g transform="translate(720, 160)">
-    <rect width="220" height="65" rx="10" fill="#1e1b4b" stroke="#a855f7" stroke-width="1.5"/>
-    <text x="15" y="28" fill="#ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="600">LLM Router (llm.js)</text>
-    <text x="15" y="46" fill="#c084fc" font-family="system-ui, sans-serif" font-size="10">এপিআই অথেনটিকেশন ও মডেল রাউটিং</text>
-  </g>
-
-  <!-- AI API Providers -->
-  <g transform="translate(720, 245)">
-    <rect width="220" height="95" rx="10" fill="#1e1b4b" stroke="#4a044e" stroke-width="1.2"/>
-    <text x="15" y="25" fill="#ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="600">AI Foundation Models</text>
-    <text x="15" y="45" fill="#e879f9" font-family="system-ui, sans-serif" font-size="9.5">● Google Gemini (Vertex AI / Studio)</text>
-    <text x="15" y="60" fill="#c084fc" font-family="system-ui, sans-serif" font-size="9.5">● Anthropic Claude 3.5 Sonnet</text>
-    <text x="15" y="75" fill="#c084fc" font-family="system-ui, sans-serif" font-size="9.5">● OpenAI GPT-4o &amp; Ollama Local</text>
-  </g>
-
-  <!-- Central MongoDB & Auth API -->
-  <g transform="translate(720, 360)">
-    <rect width="220" height="65" rx="10" fill="#1e1b4b" stroke="#4a044e" stroke-width="1.2"/>
-    <text x="15" y="28" fill="#ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="600">SaaS DB Gateway (Port 3002)</text>
-    <text x="15" y="46" fill="#c084fc" font-family="system-ui, sans-serif" font-size="10">ইউজার সাইন-ইন ও অ্যাক্টিভ লাইসেন্স চেক</text>
-  </g>
-
-  <!-- Sentry Crash Monitor -->
-  <g transform="translate(720, 445)">
-    <rect width="220" height="65" rx="10" fill="#1e1b4b" stroke="#4a044e" stroke-width="1.2"/>
-    <text x="15" y="28" fill="#ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="600">Sentry &amp; OTA Updates</text>
-    <text x="15" y="46" fill="#c084fc" font-family="system-ui, sans-serif" font-size="10">ক্র্যাশ মনিটরিং ও Tauri অটো আপডেট</text>
-  </g>
-  
-  <text x="830" y="605" text-anchor="middle" fill="#7e22ce" font-family="system-ui, sans-serif" font-size="11" font-weight="600">Cloud API Integration</text>
-
-
-  <!-- ==================== LOCAL CONFIG FILE ==================== -->
-  <g transform="translate(360, 680)">
-    <rect width="280" height="60" rx="12" fill="url(#storageGrad)" stroke="#4b5563" stroke-width="1.5" filter="url(#amberGlow)"/>
-    <!-- Config file icon -->
-    <path d="M 25,18 L 37,18 L 43,24 L 43,42 L 25,42 Z" fill="none" stroke="#f59e0b" stroke-width="1.5"/>
-    <text x="55" y="28" fill="#ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="700">~/.istiyak_agent_config.json</text>
-    <text x="55" y="44" fill="#fbbf24" font-family="system-ui, sans-serif" font-size="10">লোকাল সেটিংস স্টোরেজ (গোপন এপিআই কী ও টোকেন)</text>
-  </g>
-
-
-  <!-- ==================== ARROWS AND CONNECTION FLOWS ==================== -->
-  <!-- 1. ChatUI to Express API Server -->
-  <path d="M 280,180 C 330,180 330,175 370,175" fill="none" stroke="#06b6d4" stroke-width="2" marker-end="url(#arrow-cyan)"/>
-  <text x="325" y="168" text-anchor="middle" fill="#06b6d4" font-family="system-ui, sans-serif" font-size="9" font-weight="600">/api/chat</text>
-
-  <!-- 2. Terminal Console to run-command -->
-  <path d="M 280,360 C 330,360 330,195 370,195" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <text x="325" y="295" text-anchor="middle" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="8.5">/run-command</text>
-
-  <!-- 3. File Explorer scan request -->
-  <path d="M 280,270 C 315,270 340,320 370,320" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
-
-  <!-- 4. RAG Context Injection to Runner -->
-  <path d="M 500,360 L 500,285" fill="none" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrow-emerald)"/>
-  <text x="545" y="325" text-anchor="middle" fill="#10b981" font-family="system-ui, sans-serif" font-size="9" font-weight="600">RAG Context</text>
-
-  <!-- 5. Runner to LLM Gateway -->
-  <path d="M 620,240 C 660,240 670,195 710,195" fill="none" stroke="#10b981" stroke-width="2" marker-end="url(#arrow-emerald)"/>
-  <text x="665" y="210" text-anchor="middle" fill="#10b981" font-family="system-ui, sans-serif" font-size="9" font-weight="600">LLM Call</text>
-
-  <!-- 6. LLM Gateway to Model Providers -->
-  <path d="M 830,225 L 830,235" fill="none" stroke="#a855f7" stroke-width="2" marker-end="url(#arrow-purple)"/>
-
-  <!-- 7. Local Settings Modal to JSON Config -->
-  <path d="M 170,480 C 170,710 310,710 350,710" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#arrow)"/>
-  <text x="230" y="695" text-anchor="middle" fill="#fbbf24" font-family="system-ui, sans-serif" font-size="9" font-weight="600">Save Local Config</text>
-
-  <!-- 8. Express to local config for token validation -->
-  <path d="M 450,205 C 450,220 370,650 450,670" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#arrow)"/>
-
-  <!-- 9. Express to MongoDB (Auth check) -->
-  <path d="M 620,185 C 660,185 670,390 710,390" fill="none" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
-  <text x="665" y="315" text-anchor="middle" fill="#a855f7" font-family="system-ui, sans-serif" font-size="8.5">License Check</text>
 
 </svg>

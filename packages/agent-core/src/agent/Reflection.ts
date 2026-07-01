@@ -8,13 +8,14 @@ import { Message } from "@istiyak/shared-types";
  */
 export class Reflection {
   /** How often (in steps) the agent should automatically reflect */
-  private static readonly REFLECTION_INTERVAL = 5;
+  private static readonly REFLECTION_INTERVAL = 8;
 
   /** Error keywords that should trigger immediate reflection */
   private static readonly ERROR_TRIGGERS = [
-    "error:", "failed", "permission denied", "not found",
-    "enoent", "eacces", "timeout", "syntax error",
-    "cannot find", "undefined", "null reference"
+    "error:", "failed:", "permission denied", "enoent",
+    "eacces", "timeout", "syntax error",
+    "cannot find module", "null reference",
+    "command failed", "build failed", "compilation error"
   ];
 
   /**
@@ -38,8 +39,19 @@ export class Reflection {
     }
 
     // Trigger 2: Error in last tool result
+    // Safety: coerce to string in case a tool returns non-string value (e.g. objects, arrays)
     if (lastToolResult) {
-      const lower = lastToolResult.toLowerCase();
+      let strResult = "";
+      if (typeof lastToolResult === "object" && lastToolResult !== null) {
+        try {
+          strResult = JSON.stringify(lastToolResult);
+        } catch {
+          strResult = String(lastToolResult);
+        }
+      } else {
+        strResult = String(lastToolResult);
+      }
+      const lower = strResult.toLowerCase();
       const hasError = Reflection.ERROR_TRIGGERS.some(trigger => lower.includes(trigger));
       if (hasError) return true;
     }

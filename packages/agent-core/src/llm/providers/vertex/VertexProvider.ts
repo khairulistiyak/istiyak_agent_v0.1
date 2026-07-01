@@ -106,8 +106,9 @@ export class VertexProvider {
     const payload: any = {
       contents,
       generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 8192
+        responseMimeType: "application/json",
+        temperature: 0.3,
+        maxOutputTokens: 65536
       }
     };
     if (systemMessage) {
@@ -116,84 +117,107 @@ export class VertexProvider {
       };
     }
 
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
+    // Retry with exponential backoff for 429 rate limit errors
+    const MAX_RETRIES = 3;
+    const BASE_DELAY_MS = 10000; // 10 seconds base
 
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Vertex AI stream error: ${response.status} ${errText}`);
-    }
+    let lastError: Error | null = null;
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      if (attempt > 0) {
+        const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1); // 10s, 20s, 40s
+        console.log(`[VertexProvider] Rate limit retry ${attempt}/${MAX_RETRIES} — waiting ${delay / 1000}s...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
 
-    const reader = response.body?.getReader();
-    if (!reader) {
-      throw new Error("Vertex AI response body is not readable for streaming.");
-    }
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${accessToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
 
-    const decoder = new TextDecoder("utf-8");
-    let accumulatedText = "";
-    let buffer = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      const chunkStr = decoder.decode(value, { stream: true });
-      buffer += chunkStr;
-      
-      let openBraces = 0;
-      let startIdx = -1;
-      let inString = false;
-      let escaped = false;
-
-      for (let i = 0; i < buffer.length; i++) {
-        const char = buffer[i];
-        if (escaped) {
-          escaped = false;
-          continue;
+      if (!response.ok) {
+        const errText = await response.text();
+        if (response.status === 429 && attempt < MAX_RETRIES) {
+          console.warn(`[VertexProvider] 429 Rate limit hit on attempt ${attempt + 1}. Will retry...`);
+          lastError = new Error(`Vertex AI stream error: ${response.status} ${errText}`);
+          continue; // retry
         }
-        if (char === '\\') {
-          escaped = true;
-          continue;
-        }
-        if (char === '"') {
-          inString = !inString;
-          continue;
-        }
-        if (!inString) {
-          if (char === '{') {
-            if (openBraces === 0) {
-              startIdx = i;
-            }
-            openBraces++;
-          } else if (char === '}') {
-            openBraces--;
-            if (openBraces === 0 && startIdx !== -1) {
-              const jsonStr = buffer.substring(startIdx, i + 1);
-              try {
-                const parsed = JSON.parse(jsonStr);
-                const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                if (text) {
-                  accumulatedText += text;
-                  if (onChunk) onChunk(text);
-                }
-              } catch (e) {
-                // Ignore incomplete JSON chunks
+        throw new Error(`Vertex AI stream error: ${response.status} ${errText}`);
+      }
+
+      // Success — proceed with streaming
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("Vertex AI response body is not readable for streaming.");
+      }
+
+      const decoder = new TextDecoder("utf-8");
+      let accumulatedText = "";
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunkStr = decoder.decode(value, { stream: true });
+        buffer += chunkStr;
+        
+        let openBraces = 0;
+        let startIdx = -1;
+        let inString = false;
+        let escaped = false;
+
+        for (let i = 0; i < buffer.length; i++) {
+          const char = buffer[i];
+          if (escaped) {
+            escaped = false;
+            continue;
+          }
+          if (char === '\\') {
+            escaped = true;
+            continue;
+          }
+          if (char === '"') {
+            inString = !inString;
+            continue;
+          }
+          if (!inString) {
+            if (char === '{') {
+              if (openBraces === 0) {
+                startIdx = i;
               }
-              buffer = buffer.substring(i + 1);
-              i = -1;
-              startIdx = -1;
+              openBraces++;
+            } else if (char === '}') {
+              openBraces--;
+              if (openBraces === 0 && startIdx !== -1) {
+                const jsonStr = buffer.substring(startIdx, i + 1);
+                try {
+                  const parsed = JSON.parse(jsonStr);
+                  const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                  if (text) {
+                    accumulatedText += text;
+                    if (onChunk) onChunk(text);
+                  }
+                } catch (e) {
+                  // Ignore incomplete JSON chunks
+                }
+                buffer = buffer.substring(i + 1);
+                i = -1;
+                startIdx = -1;
+              }
             }
           }
         }
       }
+
+      return accumulatedText;
     }
 
-    return accumulatedText;
+    // All retries exhausted
+    throw lastError || new Error("Vertex AI request failed after all retries.");
   }
 }
+

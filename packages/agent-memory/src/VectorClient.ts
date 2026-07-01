@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import os from "os";
+import crypto from "crypto";
 
 const ALLOWED_EXTENSIONS = [
   ".js", ".ts", ".tsx", ".jsx", ".py", ".cpp", ".c", ".h", ".cs", ".net", ".css", ".json", ".md"
@@ -46,7 +47,7 @@ function buildInvertedIndex() {
 function tokenize(text: string): string[] {
   return text
     .toLowerCase()
-    .replace(/[^\w\s]/g, " ")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ") // Support Unicode letters/numbers (like Bangla)
     .split(/\s+/)
     .filter(token => token.length > 2);
 }
@@ -103,6 +104,13 @@ function walkWorkspace(dir: string, fileList: string[] = []): string[] {
   return fileList;
 }
 
+function getCachePath(workspacePath: string): string {
+  const home = os.homedir();
+  const normalized = path.resolve(workspacePath);
+  const hash = crypto.createHash("md5").update(normalized).digest("hex");
+  return path.join(home, `.istiyak_rag_cache_${hash}.json`);
+}
+
 export function indexWorkspace(workspacePath: string): boolean {
   console.log(`[RAG] Starting workspace indexing: ${workspacePath}`);
   try {
@@ -128,9 +136,8 @@ export function indexWorkspace(workspacePath: string): boolean {
     currentWorkspaceChunks = allChunks;
     buildInvertedIndex();
 
-    // Cache to disk
-    const home = os.homedir();
-    const cachePath = path.join(home, ".istiyak_rag_cache.json");
+    // Cache to disk namespaced by workspace path
+    const cachePath = getCachePath(workspacePath);
     const serialized = allChunks.map(c => ({
       text: c.text,
       filePath: c.filePath,
@@ -157,25 +164,27 @@ export interface SearchResult {
   score: number;
 }
 
-export function searchWorkspace(query: string, limit = 5): SearchResult[] {
+export function searchWorkspace(query: string, limit = 5, workspacePath?: string): SearchResult[] {
   if (!query) return [];
   const queryTokens = tokenize(query);
   if (queryTokens.length === 0) return [];
 
   let N = currentWorkspaceChunks.length;
   
-  if (N === 0) {
+  if (N === 0 && workspacePath) {
     try {
-      const home = os.homedir();
-      const cachePath = path.join(home, ".istiyak_rag_cache.json");
+      const cachePath = getCachePath(workspacePath);
       if (fs.existsSync(cachePath)) {
         const cache = JSON.parse(fs.readFileSync(cachePath, "utf-8"));
-        currentWorkspaceChunks = cache.chunks.map((c: any) => ({
-          ...c,
-          tokens: tokenize(c.text)
-        }));
-        buildInvertedIndex();
-        N = currentWorkspaceChunks.length;
+        // Extra validation
+        if (path.resolve(cache.workspacePath) === path.resolve(workspacePath)) {
+          currentWorkspaceChunks = cache.chunks.map((c: any) => ({
+            ...c,
+            tokens: tokenize(c.text)
+          }));
+          buildInvertedIndex();
+          N = currentWorkspaceChunks.length;
+        }
       }
     } catch (e: any) {
       console.warn("[RAG] Failed to restore from disk cache:", e.message);

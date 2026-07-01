@@ -16,7 +16,7 @@ export class WriteFileTool extends BaseTool {
     }
   };
 
-  async execute(params: { relPath: string; content: string }, context: ToolContext): Promise<void> {
+  async execute(params: { relPath: string; content: string }, context: ToolContext): Promise<string> {
     const fullPath = path.resolve(context.workspacePath, params.relPath);
     if (!fullPath.startsWith(path.resolve(context.workspacePath))) {
       throw new Error("Security Violation: Access denied outside workspace path.");
@@ -31,6 +31,7 @@ export class WriteFileTool extends BaseTool {
       const parent = path.dirname(fullPath);
       await fs.mkdir(parent, { recursive: true });
       await fs.writeFile(fullPath, params.content, "utf-8");
+      return `Successfully wrote ${params.content.length} characters to ${params.relPath}`;
     } finally {
       locks.delete(fullPath);
     }

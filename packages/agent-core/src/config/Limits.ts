@@ -4,10 +4,10 @@
  */
 export const LIMITS = {
   /** Maximum tokens in compressed conversation history */
-  MAX_HISTORY_TOKENS: 6000,
+  MAX_HISTORY_TOKENS: 30000,
 
   /** Maximum agent execution steps before forced stop */
-  MAX_STEPS: 40,
+  MAX_STEPS: 60,
 
   /** Docker sandbox memory limit */
   MAX_SANDBOX_MEMORY: "512m",
@@ -43,7 +43,10 @@ export const LIMITS = {
   MAX_USAGE_RECORDS: 10000,
 
   /** Reflection interval (steps between automatic reflections) */
-  REFLECTION_INTERVAL: 5,
+  REFLECTION_INTERVAL: 8,
+
+  /** Maximum session cost in USD before forced stop */
+  MAX_SESSION_COST_USD: 2.00,
 } as const;
 
 export type LimitKey = keyof typeof LIMITS;

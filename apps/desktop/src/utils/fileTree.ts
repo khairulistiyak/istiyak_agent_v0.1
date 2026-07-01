@@ -1,9 +1,4 @@
-export interface FileNode {
-  name: string;
-  path: string;
-  isDir: boolean;
-  children: FileNode[];
-}
+import { FileNode } from "../types/chat.js";
 
 export const buildTree = (files: string[]): FileNode[] => {
   const root: FileNode[] = [];

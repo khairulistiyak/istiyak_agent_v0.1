@@ -20,6 +20,9 @@ export class ApprovalManager {
     "git push --force", "git push -f",                        // Force push
     "drop database", "drop table", "truncate table",          // Database destruction
     "env", "printenv",                                         // Environment exposure
+    "npm install", "npm i ", "yarn add", "pnpm add",          // Package installation (may install malicious packages)
+    "pip install", "pip3 install",                              // Python package installation
+    "npx ",                                                     // Execute remote packages
   ];
 
   /** Commands that are always safe and never need approval */
@@ -29,6 +32,10 @@ export class ApprovalManager {
     "pwd", "whoami", "hostname",                               // System info
     "git status", "git log", "git diff", "git branch",        // Read-only git
     "npm list", "npm ls", "npm outdated", "npm audit",        // Read-only npm
+    "npm run build", "npm run test", "npm run dev",            // Standard npm scripts
+    "npm run lint", "npm run start", "npm run preview",        // Standard npm scripts
+    "npx tsc", "npx vitest", "npx jest", "npx eslint",       // Standard dev tools
+    "tsc", "vitest", "jest",                                   // Direct dev tool calls
     "node --version", "npm --version", "tsc --version",       // Version checks
     "grep", "find", "which", "type",                          // Search
   ];
@@ -39,6 +46,13 @@ export class ApprovalManager {
    * does not match a safe pattern override.
    */
   static requiresApproval(action: string, params: any, workspacePath?: string): boolean {
+    // Only dangerous file operations need explicit approval
+    // write_file and precise_edit are auto-approved within workspace for speed
+    const dangerousFileActions = ["delete_file"];
+    if (dangerousFileActions.includes(action)) {
+      return true;
+    }
+
     if (action !== "run_command") return false;
 
     const command = (params?.command || "").toLowerCase().trim();
@@ -82,8 +96,15 @@ export class ApprovalManager {
   /**
    * Returns a human-readable reason why approval is required.
    */
-  static getApprovalReason(command: string): string {
-    const cmd = command.toLowerCase();
+  static getApprovalReason(commandOrAction: string): string {
+    const cmd = commandOrAction.toLowerCase();
+    if (cmd === "write_file") return "This action creates or overwrites a file.";
+    if (cmd === "precise_edit") return "This action modifies specific parts of an existing file.";
+    if (cmd === "delete_file") return "This action deletes a file from the workspace.";
+    if (cmd === "create_directory") return "This action creates a new folder in the workspace.";
+    if (cmd === "move_file") return "This action moves a file or directory.";
+    if (cmd === "rename_file") return "This action renames a file or directory.";
+
     if (cmd.includes("rm") || cmd.includes("del")) return "This command deletes files or directories.";
     if (cmd.includes("sudo") || cmd.includes("su ")) return "This command requires elevated privileges.";
     if (cmd.includes("kill")) return "This command terminates running processes.";

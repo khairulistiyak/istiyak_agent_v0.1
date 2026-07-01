@@ -1,89 +1,80 @@
-import React, { useState, useRef, useEffect } from "react";
-import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
+import { useState, useEffect, useCallback } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/core";
 import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport, UIMessage } from "ai";
-import { Send, Bot, User, Paperclip, Terminal, Settings, History, Plus, Trash2, X, Folder, FolderOpen, File, Save, Sparkles, Activity } from "lucide-react";
-import Editor from "@monaco-editor/react";
-import { useChatStore } from "../store/chatStore";
-import { useSettingsStore } from "../store/settingsStore";
-import { API_BASE, SAAS_BASE } from "../utils/config";
-import { SettingsDrawer } from "./settings/SettingsDrawer";
-import { Button, Input } from "./ui";
-import { curatedThemes, injectTheme } from "../utils/theme";
+import { useChatStore } from "../store/chatStore.js";
+import { useSettingsStore } from "../store/settingsStore.js";
+import { API_BASE } from "../utils/config.js";
+import { parseAgentMessage } from "../utils/parser.js";
 
-interface AgentStep {
-  step: number;
-  status: 'thought' | 'action' | 'success' | 'error';
-  content: string;
-  actionName?: string;
-  params?: { [key: string]: string };
-}
+// Layout components
+import { TitleBar } from "./layout/TitleBar.js";
+import { HistoryDrawer } from "./layout/HistoryDrawer.js";
+import { IdeModeLayout } from "./layout/IdeModeLayout.js";
 
-interface PermissionRequest {
-  id: string;
-  type: 'run_command';
-  command: string;
-}
+// Chat components
+import { ChatPanel, type AgentMode } from "./chat/ChatPanel.js";
 
-function parseAgentMessage(rawText: string) {
-  const steps: AgentStep[] = [];
-  const permissionRequests: PermissionRequest[] = [];
-  
-  const stepMatches = [...rawText.matchAll(/<agent_step\s+([^>]*?)>(.*?)<\/agent_step>/gi)];
-  for (const m of stepMatches) {
-    const attrsStr = m[1];
-    const content = m[2];
-    
-    const stepAttr = attrsStr.match(/step="(\d+)"/i)?.[1];
-    const statusAttr = attrsStr.match(/status="([^"]+)"/i)?.[1];
-    const nameAttr = attrsStr.match(/name="([^"]+)"/i)?.[1];
-    
-    const stepNum = stepAttr ? parseInt(stepAttr, 10) : 1;
-    
-    const params: any = {};
-    const attrPairs = attrsStr.matchAll(/([a-zA-Z0-9_-]+)="([^"]*?)"/gi);
-    for (const ap of attrPairs) {
-      const k = ap[1];
-      const v = ap[2];
-      if (k !== "step" && k !== "status" && k !== "name") {
-        params[k] = v.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
-      }
-    }
+// Settings/Modal components
+import { SettingsDrawer } from "./settings/SettingsDrawer.js";
+import { AuthModal } from "./settings/AuthModal.js";
+import { MarketplaceModal } from "./settings/Marketplace.js";
+import { TelemetryModal } from "./settings/TelemetryModal.js";
+import { Toggle } from "./ui/Toggle.js";
 
-    steps.push({
-      step: stepNum,
-      status: (statusAttr || 'thought') as any,
-      content: content.replace(/&lt;/g, '<').replace(/&gt;/g, '>'),
-      actionName: nameAttr,
-      params
-    });
-  }
+// Custom hooks
+import { usePolling } from "../hooks/usePolling.js";
+import { usePermissions } from "../hooks/usePermissions.js";
+import { useIdeMode } from "../hooks/useIdeMode.js";
 
-  const permMatches = [...rawText.matchAll(/<permission_request\s+([^>]*?)><\/permission_request>/gi)];
-  for (const pm of permMatches) {
-    const attrsStr = pm[1];
-    const id = attrsStr.match(/id="([^"]+)"/i)?.[1];
-    const type = attrsStr.match(/type="([^"]+)"/i)?.[1];
-    const command = attrsStr.match(/command="([^"]+)"/i)?.[1];
-    
-    if (id && type && command) {
-      const decodedCommand = command.replace(/&quot;/g, '"');
-      permissionRequests.push({ id, type: type as any, command: decodedCommand });
-    }
-  }
+const getMessageText = (msg: UIMessage): string => {
+  const rawMsg = msg as any;
+  if (rawMsg.content) return rawMsg.content;
+  if (!msg.parts) return "";
+  return msg.parts
+    .filter((part) => part.type === "text")
+    .map((part: any) => part.text)
+    .join("");
+};
 
-  let cleanText = rawText.replace(/<agent_step[^>]*?>.*?<\/agent_step>/gi, "");
-  cleanText = cleanText.replace(/<permission_request[^>]*?><\/permission_request>/gi, "");
-  
-  return {
-    steps,
-    permissionRequests,
-    cleanText: cleanText.trim()
+const AGENT_MODES: Array<{ id: AgentMode; label: string; hint: string }> = [
+  { id: "chat", label: "Chat", hint: "No tools" },
+  { id: "plan", label: "Plan", hint: "No edits" },
+  { id: "assist", label: "Assist", hint: "Read only" },
+  { id: "agent", label: "Agent", hint: "Approve" },
+];
+
+const MODE_POLICY: Record<AgentMode, { title: string; detail: string; card: string; dot: string }> =
+  {
+    chat: {
+      title: "CHAT MODE",
+      detail: "Plain answer only. No file access or terminal tools.",
+      card: "border-cyan-400/60 bg-cyan-400/10 text-cyan-100",
+      dot: "bg-cyan-300",
+    },
+    plan: {
+      title: "PLAN MODE",
+      detail: "Analyze and roadmap only. No edits or commands.",
+      card: "border-violet-400/60 bg-violet-500/10 text-violet-100",
+      dot: "bg-violet-300",
+    },
+    assist: {
+      title: "ASSIST MODE",
+      detail: "Read/search allowed. Write and run actions are blocked.",
+      card: "border-amber-400/60 bg-amber-500/10 text-amber-100",
+      dot: "bg-amber-300",
+    },
+    agent: {
+      title: "AGENT MODE",
+      detail: "Read/write/run allowed with approval gates for risky tools.",
+      card: "border-emerald-400/60 bg-emerald-500/10 text-emerald-100",
+      dot: "bg-emerald-300",
+    },
   };
-}
 
 export default function ChatUI() {
+  // Settings store
   const {
     provider,
     authMethod,
@@ -107,538 +98,7 @@ export default function ChatUI() {
     updateSettings,
   } = useSettingsStore();
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [input, setInput] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const appWindow = getCurrentWindow();
-
-  // Permission state tracking
-  const [permState, setPermState] = useState<{ [reqId: string]: 'pending' | 'approved' | 'rejected' }>({});
-
-  const handlePermissionResponse = async (reqId: string, approved: boolean) => {
-    setPermState(prev => ({ ...prev, [reqId]: approved ? 'approved' : 'rejected' }));
-    try {
-      const res = await fetch(`${API_BASE}/api/agent/approve`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId: reqId, approved })
-      });
-      if (!res.ok) {
-        console.error("Failed to submit approval response");
-      }
-    } catch (err) {
-      console.error("Error submitting approval response:", err);
-    }
-  };
-
-  // Marketplace & Extension state variables
-  const [marketplaceOpen, setMarketplaceOpen] = useState(false);
-  const [customPromptTitle, setCustomPromptTitle] = useState("");
-  const [customPromptText, setCustomPromptText] = useState("");
-  const [promptsDropdownOpen, setPromptsDropdownOpen] = useState(false);
-
-  // Authentication UI state
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [authEmail, setAuthEmail] = useState("");
-  const [authPassword, setAuthPassword] = useState("");
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [authLoading, setAuthLoading] = useState(false);
-  const [authOpen, setAuthOpen] = useState(false);
-
-  // User subscription / billing status states
-  const [isActiveLicense, setIsActiveLicense] = useState(false);
-  const [isProfileFetching, setIsProfileFetching] = useState(false);
-  const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-
-  // Watcher TODOs state
-  interface WorkspaceTodo {
-    filePath: string;
-    relativePath: string;
-    line: number;
-    text: string;
-  }
-  const [todos, setTodos] = useState<WorkspaceTodo[]>([]);
-
-  // IDE layout states
-  const [isIdeMode, setIsIdeMode] = useState(false);
-  const [workspaceFiles, setWorkspaceFiles] = useState<string[]>([]);
-  const [openDirs, setOpenDirs] = useState<{ [key: string]: boolean }>({});
-  const [openedFile, setOpenedFile] = useState<string | null>(null);
-  const [fileContent, setFileContent] = useState<string>("");
-  const [editorLanguage, setEditorLanguage] = useState<string>("javascript");
-  const [isSaving, setIsSaving] = useState(false);
-  const [terminalInput, setTerminalInput] = useState("");
-  const [isTerminalRunning, setIsTerminalRunning] = useState(false);
-  const [logs, setLogs] = useState<Array<{ time: string, message: string, type: 'info' | 'error' | 'success' }>>([
-    { time: new Date().toLocaleTimeString(), message: "IDE Workspace Terminal initialized.", type: "info" }
-  ]);
-
-  // Git branch and RAG states
-  const [gitBranch, setGitBranch] = useState<string>("none");
-  const [gitInitialized, setGitInitialized] = useState<boolean>(false);
-  const [isIndexing, setIsIndexing] = useState<boolean>(false);
-  const [indexMessage, setIndexMessage] = useState<string>("Workspace index not loaded.");
-
-  // Telemetry states
-  interface TelemetryMetric {
-    timestamp: string;
-    provider: string;
-    model: string;
-    latencyMs: number;
-    tokensIn: number;
-    tokensOut: number;
-    totalTokens: number;
-    tokensPerSec: number;
-  }
-  interface TelemetryStats {
-    callCount: number;
-    avgLatencyMs: number;
-    avgSpeed: number;
-    totalTokensIn: number;
-    totalTokensOut: number;
-    history: TelemetryMetric[];
-  }
-  const [telemetry, setTelemetry] = useState<TelemetryStats | null>(null);
-  const [telemetryOpen, setTelemetryOpen] = useState<boolean>(false);
-  const [lastCompileError, setLastCompileError] = useState<string | null>(null);
-
-  const fetchTelemetry = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/telemetry/stats`);
-      const data = await res.json();
-      setTelemetry(data);
-    } catch (e) {
-      console.debug("Failed to fetch telemetry:", e);
-    }
-  };
-
-  const fetchGitStatus = async () => {
-    if (!workspacePath) return;
-    try {
-      const res = await fetch(`${API_BASE}/api/git/status?workspacePath=${encodeURIComponent(workspacePath)}`);
-      const data = await res.json();
-      setGitInitialized(!!data.initialized);
-      setGitBranch(data.branch || "none");
-    } catch (e) {
-      setGitInitialized(false);
-      setGitBranch("none");
-    }
-  };
-
-  const handleReindex = async () => {
-    if (!workspacePath) return;
-    setIsIndexing(true);
-    setIndexMessage("Indexing codebase...");
-    try {
-      const res = await fetch(`${API_BASE}/api/rag/reindex`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workspacePath })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setIndexMessage("Codebase indexed!");
-      } else {
-        setIndexMessage("Indexing failed.");
-      }
-    } catch (err) {
-      setIndexMessage("Error indexing.");
-    } finally {
-      setIsIndexing(false);
-    }
-  };
-
-  const toggleIdeMode = async () => {
-    const nextMode = !isIdeMode;
-    setIsIdeMode(nextMode);
-    try {
-      if (nextMode) {
-        await appWindow.setSize(new LogicalSize(1150, 680));
-      } else {
-        await appWindow.setSize(new LogicalSize(380, 620));
-      }
-    } catch (err) {
-      console.error("Failed to resize Tauri window:", err);
-    }
-  };
-
-  const handleOpenFile = async (relPath: string) => {
-    if (!workspacePath) return;
-    try {
-      const ext = relPath.substring(relPath.lastIndexOf(".")).toLowerCase();
-      let lang = "javascript";
-      if (ext === ".ts" || ext === ".tsx") lang = "typescript";
-      else if (ext === ".py") lang = "python";
-      else if (ext === ".css") lang = "css";
-      else if (ext === ".json") lang = "json";
-      else if (ext === ".md") lang = "markdown";
-      else if (ext === ".html") lang = "html";
-      else if (ext === ".cpp" || ext === ".h") lang = "cpp";
-      else if (ext === ".cs") lang = "csharp";
-      
-      setEditorLanguage(lang);
-      
-      const absPath = `${workspacePath}/${relPath}`;
-      const content: string = await invoke("read_file", { path: absPath });
-      setFileContent(content);
-      setOpenedFile(relPath);
-      setLogs(prev => [...prev, {
-        time: new Date().toLocaleTimeString(),
-        message: `Opened file: ${relPath}`,
-        type: "info"
-      }]);
-    } catch (err: any) {
-      console.error("Failed to read file:", err);
-      setLogs(prev => [...prev, {
-        time: new Date().toLocaleTimeString(),
-        message: `Failed to read file: ${relPath}. Error: ${err.message || err}`,
-        type: "error"
-      }]);
-    }
-  };
-
-  const handleSaveFile = async () => {
-    if (!workspacePath || !openedFile) return;
-    setIsSaving(true);
-    try {
-      const absPath = `${workspacePath}/${openedFile}`;
-      
-      // Lock validation check
-      try {
-        const locksRes = await fetch(`${API_BASE}/api/watcher/locks`);
-        if (locksRes.ok) {
-          const locks: Array<{ filePath: string, relativePath: string, owner: string }> = await locksRes.json();
-          const activeLock = locks.find(l => l.relativePath === openedFile || l.filePath === absPath);
-          if (activeLock && activeLock.owner !== "developer") {
-            throw new Error(`File is currently locked by: ${activeLock.owner}`);
-          }
-        }
-      } catch (lockErr: any) {
-        if (lockErr.message.includes("locked by")) {
-          throw lockErr;
-        }
-        console.warn("Could not verify file locks, engine may be offline:", lockErr);
-      }
-
-      await invoke("write_file", { path: absPath, content: fileContent });
-      setLogs(prev => [...prev, {
-        time: new Date().toLocaleTimeString(),
-        message: `Successfully saved file: ${openedFile}`,
-        type: "success"
-      }]);
-    } catch (err: any) {
-      console.error("Failed to save file:", err);
-      setLogs(prev => [...prev, {
-        time: new Date().toLocaleTimeString(),
-        message: `Failed to save file: ${openedFile}. Error: ${err.message || err}`,
-        type: "error"
-      }]);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleExecuteTerminalCommand = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!terminalInput.trim() || isTerminalRunning || !workspacePath) return;
-    
-    const cmd = terminalInput.trim();
-    setTerminalInput("");
-    setIsTerminalRunning(true);
-    
-    setLogs(prev => [...prev, {
-      time: new Date().toLocaleTimeString(),
-      message: `$ ${cmd}`,
-      type: "info"
-    }]);
-
-    try {
-      const res = await fetch(`${API_BASE}/api/run-command`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workspacePath, command: cmd })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Execution failed");
-      }
-      
-      const output = data.output || "";
-      const hasError = output.toLowerCase().includes("error") || output.toLowerCase().includes("failed") || output.toLowerCase().includes("exception");
-      
-      if (hasError) {
-        setLastCompileError(output);
-      } else {
-        setLastCompileError(null);
-      }
-
-      setLogs(prev => [...prev, {
-        time: new Date().toLocaleTimeString(),
-        message: output || "Command execution completed with no output.",
-        type: hasError ? "error" : "success"
-      }]);
-    } catch (err: any) {
-      const errMsg = err.message || err;
-      setLastCompileError(errMsg);
-      setLogs(prev => [...prev, {
-        time: new Date().toLocaleTimeString(),
-        message: `Command failed: ${errMsg}`,
-        type: "error"
-      }]);
-    } finally {
-      setIsTerminalRunning(false);
-    }
-  };
-
-  // Load workspace files for File Tree Explorer
-  // Poll workspace files, git status, and telemetry stats every 10s
-  useEffect(() => {
-    const pollWorkspace = async () => {
-      if (!workspacePath) return;
-      if (document.hidden) return;
-
-      try {
-        const files: string[] = await invoke("scan_project", { path: workspacePath });
-        setWorkspaceFiles(files);
-      } catch (err) {
-        console.error("Failed to scan project files:", err);
-      }
-      fetchGitStatus();
-      fetchTelemetry();
-    };
-
-    if (workspacePath) {
-      pollWorkspace();
-      handleReindex();
-      const interval = setInterval(pollWorkspace, 10000);
-
-      const handleVisibilityChange = () => {
-        if (!document.hidden) {
-          pollWorkspace();
-        }
-      };
-      document.addEventListener("visibilitychange", handleVisibilityChange);
-
-      return () => {
-        clearInterval(interval);
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
-      };
-    }
-  }, [workspacePath]);
-
-  // Settings store loaded at top
-
-  // Themes are now imported from ../utils/theme
-
-  const curatedPrompts = [
-    { title: "Code Refactorer", prompt: "Refactor this code to follow clean architecture principles, remove redundancies, and optimize execution flow: " },
-    { title: "Bug Hunter", prompt: "Analyze this code snippet for potential race conditions, edge case failures, performance bottlenecks, or hidden bugs: " },
-    { title: "SQL Optimizer", prompt: "Optimize this SQL query for execution speed, indexing utilization, and query plan efficiency: " },
-    { title: "Unit Test Writer", prompt: "Write comprehensive unit tests with edge-case validation coverage for this component using the standard testing library: " }
-  ];
-
-  const curatedExtensions = [
-    {
-      id: "git-companion",
-      name: "Git Companion",
-      description: "Provides Git workflow command shortcuts and commit message generators.",
-      commands: [
-        { name: "Git Status", command: "git status" },
-        { name: "Git Diff", command: "git diff --stat" },
-        { name: "Git Log", command: "git log -n 5 --oneline" }
-      ],
-      prompts: [
-        { title: "Commit Gen", prompt: "Generate a semantic git commit message based on these code changes: " },
-        { title: "Review Diff", prompt: "Perform a developer code review of these git diff changes: " }
-      ]
-    },
-    {
-      id: "docker-companion",
-      name: "Docker Companion",
-      description: "Provides basic container operations, images list, and Docker configuration check templates.",
-      commands: [
-        { name: "Docker Status", command: "docker ps" },
-        { name: "Docker Images", command: "docker images" },
-        { name: "Docker Info", command: "docker info" }
-      ],
-      prompts: [
-        { title: "Dockerfile Review", prompt: "Explain this Dockerfile line-by-line and identify optimization opportunities: " },
-        { title: "Compose Scaffold", prompt: "Create a docker-compose.yml configuration to run a service stack with these specs: " }
-      ]
-    }
-  ];
-
-  // Dynamically apply selected theme variable overrides on :root using utility
-  useEffect(() => {
-    injectTheme(activeTheme);
-  }, [activeTheme]);
-
-  const handleInstallPrompt = (p: { title: string, prompt: string }) => {
-    const isInstalled = installedPrompts.some(item => item.title === p.title);
-    if (isInstalled) {
-      updateSettings({
-        installedPrompts: installedPrompts.filter(item => item.title !== p.title)
-      });
-    } else {
-      updateSettings({
-        installedPrompts: [...installedPrompts, p]
-      });
-    }
-  };
-
-  const handleInstallExtension = (ext: typeof curatedExtensions[0]) => {
-    const isInstalled = installedExtensions.some(item => item.id === ext.id);
-    if (isInstalled) {
-      updateSettings({
-        installedExtensions: installedExtensions.filter(item => item.id !== ext.id),
-        installedPrompts: installedPrompts.filter(p => !ext.prompts.some(ep => ep.title === p.title))
-      });
-    } else {
-      updateSettings({
-        installedExtensions: [...installedExtensions, ext],
-        installedPrompts: [...installedPrompts, ...ext.prompts.filter(ep => !installedPrompts.some(p => p.title === ep.title))]
-      });
-    }
-  };
-
-  const handleAddCustomPrompt = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!customPromptTitle.trim() || !customPromptText.trim()) return;
-    const newPrompt = { title: customPromptTitle.trim(), prompt: customPromptText.trim() };
-    updateSettings({
-      installedPrompts: [...installedPrompts, newPrompt]
-    });
-    setCustomPromptTitle("");
-    setCustomPromptText("");
-  };
-
-  const fetchUserProfile = async () => {
-    if (!token) return;
-    setIsProfileFetching(true);
-    try {
-      const res = await fetch(`${SAAS_BASE}/api/auth/me`, {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setIsActiveLicense(!!data.isActive);
-      }
-    } catch (err) {
-      console.error("Failed to fetch user profile:", err);
-    } finally {
-      setIsProfileFetching(false);
-    }
-  };
-
-  const handleUpgradeToPro = async () => {
-    if (!token) return;
-    setCheckoutLoading(true);
-    setCheckoutError(null);
-    try {
-      const res = await fetch(`${SAAS_BASE}/api/billing/create-checkout-session`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to create checkout session");
-      }
-      if (data.url) {
-        window.open(data.url, "_blank");
-      } else {
-        throw new Error("No checkout URL returned from server.");
-      }
-    } catch (err: any) {
-      setCheckoutError(err.message || "An unexpected error occurred during upgrade.");
-    } finally {
-      setCheckoutLoading(false);
-    }
-  };
-
-  // Fetch subscription profile state on token change or profile open
-  useEffect(() => {
-    if (token) {
-      fetchUserProfile();
-    } else {
-      setIsActiveLicense(false);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    if (authOpen && token) {
-      fetchUserProfile();
-    }
-  }, [authOpen, token]);
-
-  // Load configuration settings on component mount
-  useEffect(() => {
-    loadSettings();
-  }, [loadSettings]);
-
-  // Poll configuration settings to detect dynamic browser login completion
-  useEffect(() => {
-    let interval: any;
-    if (!token) {
-      interval = setInterval(() => {
-        if (!document.hidden) {
-          loadSettings();
-        }
-      }, 3000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [token, loadSettings]);
-
-  // Start or update directory watcher when workspacePath changes
-  useEffect(() => {
-    if (workspacePath) {
-      fetch(`${API_BASE}/api/watcher/start`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workspacePath })
-      })
-        .then(res => res.json())
-        .then(data => {
-          console.log("[ChatUI] Watcher status:", data);
-        })
-        .catch(err => console.debug("[ChatUI] Failed to start watcher:", err));
-    }
-  }, [workspacePath]);
-
-  // Poll detected TODO comments from local engine
-  useEffect(() => {
-    let interval: any;
-
-    const fetchTodos = () => {
-      if (workspacePath && !document.hidden) {
-        fetch(`${API_BASE}/api/watcher/todos`)
-          .then(res => res.json())
-          .then(data => {
-            if (Array.isArray(data)) {
-              setTodos(data);
-            }
-          })
-          .catch(err => console.debug("[ChatUI] Failed to fetch todos:", err));
-      }
-    };
-
-    fetchTodos();
-    interval = setInterval(fetchTodos, 10000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [workspacePath]);
-
-  // Load chat history state from Zustand store
+  // Chat store
   const {
     conversations,
     activeId,
@@ -648,110 +108,19 @@ export default function ChatUI() {
     addMessage,
   } = useChatStore();
 
-  interface FileNode {
-    name: string;
-    path: string;
-    isDir: boolean;
-    children: FileNode[];
-  }
+  // Custom hooks
+  const polling = usePolling({ workspacePath, token, loadSettings });
+  const permissions = usePermissions();
+  const ide = useIdeMode({ workspacePath });
 
-  const buildTree = (files: string[]): FileNode[] => {
-    const root: FileNode[] = [];
-    for (const file of files) {
-      const parts = file.split("/");
-      let currentLevel = root;
-      let currentPath = "";
-      for (let i = 0; i < parts.length; i++) {
-        const part = parts[i];
-        if (!part) continue;
-        currentPath = currentPath ? `${currentPath}/${part}` : part;
-        const isDir = i < parts.length - 1;
-        let existingNode = currentLevel.find((node) => node.name === part);
-        if (!existingNode) {
-          existingNode = {
-            name: part,
-            path: currentPath,
-            isDir: isDir,
-            children: [],
-          };
-          currentLevel.push(existingNode);
-        }
-        currentLevel = existingNode.children;
-      }
-    }
-
-    const sortTree = (nodes: FileNode[]) => {
-      nodes.sort((a, b) => {
-        if (a.isDir && !b.isDir) return -1;
-        if (!a.isDir && b.isDir) return 1;
-        return a.name.localeCompare(b.name);
-      });
-      for (const node of nodes) {
-        if (node.isDir) {
-          sortTree(node.children);
-        }
-      }
-    };
-    sortTree(root);
-    return root;
-  };
-
-  const toggleDir = (dirPath: string) => {
-    setOpenDirs(prev => ({
-      ...prev,
-      [dirPath]: !prev[dirPath]
-    }));
-  };
-
-  const renderFileTree = (nodes: FileNode[], depth = 0): React.ReactNode[] => {
-    return nodes.map((node) => {
-      const isExpanded = !!openDirs[node.path];
-      const paddingLeft = `${depth * 12 + 8}px`;
-
-      if (node.isDir) {
-        return (
-          <div key={node.path} className="select-none">
-            <div
-              onClick={() => toggleDir(node.path)}
-              style={{ paddingLeft }}
-              className="flex items-center space-x-1.5 py-1 px-2 hover:bg-cyber-primary/10 rounded cursor-pointer text-xs text-cyber-textPrimary/90 hover:text-white transition-colors"
-            >
-              {isExpanded ? (
-                <FolderOpen size={14} className="text-cyber-primary shrink-0" />
-              ) : (
-                <Folder size={14} className="text-cyber-primary shrink-0" />
-              )}
-              <span className="truncate">{node.name}</span>
-            </div>
-            {isExpanded && (
-              <div className="mt-0.5">
-                {renderFileTree(node.children, depth + 1)}
-              </div>
-            )}
-          </div>
-        );
-      } else {
-        const isCurrent = openedFile === node.path;
-        return (
-          <div
-            key={node.path}
-            onClick={() => handleOpenFile(node.path)}
-            style={{ paddingLeft }}
-            className={`flex items-center space-x-1.5 py-1 px-2 rounded cursor-pointer text-xs transition-colors truncate select-none ${
-              isCurrent
-                ? "bg-cyber-primary/20 text-cyber-primary font-medium"
-                : "text-cyber-textSecondary hover:bg-white/5 hover:text-cyber-textPrimary"
-            }`}
-          >
-            <File size={13} className={`shrink-0 ${isCurrent ? "text-cyber-primary" : "text-cyber-textSecondary"}`} />
-            <span className="truncate">{node.name}</span>
-          </div>
-        );
-      }
-    });
-  };
-
-  const activeConvo = conversations.find((c) => c.id === activeId);
+  // UI state
+  const [input, setInput] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [marketplaceOpen, setMarketplaceOpen] = useState(false);
+  const [telemetryOpen, setTelemetryOpen] = useState(false);
+  const [agentMode, setAgentMode] = useState<AgentMode>("chat");
 
   // Auto-initialize conversation if list is empty
   useEffect(() => {
@@ -762,29 +131,17 @@ export default function ChatUI() {
     }
   }, [conversations, activeId, createConversation, setActiveConversation]);
 
-  // Helper to extract plain text from UIMessage parts
-  const getMessageText = (msg: UIMessage) => {
-    if (!msg.parts) return "";
-    return msg.parts
-      .filter((part) => part.type === "text")
-      .map((part: any) => part.text)
-      .join("");
-  };
-
   // Vercel AI SDK useChat Hook
-  const {
-    messages,
-    setMessages,
-    sendMessage,
-    status,
-  } = useChat({
+  const activeConvo = conversations.find((c) => c.id === activeId);
+  const { messages, setMessages, sendMessage, status, stop } = useChat({
     id: activeId || undefined,
-    messages: activeConvo?.messages.map((m) => ({
-      id: m.id,
-      role: m.role as "user" | "assistant" | "system",
-      parts: [{ type: "text" as const, text: m.content }],
-    })) || [],
-    
+    messages:
+      activeConvo?.messages.map((m) => ({
+        id: m.id,
+        role: m.role as "user" | "assistant" | "system",
+        parts: [{ type: "text" as const, text: m.content }],
+      })) || [],
+
     // Intercept default REST fetch and stream locally from local Express server
     transport: new TextStreamChatTransport({
       fetch: async (_url, options) => {
@@ -795,22 +152,12 @@ export default function ChatUI() {
         const reqBody = JSON.parse(options.body as string);
         const userMessages = reqBody.messages;
         const lastUserMsg = userMessages[userMessages.length - 1];
-
-        // Helper to extract content from UIMessage
-        const getMsgContent = (m: any) => {
-          if (!m.parts) return m.content || "";
-          return m.parts
-            .filter((p: any) => p.type === "text")
-            .map((p: any) => p.text)
-            .join("");
-        };
-
-        const lastUserMsgText = getMsgContent(lastUserMsg);
+        const lastUserMsgText = getMessageText(lastUserMsg);
 
         // Save user message to Zustand history store
         if (activeId) {
-          const currentConvo = useChatStore.getState().conversations.find(c => c.id === activeId);
-          const alreadyHasUserMsg = currentConvo?.messages.some(m => m.id === lastUserMsg.id);
+          const currentConvo = useChatStore.getState().conversations.find((c) => c.id === activeId);
+          const alreadyHasUserMsg = currentConvo?.messages.some((m) => m.id === lastUserMsg.id);
           if (!alreadyHasUserMsg) {
             addMessage(activeId, {
               id: lastUserMsg.id,
@@ -823,7 +170,8 @@ export default function ChatUI() {
         // Get config from useSettingsStore
         const settings = useSettingsStore.getState();
         const activeProvider = settings.provider;
-        const activeModel = settings.selectedModel === "custom" ? settings.customModel : settings.selectedModel;
+        const activeModel =
+          settings.selectedModel === "custom" ? settings.customModel : settings.selectedModel;
         const activeApiKey = settings.apiKey;
 
         if (settings.authMethod === "apiKey" && !activeApiKey && activeProvider !== "ollama") {
@@ -833,28 +181,43 @@ export default function ChatUI() {
               const encoder = new TextEncoder();
               controller.enqueue(encoder.encode(errorMsg));
               controller.close();
-            }
+            },
           });
-          return new Response(errorStream, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+          return new Response(errorStream, {
+            headers: { "Content-Type": "text/plain; charset=utf-8" },
+          });
         }
 
-        if (settings.authMethod === "serviceAccount" && activeProvider === "gemini" && !settings.serviceAccountPath) {
+        if (
+          settings.authMethod === "serviceAccount" &&
+          activeProvider === "gemini" &&
+          !settings.serviceAccountPath
+        ) {
           const errorMsg = `Error: Service Account JSON path is not configured. Please open Settings and set it.`;
           const errorStream = new ReadableStream({
             start(controller) {
               const encoder = new TextEncoder();
               controller.enqueue(encoder.encode(errorMsg));
               controller.close();
-            }
+            },
           });
-          return new Response(errorStream, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+          return new Response(errorStream, {
+            headers: { "Content-Type": "text/plain; charset=utf-8" },
+          });
         }
 
         const mappedMessages = userMessages.map((m: any) => ({
           id: m.id,
           role: m.role,
-          content: getMsgContent(m),
+          content: getMessageText(m),
         }));
+
+        // Truncate to last 60 messages to prevent oversized payloads
+        const MAX_MESSAGES_TO_SEND = 60;
+        const truncatedMessages =
+          mappedMessages.length > MAX_MESSAGES_TO_SEND
+            ? [mappedMessages[0], ...mappedMessages.slice(-MAX_MESSAGES_TO_SEND + 1)]
+            : mappedMessages;
 
         // Call local Express engine
         const response = await fetch(`${API_BASE}/api/chat`, {
@@ -863,7 +226,7 @@ export default function ChatUI() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            messages: mappedMessages,
+            messages: truncatedMessages,
             provider: activeProvider,
             model: activeModel,
             authMethod: settings.authMethod,
@@ -874,7 +237,10 @@ export default function ChatUI() {
             workspacePath: settings.workspacePath,
             googleSearchEnabled: settings.googleSearchEnabled,
             cloudSandboxEnabled: settings.cloudSandboxEnabled,
+            dockerSandboxEnabled: settings.dockerSandboxEnabled,
+            sandboxImage: settings.sandboxImage,
             token: settings.token,
+            agentMode,
           }),
         });
 
@@ -883,19 +249,7 @@ export default function ChatUI() {
           throw new Error(`Engine request failed: ${response.status} ${errText}`);
         }
 
-        // Save placeholder for assistant response in Zustand history store
-        const assistantMsgId = "assistant-" + Date.now();
-        if (activeId) {
-          addMessage(activeId, {
-            id: assistantMsgId,
-            role: "assistant",
-            content: "",
-          });
-        }
-
         const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-        let accumulatedText = "";
 
         const stream = new ReadableStream({
           async start(controller) {
@@ -904,25 +258,12 @@ export default function ChatUI() {
                 while (true) {
                   const { done, value } = await reader.read();
                   if (done) break;
-                  
-                  const text = decoder.decode(value, { stream: true });
-                  accumulatedText += text;
-                  
-                  // Live update the assistant message in Zustand store
-                  if (activeId) {
-                    useChatStore.getState().updateLastMessageContent(activeId, accumulatedText);
-                  }
-                  
                   controller.enqueue(value);
                 }
               }
             } catch (streamErr: any) {
               console.error("Stream reading error:", streamErr);
               const errChunk = `\n\n[Generation Error: ${streamErr.message || streamErr}]`;
-              accumulatedText += errChunk;
-              if (activeId) {
-                useChatStore.getState().updateLastMessageContent(activeId, accumulatedText);
-              }
               const encoder = new TextEncoder();
               controller.enqueue(encoder.encode(errChunk));
             } finally {
@@ -942,8 +283,51 @@ export default function ChatUI() {
 
   const isLoading = status === "streaming" || status === "submitted";
 
-  // Sync Vercel AI SDK messages list when switching between conversation threads
+  // Trigger timeout on new pending permission requests
   useEffect(() => {
+    messages.forEach((msg) => {
+      if (msg.role === "assistant") {
+        const text = getMessageText(msg);
+        if (text.includes("permission_request")) {
+          const parsed = parseAgentMessage(text);
+          parsed.permissionRequests.forEach((req) => {
+            permissions.addPermissionTimeout(req.id);
+          });
+        }
+      }
+    });
+  }, [messages, permissions.addPermissionTimeout]);
+
+  // Sync messages between Vercel AI SDK (useChat) and Zustand store
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (activeId && messages.length > 0) {
+      const currentConvo = useChatStore.getState().conversations.find((c) => c.id === activeId);
+      if (currentConvo) {
+        const currentMsgCount = currentConvo.messages.length;
+        const hookMsgCount = messages.length;
+        if (hookMsgCount > currentMsgCount) {
+          for (let i = currentMsgCount; i < hookMsgCount; i++) {
+            const msg = messages[i];
+            const msgText = getMessageText(msg);
+            if (msgText) {
+              useChatStore.getState().addMessage(activeId, {
+                id: msg.id,
+                role: msg.role as "user" | "assistant" | "system",
+                content: msgText,
+              });
+            }
+          }
+        }
+      }
+    }
+  }, [activeId, isLoading, messages.length]);
+
+  // Load messages from Zustand when switching to a different conversation
+  useEffect(() => {
+    if (isLoading) return;
+
     const convo = useChatStore.getState().conversations.find((c) => c.id === activeId);
     if (convo) {
       setMessages(
@@ -956,897 +340,280 @@ export default function ChatUI() {
     } else {
       setMessages([]);
     }
-  }, [activeId, setMessages]);
+  }, [activeId, setMessages, isLoading]);
 
-  // Scroll to bottom on new message additions or active text generation
+  // Settings loaded at mount
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
+    loadSettings();
+  }, [loadSettings]);
 
-  const handleMinimize = async () => {
+  // Abort running agent
+  const handleAbortAgent = useCallback(async () => {
     try {
-      await appWindow.minimize();
+      stop();
+      const res = await fetch(`${API_BASE}/api/agent/abort`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      console.log("[ChatUI] Abort response:", data);
     } catch (err) {
-      console.error("Failed to minimize window:", err);
+      console.error("Failed to abort agent:", err);
     }
-  };
+  }, [stop]);
 
-  const handleClose = async () => {
-    try {
-      await appWindow.close();
-    } catch (err) {
-      console.error("Failed to close window:", err);
-    }
-  };
-
-  const handleExpand = async () => {
-    try {
-      await appWindow.toggleMaximize();
-    } catch (err) {
-      console.error("Failed to toggle maximize:", err);
-    }
-  };
-
-  const handleSend = () => {
+  // Send message
+  const handleSend = useCallback(() => {
     if (!input.trim() || isLoading) return;
     sendMessage({
       role: "user" as const,
-      parts: [{ type: "text" as const, text: input }]
+      parts: [{ type: "text" as const, text: input }],
     });
     setInput("");
-  };
+  }, [input, isLoading, sendMessage]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
+  const appWindow = getCurrentWindow();
 
-  // Helper formatter to display structured markdown (bold, list bullets, code blocks)
-  const renderMessageContent = (text: string) => {
-    const codeBlocks = text.split("```");
-    return codeBlocks.map((block, index) => {
-      if (index % 2 === 1) {
-        // Render Code block
-        const lines = block.trim().split("\n");
-        const language = lines[0].match(/^[a-zA-Z0-9_-]+$/) ? lines[0] : "";
-        const code = language ? lines.slice(1).join("\n") : lines.join("\n");
-        return (
-          <div key={index} className="my-2.5 border border-cyber-cardBorder bg-cyber-dark/90 rounded-xl p-3 font-mono text-xs overflow-x-auto text-emerald-400 select-text">
-            {language && <div className="text-[10px] text-cyber-textSecondary mb-1.5 uppercase font-bold tracking-wider">{language}</div>}
-            <pre><code>{code}</code></pre>
-          </div>
-        );
-      } else {
-        // Render plain text with inline code blocks, bold text, list spacing, and linebreaks
-        const lines = block.split("\n");
-        return lines.map((line, lIdx) => {
-          const isBullet = line.trim().startsWith("- ") || line.trim().startsWith("* ");
-          const cleanLine = isBullet ? line.trim().substring(2) : line;
-
-          const formattedLine = cleanLine.split("`").map((chunk, cIdx) => {
-            if (cIdx % 2 === 1) {
-              return (
-                <code key={cIdx} className="bg-cyber-dark/80 text-cyber-primary px-1.5 py-0.5 rounded font-mono text-xs select-text">
-                  {chunk}
-                </code>
-              );
-            }
-            return chunk.split("**").map((part, bIdx) => {
-              if (bIdx % 2 === 1) {
-                return (
-                  <strong key={bIdx} className="text-cyber-primary font-semibold">
-                    {part}
-                  </strong>
-                );
-              }
-              return part;
-            });
-          });
-
-          if (isBullet) {
-            return (
-              <div key={lIdx} className="flex items-start space-x-2 my-1 ml-2">
-                <span className="text-cyber-primary mt-1">•</span>
-                <span className="flex-1">{formattedLine}</span>
-              </div>
-            );
-          }
-          return (
-            <div key={lIdx} className="min-h-[1.25em]">
-              {formattedLine}
-            </div>
-          );
-        });
-      }
-    });
-  };
-
-  const handleAuthSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!authEmail || !authPassword) {
-      setAuthError("Please fill in all fields.");
-      return;
-    }
-    setAuthError(null);
-    setAuthLoading(true);
-
+  const handleClose = useCallback(async () => {
     try {
-      const endpoint = authMode === "login" ? "login" : "register";
-      const response = await fetch(`${SAAS_BASE}/api/auth/${endpoint}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: authEmail,
-          password: authPassword,
-        }),
-      });
+      await appWindow.close();
+    } catch (err) {
+      console.error(err);
+    }
+  }, [appWindow]);
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Authentication failed");
+  const handleMinimize = useCallback(async () => {
+    try {
+      await appWindow.minimize();
+    } catch (err) {
+      console.error(err);
+    }
+  }, [appWindow]);
+
+  const handleExpand = useCallback(async () => {
+    try {
+      await appWindow.toggleMaximize();
+    } catch (err) {
+      console.error(err);
+    }
+  }, [appWindow]);
+
+  const renderToggle = useCallback((checked: boolean, onChange: () => void, disabled?: boolean) => {
+    return <Toggle active={checked} onChange={onChange} disabled={disabled} />;
+  }, []);
+
+  const handleOpenWorkspace = useCallback(async () => {
+    try {
+      const selected: string = await invoke("select_directory");
+      if (selected) {
+        updateSettings({ workspacePath: selected });
       }
-
-      // Save token and email in settings store
-      await updateSettings({
-        token: data.token,
-        userEmail: data.email,
-      });
-      setAuthOpen(false);
-    } catch (err: any) {
-      setAuthError(err.message || "An unexpected error occurred.");
-    } finally {
-      setAuthLoading(false);
+    } catch (err) {
+      console.log("Directory selection cancelled or failed:", err);
     }
-  };
+  }, [updateSettings]);
 
-  const renderChatMessage = (msg: any) => {
-    if (msg.role === "user") {
-      return (
-        <div key={msg.id} className="flex justify-end w-full animate-slide-up">
-          <div className="max-w-[80%] px-4 py-2.5 bg-[#121316] border border-[#1c1e24] text-white rounded-[10px] text-[11px] leading-relaxed select-text shadow-sm">
-            {renderMessageContent(getMessageText(msg))}
-          </div>
-        </div>
-      );
-    }
-
-    const { steps, permissionRequests, cleanText } = parseAgentMessage(getMessageText(msg));
-    return (
-      <div key={msg.id} className="w-full flex flex-col items-start space-y-1.5 animate-slide-up">
-        <span className="font-mono text-[8.5px] font-bold text-cyber-textMuted tracking-wider">COMPANION</span>
-        
-        <div className="w-full space-y-3">
-          {steps.length > 0 && (
-            <div className="w-full bg-[#0b0c0e] rounded-lg p-4 font-mono select-none my-3 space-y-3.5">
-              <div className="text-[8px] font-bold text-[#44444a] tracking-wider uppercase select-none">
-                ACTIVE WORKFLOW EXECUTION
-              </div>
-              <div className="space-y-2.5 px-1 font-bold text-[8px]">
-                {steps.map((s, idx) => {
-                  let dotColor = "bg-[#22242a]";
-                  let textColor = "text-[#44444a]";
-                  let rightText = "";
-                  let rightColor = "text-[#44444a]";
-
-                  if (s.status === "success") {
-                    dotColor = "bg-[#10b981]";
-                    textColor = "text-[#10b981]";
-                    rightText = s.params?.duration ? `${s.params.duration}s` : "0.8s";
-                    rightColor = "text-[#44444a]";
-                  } else if (s.status === "action" || s.status === "thought") {
-                    dotColor = "bg-[#5f8aa8] animate-pulse";
-                    textColor = "text-[#d1d5db]";
-                    rightText = "ACTIVE";
-                    rightColor = "text-[#5f8aa8]";
-                  }
-
-                  const displayContent = s.actionName 
-                    ? `${s.actionName.replace(/_/g, " ")}: ${s.content || "working"}`
-                    : s.content || "Thinking...";
-
-                  return (
-                    <div key={idx} className="flex justify-between items-center leading-normal">
-                      <div className="flex items-center space-x-2">
-                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
-                        <span className={textColor}>
-                          {displayContent}
-                        </span>
-                      </div>
-                      <span className={`${rightColor} shrink-0`}>{rightText}</span>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="px-1 space-y-2 pt-1">
-                {(() => {
-                  const completedCount = steps.filter(s => s.status === "success").length;
-                  const currentStepNum = completedCount + (steps.some(s => s.status === "action" || s.status === "thought") ? 1 : 0);
-                  const currentStepStr = String(currentStepNum).padStart(2, '0');
-                  const totalStepsStr = String(steps.length).padStart(2, '0');
-                  const percent = Math.round((completedCount / steps.length) * 100);
-                  return (
-                    <>
-                      <div className="w-full h-[1px] bg-[#1c1e24] overflow-hidden">
-                        <div 
-                          className="h-full bg-white opacity-60 transition-all duration-500" 
-                          style={{ width: `${percent}%` }} 
-                        />
-                      </div>
-                      <div className="text-[7.5px] text-[#44444a] font-mono uppercase tracking-wider">
-                        {currentStepStr}/{totalStepsStr} • {percent}% completed
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-            </div>
-          )}
-
-          {permissionRequests.map((req) => {
-            const state = permState[req.id] || "pending";
-            return (
-              <div key={req.id} className="border border-amber-500/35 bg-amber-500/5 rounded-xl p-3.5 space-y-3 text-xs select-none my-2.5 max-w-[90%]">
-                <div className="font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
-                  <span>⚠️ Execution Permission Required</span>
-                </div>
-                <p className="text-cyber-textSecondary text-[11.5px] leading-relaxed">
-                  এজেন্ট আপনার লোকাল ওয়ার্কস্পেসে নিচের কমান্ডটি রান করার অনুমতি চাচ্ছে:
-                </p>
-                <code className="block bg-[#0b0c0e] p-2 rounded text-white font-mono border border-[#1c1e24] text-[10.5px] break-all whitespace-pre-wrap">
-                  {req.command}
-                </code>
-                
-                {state === "pending" ? (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handlePermissionResponse(req.id, true)}
-                      className="flex-1 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-cyber-dark font-bold rounded-lg transition-colors cursor-pointer text-[11px]"
-                    >
-                      Approve (রান করো)
-                    </button>
-                    <button
-                      onClick={() => handlePermissionResponse(req.id, false)}
-                      className="flex-1 py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-400 font-bold rounded-lg transition-colors cursor-pointer text-[11px]"
-                    >
-                      Block (রান করিও না)
-                    </button>
-                  </div>
-                ) : (
-                  <div className={`text-center py-1 font-semibold rounded text-[11px] ${
-                    state === "approved" ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
-                  }`}>
-                    {state === "approved" ? "✓ APPROVED & EXECUTED" : "✗ BLOCKED BY USER"}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          {cleanText && (
-            <div className="text-[11px] font-medium leading-relaxed text-[#d1d5db] select-text w-full">
-              {renderMessageContent(cleanText)}
-            </div>
-          )}
-
-          <div className="font-mono text-[9px] text-cyber-textMuted pt-1 select-none">
-            {(() => {
-              const textVal = getMessageText(msg);
-              const outTokens = Math.round(textVal.length / 4) || 12;
-              const inTokens = Math.round(textVal.length * 0.8) || 2500;
-              const totalTokens = inTokens + outTokens;
-              const cost = (inTokens * 0.000000075 + outTokens * 0.0000003).toFixed(6);
-              return `cost: $${cost}  |  tokens: ${totalTokens} (${inTokens} in / ${outTokens} out)`;
-            })()}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderToggle = (active: boolean, onChange: () => void, disabled = false) => {
-    return (
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={onChange}
-        className={`relative inline-flex h-3.5 w-7 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
-          active ? "bg-[#10b981]/30" : "bg-[#1c1e24]"
-        }`}
-      >
-        <span
-          className={`pointer-events-none inline-block h-2.5 w-2.5 transform rounded-full transition duration-200 ease-in-out mt-[2px] ml-[2px] ${
-            active ? "bg-[#10b981] translate-x-[14px]" : "bg-[#44444a] translate-x-0"
-          }`}
-        />
-      </button>
-    );
-  };
+  const currentPolicy = MODE_POLICY[agentMode];
 
   return (
     <div className="relative flex flex-col h-screen w-full bg-cyber-dark border border-cyber-cardBorder rounded-xl overflow-hidden shadow-2xl animate-fade-in text-cyber-textPrimary">
-      
-      <header
-        data-tauri-drag-region
-        className="relative z-20 flex items-center justify-between px-4 py-3 bg-cyber-dark cursor-grab active:cursor-grabbing select-none"
-      >
-        {/* macOS-style Window controls on the top-left (Subtle Flat Gray default, lights up on group hover) */}
-        <div className="flex items-center space-x-2 group/traffic w-[64px] z-30" data-tauri-drag-region>
-          <button
-            onClick={handleClose}
-            className="w-2.5 h-2.5 rounded-full bg-[#22242a] group-hover/traffic:bg-[#ff5f56] flex items-center justify-center text-transparent group-hover/traffic:text-[#4c0002] transition-all duration-150 cursor-pointer relative"
-            title="Close"
-          >
-            <span className="absolute text-[7px] font-bold opacity-0 group-hover/traffic:opacity-100 transition-opacity leading-none select-none bottom-[1.5px] pointer-events-none">×</span>
-          </button>
-          <button
-            onClick={handleMinimize}
-            className="w-2.5 h-2.5 rounded-full bg-[#22242a] group-hover/traffic:bg-[#ffbd2e] flex items-center justify-center text-transparent group-hover/traffic:text-[#5c3e00] transition-all duration-150 cursor-pointer relative"
-            title="Minimize"
-          >
-            <span className="absolute text-[7px] font-bold opacity-0 group-hover/traffic:opacity-100 transition-opacity leading-none select-none bottom-[2px] pointer-events-none">-</span>
-          </button>
-          <button
-            onClick={handleExpand}
-            className="w-2.5 h-2.5 rounded-full bg-[#22242a] group-hover/traffic:bg-[#27c93f] flex items-center justify-center text-transparent group-hover/traffic:text-[#024d00] transition-all duration-150 cursor-pointer relative"
-            title="Maximize"
-          >
-            <span className="absolute text-[5px] font-bold opacity-0 group-hover/traffic:opacity-100 transition-opacity select-none leading-none bottom-[1.5px] pointer-events-none">+</span>
-          </button>
-        </div>
+      <TitleBar
+        engineStatus={polling.engineStatus}
+        isLoading={isLoading}
+        token={token}
+        userEmail={userEmail}
+        onClose={handleClose}
+        onMinimize={handleMinimize}
+        onExpand={handleExpand}
+        onAuthOpen={() => setAuthOpen(true)}
+        onSettingsOpen={() => setSettingsOpen(true)}
+        onHistoryOpen={() => setSidebarOpen(true)}
+      />
 
-        {/* Centered Title */}
-        <div className="flex items-center justify-center space-x-2 pointer-events-none flex-1" data-tauri-drag-region>
-          <div className="relative pointer-events-none">
-            <span className="flex h-1.5 w-1.5 pointer-events-none">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10b981] opacity-75 pointer-events-none"></span>
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#10b981] pointer-events-none"></span>
-            </span>
-          </div>
-          <span className="font-extrabold text-[9px] tracking-wider uppercase text-[#88888c] pointer-events-none" data-tauri-drag-region>
-            {isLoading ? "GENERATING..." : "ISTIYAK COMPANION"}
-          </span>
-        </div>
-
-        {/* Action Toggle buttons on top-right */}
-        <div className="flex items-center justify-end space-x-1.5 z-30">
-          <button
-            onClick={() => setAuthOpen(true)}
-            className="p-1.5 rounded-lg text-cyber-textMuted hover:text-white transition-colors cursor-pointer"
-            title={token ? `Logged in as ${userEmail}` : "Account Login"}
-          >
-            <User size={14} className={token ? "text-[#10b981]" : "text-cyber-textMuted"} />
-          </button>
-          <button
-            onClick={() => setSettingsOpen(true)}
-            className="p-1.5 rounded-lg text-cyber-textMuted hover:text-white transition-colors cursor-pointer"
-            title="Settings & System Config"
-          >
-            <Settings size={14} />
-          </button>
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-1.5 rounded-lg text-cyber-textMuted hover:text-white transition-colors mr-1 cursor-pointer"
-            title="Chat History"
-          >
-            <History size={14} />
-          </button>
-        </div>
-      </header>
-
-      {isIdeMode ? (
-        <div className="flex-1 flex flex-row overflow-hidden">
-          {/* Left Panel: File Explorer */}
-          <div className="w-[240px] bg-cyber-dark border-r border-cyber-cardBorder flex flex-col overflow-hidden">
-            <div className="p-3 border-b border-cyber-cardBorder/40 flex items-center justify-between select-none">
-              <span className="font-semibold text-xs tracking-wider uppercase text-cyber-textPrimary/80">File Explorer</span>
-              <button 
-                onClick={async () => {
-                  if (workspacePath) {
-                    try {
-                      const files: string[] = await invoke("scan_project", { path: workspacePath });
-                      setWorkspaceFiles(files);
-                    } catch (err) {
-                      console.error("Failed to scan project files:", err);
-                    }
-                  }
-                }}
-                className="p-1 rounded text-cyber-textSecondary hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
-                title="Refresh File Explorer"
-              >
-                <Plus size={12} className="rotate-45" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
-              {workspacePath ? (
-                workspaceFiles.length === 0 ? (
-                  <p className="text-[10px] text-cyber-textSecondary italic p-2">Empty or scanning...</p>
-                ) : (
-                  renderFileTree(buildTree(workspaceFiles))
-                )
-              ) : (
-                <div className="text-center p-4">
-                  <p className="text-[10px] text-cyber-textMuted mb-2">No workspace selected.</p>
-                  <button
-                    onClick={async () => {
-                      try {
-                        const selected: string = await invoke("select_directory");
-                        if (selected) {
-                          updateSettings({ workspacePath: selected });
-                        }
-                      } catch (err) {
-                        console.log("Directory selection cancelled or failed:", err);
-                      }
-                    }}
-                    className="px-2 py-1.5 bg-cyber-primary/20 hover:bg-cyber-primary/30 border border-cyber-primary/40 hover:border-cyber-primary text-cyber-primary rounded text-[10px] font-semibold transition-all duration-300"
-                  >
-                    Select Workspace
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {workspacePath && (
-              <div className="p-3 border-t border-cyber-cardBorder/40 bg-cyber-dark/40 text-[10px] space-y-2 select-none">
-                <div className="flex justify-between items-center text-cyber-textSecondary">
-                  <span>Branch:</span>
-                  <span className={`font-mono px-1.5 py-0.5 rounded truncate max-w-[120px] ${gitInitialized ? "text-white bg-cyber-primary/10 border border-cyber-primary/20" : "text-amber-400 bg-amber-400/10 border border-amber-400/20"}`} title={gitBranch}>
-                    {gitInitialized ? gitBranch : "No Repo"}
-                  </span>
-                </div>
-                <div className="flex flex-col space-y-1">
-                  <div className="flex justify-between items-center text-cyber-textSecondary">
-                    <span>Search Index:</span>
-                    <span className="text-white truncate max-w-[100px]" title={indexMessage}>
-                      {indexMessage}
-                    </span>
-                  </div>
-                  <button
-                    disabled={isIndexing}
-                    onClick={handleReindex}
-                    className="w-full py-1 bg-cyber-primary/25 border border-cyber-primary/40 hover:border-cyber-primary text-cyber-primary hover:bg-cyber-primary/20 rounded font-semibold transition-all disabled:opacity-50 flex items-center justify-center space-x-1 cursor-pointer text-[9px]"
-                  >
-                    {isIndexing ? (
-                      <span className="w-2.5 h-2.5 border-2 border-cyber-primary border-t-transparent rounded-full animate-spin mr-1" />
-                    ) : null}
-                    <span>REINDEX CODEBASE</span>
-                  </button>
+      {ide.isIdeMode ? (
+        <IdeModeLayout
+          workspacePath={workspacePath}
+          workspaceFiles={polling.workspaceFiles}
+          openedFile={ide.openedFile}
+          gitBranch={polling.gitBranch}
+          gitInitialized={polling.gitInitialized}
+          isIndexing={polling.isIndexing}
+          indexMessage={polling.indexMessage}
+          onFileSelect={ide.handleOpenFile}
+          onRefreshExplorer={polling.refreshFiles}
+          onSelectWorkspace={handleOpenWorkspace}
+          onReindex={polling.handleReindex}
+          fileContent={ide.fileContent}
+          editorLanguage={ide.editorLanguage}
+          isSaving={ide.isSaving}
+          onContentChange={ide.setFileContent}
+          onSaveFile={ide.handleSaveFile}
+          terminalLogs={ide.logs}
+          terminalInput={ide.terminalInput}
+          isTerminalRunning={ide.isTerminalRunning}
+          lastCompileError={ide.lastCompileError}
+          installedExtensions={installedExtensions as any}
+          onTerminalInputChange={ide.setTerminalInput}
+          onExecuteCommand={ide.handleExecuteTerminalCommand}
+          onClearTerminalLogs={() =>
+            ide.setLogs([
+              {
+                time: new Date().toLocaleTimeString(),
+                message: "Terminal logs cleared.",
+                type: "info",
+              },
+            ])
+          }
+          onAutoFixError={() => {
+            setInput(
+              `I encountered the following execution error in the terminal:\n\n${ide.lastCompileError}\n\nPlease diagnose and edit the codebase to fix this error.`
+            );
+            ide.setLastCompileError(null);
+          }}
+          onShortcutClick={ide.setTerminalInput}
+          messages={messages}
+          chatInput={input}
+          setChatInput={setInput}
+          isChatLoading={isLoading}
+          onSendChatMessage={handleSend}
+          onAbortAgent={handleAbortAgent}
+          onSettingsOpen={() => setSettingsOpen(true)}
+          installedPrompts={installedPrompts}
+          permissionStates={permissions.permissionStates}
+          resolvedPermissionIds={permissions.resolvedPermissionIds}
+          onPermissionResponse={permissions.handlePermissionResponse}
+        />
+      ) : (
+        <div className="flex-1 min-h-0 p-5 bg-gradient-to-br from-[#05060a] via-[#080a10] to-[#090b12]">
+          <div className="grid h-full grid-cols-[236px_minmax(420px,1fr)_248px] gap-5">
+            <aside className="flex flex-col rounded-[22px] border border-[#171b25] bg-gradient-to-b from-[#10131b] to-[#07080d] p-5">
+              <div className="flex items-center gap-3">
+                <div className="h-7 w-7 rounded-full bg-gradient-to-br from-cyan-400 to-violet-500" />
+                <div>
+                  <h2 className="text-sm font-bold text-white">Istiyak Agent</h2>
+                  <p className="text-[10px] text-cyber-textMuted">Current workspace</p>
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* Center Panel: Monaco Editor & Terminal simulator */}
-          <div className="flex-1 flex flex-col overflow-hidden border-r border-cyber-cardBorder bg-cyber-card">
-            {/* Editor Title Bar */}
-            <div className="p-3 border-b border-cyber-cardBorder/40 bg-cyber-dark flex items-center justify-between min-h-[41px] select-none">
-              <span className="text-xs font-mono text-cyber-primary truncate">
-                {openedFile ? openedFile : "No File Opened"}
-              </span>
-              {openedFile && (
-                <button
-                  onClick={handleSaveFile}
-                  disabled={isSaving}
-                  className="flex items-center space-x-1 px-2.5 py-1 bg-cyber-primary/20 hover:bg-cyber-primary/30 border border-cyber-primary/45 text-cyber-primary hover:text-white rounded text-[10px] font-semibold transition-colors disabled:opacity-50"
+              <div className="mt-5 rounded-xl border border-[#1e2533] bg-[#0c0f16] px-3 py-3">
+                <p
+                  className="truncate font-mono text-[11px] text-slate-300"
+                  title={workspacePath || "No workspace selected"}
                 >
-                  <Save size={12} />
-                  <span>{isSaving ? "Saving..." : "Save"}</span>
-                </button>
-              )}
-            </div>
-
-            {/* Monaco Editor Container */}
-            <div className="flex-1 relative overflow-hidden bg-cyber-dark">
-              {openedFile ? (
-                <Editor
-                  height="100%"
-                  language={editorLanguage}
-                  theme="vs-dark"
-                  value={fileContent}
-                  onChange={(val) => setFileContent(val || "")}
-                  options={{
-                    fontSize: 12,
-                    fontFamily: "Fira Code, Monaco, Courier New, monospace",
-                    minimap: { enabled: false },
-                    scrollBeyondLastLine: false,
-                    automaticLayout: true,
-                    lineNumbers: "on",
-                    glyphMargin: false,
-                    folding: true,
-                    lineDecorationsWidth: 10,
-                    lineNumbersMinChars: 3,
-                    wordWrap: "on",
-                    padding: { top: 8, bottom: 8 }
-                  }}
-                />
-              ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 space-y-2 opacity-50 select-none">
-                  <File size={32} className="text-cyber-textSecondary animate-pulse" />
-                  <p className="text-xs text-cyber-textSecondary">Select a file from the explorer to view/edit</p>
-                </div>
-              )}
-            </div>
-
-            {/* Terminal Simulator Log at Bottom-Center */}
-            <div className="h-[200px] border-t border-cyber-cardBorder flex flex-col overflow-hidden bg-cyber-dark">
-              <div className="p-2 border-b border-cyber-cardBorder/40 bg-cyber-dark flex items-center justify-between select-none">
-                <span className="font-semibold text-[10px] tracking-wider uppercase text-cyber-textSecondary flex items-center space-x-1.5">
-                  <Terminal size={12} className="text-cyber-primary" />
-                  <span>Terminal Outputs</span>
-                </span>
-                <div className="flex items-center space-x-2">
-                  {lastCompileError && (
-                    <button
-                      onClick={() => {
-                        setInput(`I encountered the following execution error in the terminal:\n\n${lastCompileError}\n\nPlease diagnose and edit the codebase to fix this error.`);
-                        setLastCompileError(null);
-                      }}
-                      className="text-[9px] bg-cyan-500/25 border border-cyan-500/45 text-cyan-400 hover:bg-cyan-500/35 hover:border-cyan-300 font-bold px-2 py-0.5 rounded transition-all animate-pulse cursor-pointer"
-                      title="Diagnose & auto-fix this terminal/compilation error"
-                    >
-                      AUTO-FIX ERROR
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      setLogs([{ time: new Date().toLocaleTimeString(), message: "Terminal logs cleared.", type: "info" }]);
-                      setLastCompileError(null);
-                    }}
-                    className="text-[9px] text-cyber-textMuted hover:text-white px-1.5 py-0.5 rounded hover:bg-white/5 transition-colors cursor-pointer"
-                  >
-                    Clear
-                  </button>
-                </div>
+                  {workspacePath ? workspacePath.split(/[\\/]/).pop() : "No workspace"}
+                </p>
               </div>
 
-              {/* Extension command shortcuts */}
-              {installedExtensions.some(ext => ext.commands.length > 0) && (
-                <div className="px-3 py-1.5 bg-cyber-dark/40 border-b border-cyber-cardBorder/30 flex items-center space-x-2 overflow-x-auto select-none shrink-0 scrollbar-none">
-                  <span className="text-[9px] text-cyber-textSecondary font-bold uppercase tracking-wider shrink-0">Shortcuts:</span>
-                  {installedExtensions.flatMap(ext => ext.commands.map(cmd => ({ extName: ext.name, ...cmd }))).map((c, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => {
-                        setTerminalInput(c.command);
-                      }}
-                      className="px-2 py-0.5 bg-cyber-card/60 hover:bg-cyber-primary/20 border border-cyber-cardBorder hover:border-cyber-primary/40 rounded text-[9px] text-cyber-textSecondary hover:text-white transition-all duration-200 truncate cursor-pointer font-mono"
-                      title={`Command: ${c.command} (${c.extName})`}
-                    >
-                      {c.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Terminal Logs List */}
-              <div className="flex-1 overflow-y-auto p-3 font-mono text-[11px] space-y-1.5 select-text">
-                {logs.map((log, idx) => {
-                  let colorClass = "text-white/80";
-                  if (log.type === "error") colorClass = "text-red-400";
-                  if (log.type === "success") colorClass = "text-emerald-400 font-semibold";
-                  if (log.type === "info") colorClass = "text-cyan-400";
+              <p className="mt-8 text-[10px] font-bold uppercase tracking-[0.22em] text-cyber-textMuted">
+                Mode selector
+              </p>
+              <div className="mt-3 space-y-2.5">
+                {AGENT_MODES.map((mode) => {
+                  const active = mode.id === agentMode;
+                  const policy = MODE_POLICY[mode.id];
                   return (
-                    <div key={idx} className="leading-relaxed break-words whitespace-pre-wrap">
-                      <span className="text-cyber-textMuted select-none mr-2">[{log.time}]</span>
-                      <span className={colorClass}>{log.message}</span>
+                    <button
+                      key={mode.id}
+                      type="button"
+                      onClick={() => setAgentMode(mode.id)}
+                      className={`w-full rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${active ? policy.card : "border-[#1e2533] bg-[#0b0e14] text-cyber-textSecondary hover:border-cyber-primary/40 hover:text-white"}`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            className={`h-2.5 w-2.5 rounded-full ${active ? policy.dot : "bg-slate-600"}`}
+                          />
+                          <span className="text-sm font-bold">{mode.label}</span>
+                        </div>
+                        <span className="text-[10px] opacity-70">{mode.hint}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-auto rounded-[18px] border border-emerald-500/25 bg-emerald-500/5 px-4 py-4">
+                <h3 className="text-sm font-bold text-white">Safety Guard</h3>
+                <p className="mt-2 text-[11px] leading-5 text-cyber-textSecondary">
+                  Tool execution blocked until the selected mode allows it.
+                </p>
+              </div>
+            </aside>
+
+            <main className="flex min-h-0 flex-col overflow-hidden rounded-[22px] border border-[#171b25] bg-[#0a0d14] shadow-2xl">
+              <div className="flex items-center justify-between border-b border-[#171b25] bg-[#0d111a] px-6 py-4">
+                <div>
+                  <h1 className="text-base font-bold text-white">Chat-first Agent</h1>
+                  <p className="text-[11px] text-cyber-textMuted">
+                    Switch mode before giving an action.
+                  </p>
+                </div>
+                <span
+                  className={`rounded-full border px-3 py-1 text-[11px] font-bold ${currentPolicy.card}`}
+                >
+                  {currentPolicy.title}
+                </span>
+              </div>
+              <ChatPanel
+                messages={messages}
+                input={input}
+                setInput={setInput}
+                isLoading={isLoading}
+                onSend={handleSend}
+                onAbort={handleAbortAgent}
+                onSettingsOpen={() => setSettingsOpen(true)}
+                installedPrompts={installedPrompts}
+                permissionStates={permissions.permissionStates}
+                resolvedPermissionIds={permissions.resolvedPermissionIds}
+                onPermissionResponse={permissions.handlePermissionResponse}
+                mode={agentMode}
+                showModeHeader={false}
+                className="flex-1 min-h-0 flex flex-col overflow-hidden bg-transparent"
+              />
+            </main>
+
+            <aside className="rounded-[22px] border border-[#171b25] bg-[#0a0d14] p-6">
+              <h2 className="text-base font-bold text-white">Permission Policy</h2>
+              <p className="mt-1 text-xs text-cyber-textMuted">Backend-enforced rules</p>
+
+              <div className="mt-8 space-y-4">
+                {AGENT_MODES.map((mode) => {
+                  const policy = MODE_POLICY[mode.id];
+                  const active = mode.id === agentMode;
+                  return (
+                    <div
+                      key={mode.id}
+                      className={`rounded-[18px] border p-4 transition-all ${active ? policy.card : "border-[#1e2533] bg-[#0b0e14] text-cyber-textSecondary"}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={`h-2 w-2 rounded-full ${policy.dot}`} />
+                        <h3 className="text-sm font-bold">{mode.label.toUpperCase()}</h3>
+                      </div>
+                      <p className="mt-3 text-xs leading-5 opacity-80">{policy.detail}</p>
                     </div>
                   );
                 })}
               </div>
 
-              {/* Terminal Command Input Form */}
-              <form onSubmit={handleExecuteTerminalCommand} className="flex border-t border-cyber-cardBorder/50 bg-cyber-dark/40">
-                <span className="pl-3 py-2 text-cyber-primary font-mono text-xs select-none">$</span>
-                <input
-                  type="text"
-                  value={terminalInput}
-                  onChange={(e) => setTerminalInput(e.target.value)}
-                  placeholder="Execute shell commands in sandbox environment..."
-                  disabled={isTerminalRunning || !workspacePath}
-                  className="flex-1 bg-transparent border-0 px-2 py-2 text-xs text-white placeholder-cyber-textMuted focus:outline-none focus:ring-0 font-mono disabled:opacity-50"
-                />
-                <button
-                  type="submit"
-                  disabled={isTerminalRunning || !terminalInput.trim() || !workspacePath}
-                  className="px-3 bg-cyber-primary/10 border-l border-cyber-cardBorder/50 text-cyber-primary hover:bg-cyber-primary/20 text-xs font-semibold font-mono transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  RUN
-                </button>
-              </form>
-            </div>
-          </div>
-
-          {/* Right Panel: Companion Chat UI */}
-          <div className="w-[380px] flex flex-col overflow-hidden bg-cyber-dark">
-            {/* Messages Scroll Panel */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center p-6 space-y-3 opacity-60">
-                  <Bot size={40} className="text-cyber-primary animate-pulse" />
-                  <h3 className="font-semibold text-sm">Welcome to Istiyak Companion</h3>
-                  <p className="text-xs text-cyber-textSecondary max-w-[240px]">
-                    Start typing a message below. I can generate code, answer questions, and execute commands.
-                  </p>
-                </div>
-              ) : (
-                messages.map((msg) => renderChatMessage(msg))
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input controls form */}
-            <div className="p-4 bg-cyber-dark border-t border-cyber-cardBorder">
-              <div className="relative flex flex-col bg-cyber-card border border-cyber-cardBorder rounded-xl focus-within:border-cyber-primary/50 focus-within:ring-1 focus-within:ring-cyber-primary/20 transition-all duration-300">
-                <textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask ISTIYAK to build code..."
-                  rows={1}
-                  disabled={isLoading}
-                  className="w-full resize-none bg-transparent border-0 px-4 py-3 text-sm focus:outline-none focus:ring-0 text-white placeholder-cyber-textMuted max-h-32 min-h-[44px] disabled:opacity-50"
-                />
-
-                {/* Action Bar */}
-                <div className="flex items-center justify-between px-3 py-2 border-t border-cyber-cardBorder/30">
-                  <div className="flex items-center space-x-1.5">
-                    <button
-                      type="button"
-                      className="p-1.5 rounded-lg text-cyber-textSecondary hover:text-cyber-primary hover:bg-cyber-primary/10 transition-colors cursor-pointer"
-                      title="Attach file (Phase 3)"
-                    >
-                      <Paperclip size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      className="p-1.5 rounded-lg text-cyber-textSecondary hover:text-cyber-accent hover:bg-cyber-accent/10 transition-colors cursor-pointer"
-                      title="Run command (Phase 4)"
-                    >
-                      <Terminal size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSettingsOpen(true)}
-                      className="p-1.5 rounded-lg text-cyber-textSecondary hover:text-cyber-secondary hover:bg-cyber-secondary/10 transition-colors cursor-pointer"
-                      title="Companion Settings"
-                    >
-                      <Settings size={15} />
-                    </button>
-                    
-                    {/* Dynamic Prompt Selector library */}
-                    {installedPrompts.length > 0 && (
-                      <div className="relative">
-                        <button
-                          type="button"
-                          onClick={() => setPromptsDropdownOpen(!promptsDropdownOpen)}
-                          className="px-2 py-0.5 bg-cyber-primary/15 hover:bg-cyber-primary/25 border border-cyber-primary/30 text-cyber-primary rounded text-[9px] font-semibold transition-colors flex items-center space-x-1 cursor-pointer"
-                        >
-                          <span>Prompts</span>
-                          <span className="text-[8px] bg-cyber-primary/20 text-cyber-primary px-1 rounded-full">{installedPrompts.length}</span>
-                        </button>
-                        {promptsDropdownOpen && (
-                          <div className="absolute bottom-full left-0 mb-1.5 w-48 bg-cyber-dark border border-cyber-cardBorder rounded-xl shadow-2xl z-50 p-2 space-y-1 max-h-48 overflow-y-auto">
-                            <div className="text-[9px] text-cyber-textSecondary px-2 py-1 font-semibold uppercase tracking-wider border-b border-cyber-cardBorder/40">Select Prompt</div>
-                            {installedPrompts.map((p, idx) => (
-                              <button
-                                key={idx}
-                                onClick={() => {
-                                  setInput(prev => prev ? `${prev}\n${p.prompt}` : p.prompt);
-                                  setPromptsDropdownOpen(false);
-                                }}
-                                className="w-full text-left px-2 py-1.5 hover:bg-cyber-primary/15 rounded text-[10px] text-white truncate transition-colors cursor-pointer"
-                                title={p.prompt}
-                              >
-                                {p.title}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={handleSend}
-                    disabled={!input.trim() || isLoading}
-                    className={`p-2 rounded-lg transition-all duration-300 cursor-pointer ${
-                      input.trim() && !isLoading
-                        ? "bg-cyber-primary text-cyber-dark hover:shadow-[0_0_12px_rgba(6,182,212,0.5)] transform hover:scale-105"
-                        : "bg-cyber-cardBorder text-cyber-textMuted cursor-not-allowed"
-                    }`}
-                  >
-                    <Send size={14} />
-                  </button>
-                </div>
+              <div className="mt-8 rounded-[18px] border border-[#1f2937] bg-[#111827] p-4">
+                <h3 className="text-sm font-bold text-white">Result</h3>
+                <p className="mt-2 text-xs text-cyber-textSecondary">No accidental actions.</p>
               </div>
-            </div>
+            </aside>
           </div>
         </div>
-      ) : (
-        <>
-          {/* Messages Scroll Panel */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center p-6 space-y-3 opacity-60">
-                <Bot size={40} className="text-cyber-primary animate-pulse" />
-                <h3 className="font-semibold text-sm">Welcome to Istiyak Companion</h3>
-                <p className="text-xs text-cyber-textSecondary max-w-[240px]">
-                  Start typing a message below. I can generate code, answer questions, and execute commands.
-                </p>
-              </div>
-            ) : (
-              messages.map((msg) => renderChatMessage(msg))
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input controls form */}
-          <div className="p-4 bg-cyber-dark border-t border-cyber-cardBorder">
-            <div className="relative flex flex-col bg-cyber-card border border-cyber-cardBorder rounded-xl focus-within:border-cyber-primary/50 focus-within:ring-1 focus-within:ring-cyber-primary/20 transition-all duration-300">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask ISTIYAK to build code..."
-                rows={1}
-                disabled={isLoading}
-                className="w-full resize-none bg-transparent border-0 px-4 py-3 text-sm focus:outline-none focus:ring-0 text-white placeholder-cyber-textMuted max-h-32 min-h-[44px] disabled:opacity-50"
-              />
-
-              {/* Action Bar */}
-              <div className="flex items-center justify-between px-3 py-2 border-t border-cyber-cardBorder/30">
-                <div className="flex items-center space-x-1.5">
-                  <button
-                    type="button"
-                    className="p-1.5 rounded-lg text-cyber-textSecondary hover:text-cyber-primary hover:bg-cyber-primary/10 transition-colors cursor-pointer"
-                    title="Attach file (Phase 3)"
-                  >
-                    <Paperclip size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    className="p-1.5 rounded-lg text-cyber-textSecondary hover:text-cyber-accent hover:bg-cyber-accent/10 transition-colors cursor-pointer"
-                    title="Run command (Phase 4)"
-                  >
-                    <Terminal size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSettingsOpen(true)}
-                    className="p-1.5 rounded-lg text-cyber-textSecondary hover:text-cyber-secondary hover:bg-cyber-secondary/10 transition-colors cursor-pointer"
-                    title="Companion Settings"
-                  >
-                    <Settings size={15} />
-                  </button>
-                  
-                  {/* Dynamic Prompt Selector library */}
-                  {installedPrompts.length > 0 && (
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setPromptsDropdownOpen(!promptsDropdownOpen)}
-                        className="px-2 py-0.5 bg-cyber-primary/15 hover:bg-cyber-primary/25 border border-cyber-primary/30 text-cyber-primary rounded text-[9px] font-semibold transition-colors flex items-center space-x-1 cursor-pointer"
-                      >
-                        <span>Prompts</span>
-                        <span className="text-[8px] bg-cyber-primary/20 text-cyber-primary px-1 rounded-full">{installedPrompts.length}</span>
-                      </button>
-                      {promptsDropdownOpen && (
-                        <div className="absolute bottom-full left-0 mb-1.5 w-48 bg-cyber-dark border border-cyber-cardBorder rounded-xl shadow-2xl z-50 p-2 space-y-1 max-h-48 overflow-y-auto">
-                          <div className="text-[9px] text-cyber-textSecondary px-2 py-1 font-semibold uppercase tracking-wider border-b border-cyber-cardBorder/40">Select Prompt</div>
-                          {installedPrompts.map((p, idx) => (
-                            <button
-                              key={idx}
-                              onClick={() => {
-                                setInput(prev => prev ? `${prev}\n${p.prompt}` : p.prompt);
-                                setPromptsDropdownOpen(false);
-                              }}
-                              className="w-full text-left px-2 py-1.5 hover:bg-cyber-primary/15 rounded text-[10px] text-white truncate transition-colors cursor-pointer"
-                              title={p.prompt}
-                            >
-                              {p.title}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <button
-                  onClick={handleSend}
-                  disabled={!input.trim() || isLoading}
-                  className={`p-2 rounded-lg transition-all duration-300 cursor-pointer ${
-                    input.trim() && !isLoading
-                      ? "bg-cyber-primary text-cyber-dark hover:shadow-[0_0_12px_rgba(6,182,212,0.5)] transform hover:scale-105"
-                      : "bg-cyber-cardBorder text-cyber-textMuted cursor-not-allowed"
-                  }`}
-                >
-                  <Send size={14} />
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
       )}
 
-      {/* History Drawer Overlay Panel */}
-      <div
-        className={`absolute inset-0 bg-cyber-dark/60 backdrop-blur-sm z-40 transition-opacity duration-300 ${
-          sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
-        onClick={() => setSidebarOpen(false)}
-      >
-        {/* Drawer content */}
-        <div
-          className={`absolute top-0 left-0 bottom-0 w-64 bg-cyber-dark border-r border-cyber-cardBorder shadow-2xl flex flex-col p-4 space-y-4 transition-transform duration-300 transform ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Drawer Header */}
-          <div className="flex items-center justify-between border-b border-cyber-cardBorder/40 pb-3">
-            <span className="font-semibold text-xs tracking-wider uppercase text-cyber-textPrimary/80">Chats History</span>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="p-1 rounded text-cyber-textSecondary hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-            >
-              <X size={15} />
-            </button>
-          </div>
+      <HistoryDrawer
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        conversations={conversations}
+        activeId={activeId}
+        onSelectConversation={setActiveConversation}
+        onNewChat={createConversation}
+        onDeleteConversation={deleteConversation}
+      />
 
-          {/* New Chat Trigger */}
-          <button
-            onClick={() => {
-              createConversation();
-              setSidebarOpen(false);
-            }}
-            className="flex items-center justify-center space-x-2 py-2 px-3 border border-cyber-primary/30 text-cyber-primary rounded-lg text-xs font-semibold hover:bg-cyber-primary/10 hover:border-cyber-primary transition-all duration-300 cursor-pointer"
-          >
-            <Plus size={14} />
-            <span>Start New Chat</span>
-          </button>
-
-          {/* Chat List */}
-          <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-            {conversations.map((convo) => (
-              <div
-                key={convo.id}
-                onClick={() => {
-                  setActiveConversation(convo.id);
-                  setSidebarOpen(false);
-                }}
-                className={`flex items-center justify-between p-2 rounded-lg text-xs group cursor-pointer border transition-all ${
-                  convo.id === activeId
-                    ? "bg-cyber-primary/10 border-cyber-primary/30 text-cyber-primary"
-                    : "bg-cyber-card/30 border-transparent text-cyber-textSecondary hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                <span className="truncate flex-1 font-medium pr-2">{convo.title}</span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteConversation(convo.id);
-                  }}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-cyber-textSecondary hover:text-red-400 hover:bg-red-500/10 rounded transition-all cursor-pointer"
-                  title="Delete Chat"
-                >
-                  <Trash2 size={13} />
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* Drawer Footer */}
-          <div className="text-[10px] text-cyber-textMuted text-center select-none pt-2 border-t border-cyber-cardBorder/30">
-            ISTIYAK AI Companion v0.1.0
-          </div>
-        </div>
-      </div>
-
-      {/* Settings Drawer Overlay Panel */}
       <SettingsDrawer
         settingsOpen={settingsOpen}
         setSettingsOpen={setSettingsOpen}
@@ -1863,457 +630,44 @@ export default function ChatUI() {
         dockerSandboxEnabled={dockerSandboxEnabled}
         sandboxImage={sandboxImage}
         cloudSandboxEnabled={cloudSandboxEnabled}
-        isIdeMode={isIdeMode}
-        isActiveLicense={isActiveLicense}
-        gitInitialized={gitInitialized}
-        gitBranch={gitBranch}
-        isIndexing={isIndexing}
+        isIdeMode={ide.isIdeMode}
+        isActiveLicense={false} // wait, this will fetch in AuthModal. Keep mock or get from state
+        gitInitialized={polling.gitInitialized}
+        gitBranch={polling.gitBranch}
+        isIndexing={polling.isIndexing}
         userEmail={userEmail}
-        todos={todos}
+        todos={polling.todos}
         updateSettings={updateSettings}
-        toggleIdeMode={toggleIdeMode}
+        toggleIdeMode={ide.toggleIdeMode}
         setTelemetryOpen={setTelemetryOpen}
         setMarketplaceOpen={setMarketplaceOpen}
-        handleReindex={handleReindex}
+        handleReindex={polling.handleReindex}
         setInput={setInput}
         renderToggle={renderToggle}
       />
-      
-      {/* Profile / Authentication Modal Overlay */}
-      {authOpen && (
-        <div
-          className="absolute inset-0 bg-cyber-dark/85 backdrop-blur-md z-50 flex items-center justify-center p-6 animate-fade-in"
-          onClick={() => {
-            setAuthOpen(false);
-          }}
-        >
-          <div
-            className="w-full max-w-[320px] bg-cyber-card/90 border border-cyber-cardBorder/60 p-6 rounded-2xl shadow-2xl backdrop-blur-md relative z-10 flex flex-col space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close Button on modal card */}
-            <button
-              onClick={() => {
-                setAuthOpen(false);
-                setAuthError(null);
-              }}
-              className="absolute top-3 right-3 p-1 rounded-lg text-cyber-textSecondary hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-            >
-              <X size={15} />
-            </button>
 
-            {!token ? (
-              // Login / Sign Up Form
-              <>
-                <div className="flex flex-col items-center text-center space-y-1">
-                  <Bot size={36} className="text-cyber-primary animate-pulse" />
-                  <h2 className="text-base font-bold text-white tracking-wide uppercase">
-                    {authMode === "login" ? "Welcome Back" : "Create Account"}
-                  </h2>
-                  <p className="text-[11px] text-cyber-textSecondary">
-                    {authMode === "login" ? "Enter details to access your companion" : "Get started with 3 accounts per IP limitation"}
-                  </p>
-                </div>
+      <AuthModal
+        isOpen={authOpen}
+        onClose={() => setAuthOpen(false)}
+        token={token}
+        userEmail={userEmail}
+        updateSettings={updateSettings}
+      />
 
-                <form onSubmit={handleAuthSubmit} className="flex flex-col space-y-3.5">
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold tracking-wider text-cyber-textSecondary">Email Address</label>
-                    <Input
-                      type="email"
-                      required
-                      value={authEmail}
-                      onChange={(e) => setAuthEmail(e.target.value)}
-                      placeholder="developer@domain.com"
-                      className="w-full bg-[#121318] border border-[#1f232b] focus:border-cyber-primary/60 text-xs"
-                    />
-                  </div>
+      <MarketplaceModal
+        isOpen={marketplaceOpen}
+        onClose={() => setMarketplaceOpen(false)}
+        activeTheme={activeTheme}
+        installedPrompts={installedPrompts}
+        installedExtensions={installedExtensions as any}
+        updateSettings={updateSettings}
+      />
 
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold tracking-wider text-cyber-textSecondary">Password</label>
-                    <Input
-                      type="password"
-                      required
-                      value={authPassword}
-                      onChange={(e) => setAuthPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full bg-[#121318] border border-[#1f232b] focus:border-cyber-primary/60 text-xs font-mono"
-                    />
-                  </div>
-
-                  {authError && (
-                    <div className="p-2 border border-red-500/20 bg-red-500/10 text-red-400 rounded-lg text-[10.5px] leading-relaxed text-center">
-                      {authError}
-                    </div>
-                  )}
-
-                  <Button
-                    type="submit"
-                    disabled={authLoading}
-                    variant="primary"
-                    className="w-full py-2 text-xs font-bold active:scale-[0.98] flex justify-center items-center"
-                  >
-                    {authLoading ? (
-                      <span className="w-4 h-4 border-2 border-cyber-dark border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      authMode === "login" ? "LOGIN" : "REGISTER"
-                    )}
-                  </Button>
-                </form>
-
-                {/* OAuth Brand Login Buttons */}
-                <div className="flex flex-col space-y-2 border-t border-cyber-cardBorder/30 pt-3">
-                  <div className="text-center text-[9px] text-cyber-textSecondary font-semibold uppercase tracking-wider mb-1">
-                    Or Sign In With
-                  </div>
-                  
-                  <button
-                    type="button"
-                    onClick={() => {
-                      window.open(`${SAAS_BASE}/api/auth/google`, "_blank");
-                    }}
-                    className="w-full py-1.5 bg-[#ea4335]/15 hover:bg-[#ea4335]/25 border border-[#ea4335]/30 hover:border-[#ea4335]/50 text-white rounded-lg text-[10.5px] font-semibold transition-all cursor-pointer flex justify-center items-center"
-                  >
-                    Google Account
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      window.open(`${SAAS_BASE}/api/auth/github`, "_blank");
-                    }}
-                    className="w-full py-1.5 bg-[#24292e]/40 hover:bg-[#24292e]/60 border border-[#24292e]/60 hover:border-white/30 text-white rounded-lg text-[10.5px] font-semibold transition-all cursor-pointer flex justify-center items-center"
-                  >
-                    GitHub Account
-                  </button>
-                </div>
-
-                {/* Toggle Tab */}
-                <div className="text-center pt-2 text-[11px] border-t border-cyber-cardBorder/30">
-                  <span className="text-cyber-textSecondary">
-                    {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
-                  </span>
-                  <button
-                    onClick={() => {
-                      setAuthMode(authMode === "login" ? "register" : "login");
-                      setAuthError(null);
-                    }}
-                    className="text-cyber-primary hover:underline font-semibold cursor-pointer"
-                  >
-                    {authMode === "login" ? "Sign Up" : "Sign In"}
-                  </button>
-                </div>
-              </>
-            ) : (
-              // Logged In Profile Card
-              <div className="flex flex-col space-y-4 pt-2">
-                <div className="flex flex-col items-center text-center space-y-1">
-                  <div className="w-12 h-12 rounded-full bg-cyber-primary/20 border border-cyber-primary/45 flex items-center justify-center text-cyber-primary text-lg font-bold select-none mb-1">
-                    {userEmail.charAt(0).toUpperCase()}
-                  </div>
-                  <h2 className="text-sm font-bold text-white truncate max-w-[240px]" title={userEmail}>
-                    {userEmail}
-                  </h2>
-                  {isActiveLicense ? (
-                    <div className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
-                      Pro License Active
-                    </div>
-                  ) : (
-                    <div className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/25 animate-pulse">
-                      Free Tier User
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-1.5 border-t border-cyber-cardBorder/30 pt-3 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-cyber-textSecondary">Status</span>
-                    <span className="text-white font-medium">Verified</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-cyber-textSecondary">Plan</span>
-                    <span className="text-white font-medium">{isActiveLicense ? "SaaS Pro Developer" : "SaaS Free Tier"}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-cyber-textSecondary">Sync License</span>
-                    <button
-                      type="button"
-                      onClick={fetchUserProfile}
-                      disabled={isProfileFetching}
-                      className="text-[10px] text-cyber-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                    >
-                      {isProfileFetching ? "Syncing..." : "Sync Status"}
-                    </button>
-                  </div>
-                </div>
-
-                {!isActiveLicense && (
-                  <div className="flex flex-col space-y-2 pt-2 border-t border-cyber-cardBorder/30">
-                    {checkoutError && (
-                      <div className="p-2 border border-red-500/20 bg-red-500/10 text-red-400 rounded-lg text-[10px] text-center leading-relaxed">
-                        {checkoutError}
-                      </div>
-                    )}
-                    <button
-                      onClick={handleUpgradeToPro}
-                      disabled={checkoutLoading}
-                      className="w-full py-2 bg-cyber-primary text-cyber-dark rounded-lg text-xs font-bold transition-all duration-300 hover:shadow-[0_0_12px_rgba(6,182,212,0.5)] active:scale-[0.98] disabled:opacity-50 cursor-pointer flex justify-center items-center"
-                    >
-                      {checkoutLoading ? (
-                        <span className="w-4 h-4 border-2 border-cyber-dark border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        "UPGRADE TO PRO ($19/mo)"
-                      )}
-                    </button>
-                  </div>
-                )}
-
-                <button
-                  onClick={async () => {
-                    await updateSettings({ token: "", userEmail: "" });
-                    setAuthOpen(false);
-                  }}
-                  className="w-full py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-400 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                >
-                  LOGOUT
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Marketplace Modal */}
-      {marketplaceOpen && (
-        <div
-          className="absolute inset-0 bg-cyber-dark/85 backdrop-blur-md z-50 flex items-center justify-center p-6 animate-fade-in"
-          onClick={() => setMarketplaceOpen(false)}
-        >
-          <div
-            className="w-full max-w-[500px] max-h-[90%] bg-cyber-card/95 border border-cyber-cardBorder/60 p-6 rounded-2xl shadow-2xl backdrop-blur-md relative z-10 flex flex-col space-y-4 overflow-hidden text-xs text-cyber-textPrimary"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-cyber-cardBorder/40 pb-3">
-              <span className="font-semibold text-xs tracking-wider uppercase text-cyber-textPrimary/80 flex items-center space-x-1.5">
-                <Sparkles size={14} className="text-cyber-primary" />
-                <span>Marketplace & Customizations</span>
-              </span>
-              <button
-                onClick={() => setMarketplaceOpen(false)}
-                className="p-1 rounded text-cyber-textSecondary hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-              >
-                <X size={15} />
-              </button>
-            </div>
-
-            {/* Scrollable Catalog Sections */}
-            <div className="flex-1 overflow-y-auto space-y-5 pr-1.5">
-              
-              {/* Section 1: Themes */}
-              <div className="space-y-2">
-                <h3 className="font-bold text-cyber-primary uppercase tracking-wider text-[10px]">1. Custom UI Themes</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {curatedThemes.map((t) => {
-                    const isActive = activeTheme === t.id;
-                    return (
-                      <div
-                        key={t.id}
-                        onClick={() => updateSettings({ activeTheme: t.id })}
-                        className={`p-2.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                          isActive 
-                            ? "bg-cyber-primary/10 border-cyber-primary text-white font-semibold" 
-                            : "bg-cyber-card/45 border-cyber-cardBorder text-cyber-textSecondary hover:bg-white/5 hover:text-white"
-                        }`}
-                      >
-                        <span className="font-medium">{t.name}</span>
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: t.color }} />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Section 2: Prompts Catalog */}
-              <div className="space-y-2">
-                <h3 className="font-bold text-cyber-primary uppercase tracking-wider text-[10px]">2. Prompts Catalog</h3>
-                <div className="space-y-2">
-                  {curatedPrompts.map((p, idx) => {
-                    const isInstalled = installedPrompts.some(item => item.title === p.title);
-                    return (
-                      <div key={idx} className="p-2.5 bg-cyber-card/45 border border-cyber-cardBorder rounded-xl flex items-center justify-between space-x-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-white truncate">{p.title}</div>
-                          <div className="text-[10px] text-cyber-textSecondary truncate">{p.prompt}</div>
-                        </div>
-                        <button
-                          onClick={() => handleInstallPrompt(p)}
-                          className={`px-2.5 py-1 rounded-md text-[10px] font-semibold transition-colors cursor-pointer shrink-0 ${
-                            isInstalled 
-                              ? "bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-400" 
-                              : "bg-cyber-primary/20 hover:bg-cyber-primary/30 border border-cyber-primary/40 text-cyber-primary"
-                          }`}
-                        >
-                          {isInstalled ? "Uninstall" : "Install"}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Section 3: Extension Plugins */}
-              <div className="space-y-2">
-                <h3 className="font-bold text-cyber-primary uppercase tracking-wider text-[10px]">3. Extension SDK Plugins</h3>
-                <div className="space-y-2">
-                  {curatedExtensions.map((ext) => {
-                    const isInstalled = installedExtensions.some(item => item.id === ext.id);
-                    return (
-                      <div key={ext.id} className="p-2.5 bg-cyber-card/45 border border-cyber-cardBorder rounded-xl space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="font-semibold text-white">{ext.name}</div>
-                          <button
-                            onClick={() => handleInstallExtension(ext)}
-                            className={`px-2.5 py-1 rounded-md text-[10px] font-semibold transition-colors cursor-pointer shrink-0 ${
-                              isInstalled 
-                                ? "bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-400" 
-                                : "bg-cyber-primary/20 hover:bg-cyber-primary/30 border border-cyber-primary/40 text-cyber-primary"
-                            }`}
-                          >
-                            {isInstalled ? "Uninstall" : "Install"}
-                          </button>
-                        </div>
-                        <p className="text-[10px] text-cyber-textSecondary leading-relaxed">{ext.description}</p>
-                        <div className="flex flex-wrap gap-1 text-[9px]">
-                          {ext.commands.map((c, cIdx) => (
-                            <span key={cIdx} className="bg-cyber-dark/65 border border-cyber-cardBorder text-cyber-primary px-1.5 py-0.5 rounded font-mono">
-                              cmd: {c.name}
-                            </span>
-                          ))}
-                          {ext.prompts.map((p, pIdx) => (
-                            <span key={pIdx} className="bg-cyber-dark/65 border border-cyber-cardBorder text-cyber-secondary px-1.5 py-0.5 rounded font-mono">
-                              prompt: {p.title}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Section 4: Add Custom Prompt */}
-              <div className="space-y-2">
-                <h3 className="font-bold text-cyber-primary uppercase tracking-wider text-[10px]">4. Create Custom Chat Prompt</h3>
-                <form onSubmit={handleAddCustomPrompt} className="p-3 bg-cyber-card/45 border border-cyber-cardBorder rounded-xl space-y-2.5">
-                  <div className="space-y-1">
-                    <label className="text-[9px] uppercase font-bold text-cyber-textSecondary">Prompt Shortcut Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={customPromptTitle}
-                      onChange={(e) => setCustomPromptTitle(e.target.value)}
-                      placeholder="e.g. Code Reviewer"
-                      className="w-full bg-cyber-dark/80 border border-cyber-cardBorder rounded-lg px-2.5 py-1.5 text-white outline-none focus:border-cyber-primary/60 text-xs"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[9px] uppercase font-bold text-cyber-textSecondary">Prompt Instruction Text</label>
-                    <textarea
-                      required
-                      rows={2}
-                      value={customPromptText}
-                      onChange={(e) => setCustomPromptText(e.target.value)}
-                      placeholder="e.g. Please analyze this code for complexity..."
-                      className="w-full bg-cyber-dark/80 border border-cyber-cardBorder rounded-lg px-2.5 py-1.5 text-white outline-none focus:border-cyber-primary/60 text-xs resize-none"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full py-1.5 bg-cyber-primary text-cyber-dark font-bold rounded-lg text-[10px] hover:shadow-[0_0_8px_rgba(6,182,212,0.3)] transition-all cursor-pointer"
-                  >
-                    ADD CUSTOM PROMPT
-                  </button>
-                </form>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Telemetry Modal */}
-      {telemetryOpen && (
-        <div
-          className="absolute inset-0 bg-cyber-dark/85 backdrop-blur-md z-50 flex items-center justify-center p-6 animate-fade-in"
-          onClick={() => setTelemetryOpen(false)}
-        >
-          <div
-            className="w-full max-w-[480px] max-h-[85%] bg-cyber-card/95 border border-cyber-cardBorder/60 p-5 rounded-2xl shadow-2xl backdrop-blur-md relative z-10 flex flex-col space-y-4 overflow-hidden text-xs text-cyber-textPrimary"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-cyber-cardBorder/40 pb-3">
-              <span className="font-semibold text-xs tracking-wider uppercase text-cyber-textPrimary/80 flex items-center space-x-1.5">
-                <Activity size={14} className="text-cyber-primary animate-pulse" />
-                <span>Live Performance & Cost Telemetry</span>
-              </span>
-              <button
-                onClick={() => setTelemetryOpen(false)}
-                className="p-1 rounded text-cyber-textSecondary hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-              >
-                <X size={15} />
-              </button>
-            </div>
-
-            {/* Metrics cards grid */}
-            <div className="grid grid-cols-2 gap-3 shrink-0">
-              <div className="bg-cyber-dark/45 border border-cyber-cardBorder rounded-xl p-3 flex flex-col justify-center items-center text-center">
-                <span className="text-[10px] uppercase font-bold text-cyber-textSecondary tracking-wider">Total Calls</span>
-                <span className="text-lg font-extrabold text-white mt-1">{telemetry?.callCount || 0}</span>
-              </div>
-              <div className="bg-cyber-dark/45 border border-cyber-cardBorder rounded-xl p-3 flex flex-col justify-center items-center text-center">
-                <span className="text-[10px] uppercase font-bold text-cyber-textSecondary tracking-wider">Avg Latency</span>
-                <span className="text-lg font-extrabold text-white mt-1">{(telemetry?.avgLatencyMs || 0)}ms</span>
-              </div>
-              <div className="bg-cyber-dark/45 border border-cyber-cardBorder rounded-xl p-3 flex flex-col justify-center items-center text-center">
-                <span className="text-[10px] uppercase font-bold text-cyber-textSecondary tracking-wider">Avg Speed</span>
-                <span className="text-lg font-extrabold text-cyber-primary mt-1">{(telemetry?.avgSpeed || 0)} t/s</span>
-              </div>
-              <div className="bg-cyber-dark/45 border border-cyber-cardBorder rounded-xl p-3 flex flex-col justify-center items-center text-center">
-                <span className="text-[10px] uppercase font-bold text-cyber-textSecondary tracking-wider">Session Cost</span>
-                <span className="text-lg font-extrabold text-emerald-400 mt-1">
-                  ${(telemetry ? telemetry.history.reduce((acc, m) => acc + (m.tokensIn * 0.000000075 + m.tokensOut * 0.0000003), 0) : 0).toFixed(6)}
-                </span>
-              </div>
-            </div>
-
-            {/* Recent API Call Logs list */}
-            <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-              <h3 className="font-bold text-cyber-primary uppercase tracking-wider text-[9px] mb-2 shrink-0">Call History & Rates</h3>
-              <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-                {!telemetry || telemetry.history.length === 0 ? (
-                  <p className="text-[10.5px] text-cyber-textSecondary italic text-center py-4">No metrics logged in this session.</p>
-                ) : (
-                  [...telemetry.history].reverse().map((item, idx) => (
-                    <div key={idx} className="p-3 bg-cyber-dark/30 border border-cyber-cardBorder/50 rounded-xl space-y-1 text-[11px]">
-                      <div className="flex justify-between items-center text-white">
-                        <span className="font-bold">{item.provider.toUpperCase()} ({item.model})</span>
-                        <span className="text-[9px] text-cyber-textSecondary font-mono">{item.timestamp}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-cyber-textSecondary text-[10px] font-mono">
-                        <span>Latency: <span className="text-white">{item.latencyMs}ms</span></span>
-                        <span>Tokens: <span className="text-white">{item.tokensIn} in / {item.tokensOut} out</span></span>
-                        <span>Speed: <span className="text-cyber-primary font-bold">{item.tokensPerSec} t/s</span></span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      
+      <TelemetryModal
+        isOpen={telemetryOpen}
+        onClose={() => setTelemetryOpen(false)}
+        telemetry={polling.telemetry}
+      />
     </div>
   );
 }
