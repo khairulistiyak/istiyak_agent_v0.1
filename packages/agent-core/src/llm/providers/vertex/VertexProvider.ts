@@ -85,7 +85,8 @@ export class VertexProvider {
   async streamGenerate(
     messages: Message[],
     model: string,
-    onChunk?: (text: string) => void
+    onChunk?: (text: string) => void,
+    jsonMode = true
   ): Promise<string> {
     const accessToken = await this.getAccessToken();
     const host = this.location === "global" ? "aiplatform.googleapis.com" : `${this.location}-aiplatform.googleapis.com`;
@@ -106,11 +107,13 @@ export class VertexProvider {
     const payload: any = {
       contents,
       generationConfig: {
-        responseMimeType: "application/json",
-        temperature: 0.3,
+        temperature: jsonMode ? 0.3 : 0.7,
         maxOutputTokens: 65536
       }
     };
+    if (jsonMode) {
+      payload.generationConfig.responseMimeType = "application/json";
+    }
     if (systemMessage) {
       payload.systemInstruction = {
         parts: [{ text: systemMessage.content }]

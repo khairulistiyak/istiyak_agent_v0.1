@@ -23,15 +23,27 @@ export async function streamLLM(
   serviceAccountPath: string,
   projectId: string,
   location: string,
-  onChunk?: (text: string) => void
+  onChunk?: (text: string) => void,
+  jsonMode = true
 ): Promise<string> {
   if (mockStreamLLMFn) {
-    return await mockStreamLLMFn(messages, provider, model, authMethod, apiKey, serviceAccountPath, projectId, location, onChunk);
+    return await mockStreamLLMFn(
+      messages,
+      provider,
+      model,
+      authMethod,
+      apiKey,
+      serviceAccountPath,
+      projectId,
+      location,
+      onChunk,
+      jsonMode
+    );
   }
 
   let targetModel = model;
   if (model === "auto" || model === "auto-route") {
-    const lastUserMsg = messages.filter(m => m.role === "user").slice(-1)[0];
+    const lastUserMsg = messages.filter((m) => m.role === "user").slice(-1)[0];
     const content = lastUserMsg ? lastUserMsg.content : "";
     targetModel = classifyAndRoute(content, provider);
     console.log(`[Router] Dynamically routed to model: ${targetModel}`);
@@ -42,10 +54,10 @@ export async function streamLLM(
   if (p === "gemini") {
     if (authMethod === "serviceAccount") {
       const vertex = new VertexProvider(serviceAccountPath, projectId, location);
-      return await vertex.streamGenerate(messages, targetModel, onChunk);
+      return await vertex.streamGenerate(messages, targetModel, onChunk, jsonMode);
     } else {
       const gemini = new GeminiProvider(apiKey);
-      return await gemini.streamGenerateContent(messages, targetModel, onChunk);
+      return await gemini.streamGenerateContent(messages, targetModel, onChunk, 0, jsonMode);
     }
   } else if (p === "openai") {
     const openai = new OpenAIProvider(apiKey);
@@ -66,6 +78,8 @@ export async function streamLLM(
     });
     return await custom.streamChat(messages, targetModel, onChunk);
   } else {
-    throw new Error(`Unsupported provider: ${provider}. Supported: gemini, openai, claude, ollama, deepseek, custom`);
+    throw new Error(
+      `Unsupported provider: ${provider}. Supported: gemini, openai, claude, ollama, deepseek, custom`
+    );
   }
 }

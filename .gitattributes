@@ -1,0 +1,8 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Prevent macOS Apple Double (._) files from being created
+._* binary
+
+# Do not store macOS resource forks
+.DS_Store binary

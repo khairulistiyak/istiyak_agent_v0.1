@@ -178,7 +178,8 @@ export async function runAgent(options: RunnerOptions) {
         streamedDirectResponse = true;
         directResponse += chunk;
         options.onChunk(chunk);
-      }
+      },
+      false // jsonMode: Chat/Plan = plain text, not JSON
     );
 
     if (!streamedDirectResponse && directResponse) {
