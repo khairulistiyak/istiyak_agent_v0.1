@@ -77,6 +77,11 @@ async function onTodoFound(filePath, todoText) {
       },
       cloudSandboxEnabled: !!config.CLOUD_SANDBOX_ENABLED,
       token: config.TOKEN || "",
+      agentMode: "agent",
+      // Allow auto-pilot to be cancelled when user starts a new chat
+      abortSignal: currentAbortController?.signal,
+      // Auto-pilot auto-approves all actions (user enabled it explicitly)
+      requestPermission: (_reqId, _command) => Promise.resolve(true),
     });
     console.log(`[Auto-Pilot] Successfully resolved TODO in ${relativePath}.`);
   } catch (err) {
@@ -171,6 +176,12 @@ export function startDaemon() {
       return res.status(400).json({ error: "Invalid messages list" });
     }
 
+    // Server-side mode validation — prevents UI bypass via direct API call
+    const VALID_MODES = ["chat", "plan", "assist", "agent"];
+    const validatedMode = VALID_MODES.includes(agentMode) ? agentMode : "agent";
+
+    console.log(`[daemon] Chat request — mode: ${validatedMode}`);
+
     // Set streaming headers — do NOT manually set Transfer-Encoding for HTTP/2 compatibility
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.setHeader("X-Content-Type-Options", "nosniff");
@@ -199,7 +210,7 @@ export function startDaemon() {
         dockerSandboxEnabled,
         sandboxImage,
         token,
-        agentMode,
+        agentMode: validatedMode,
         abortSignal: currentAbortController.signal,
         requestPermission: (reqId, command) => {
           return new Promise((resolve) => {
@@ -226,7 +237,8 @@ export function startDaemon() {
       const cost = calculateCost(
         provider || "gemini",
         agentResult.inputTokens,
-        agentResult.outputTokens
+        agentResult.outputTokens,
+        model || "gemini-2.5-flash"
       );
 
       res.write(

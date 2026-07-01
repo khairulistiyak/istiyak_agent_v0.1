@@ -140,6 +140,9 @@ export async function runAgent(options: RunnerOptions) {
   } else if (agentMode === "plan") {
     systemPromptContent =
       "You are ISTIYAK AGENT in PLAN mode. Give analysis, options, and implementation plans only. Do not output JSON. Do not use tools. Do not modify files, run commands, or claim you did.";
+  } else if (agentMode === "assist") {
+    systemPromptContent =
+      "You are ISTIYAK AGENT in ASSIST mode. You can read files, search code, and inspect the workspace. You may NOT edit files, run terminal commands, or execute any write operations. Stick to read-only assistance.";
   } else {
     if (options.workspacePath) {
       try {
@@ -303,7 +306,12 @@ export async function runAgent(options: RunnerOptions) {
     outputTokensTotal += stepOutputTokens;
 
     // Record telemetry
-    const stepCost = calculateCost(options.provider, stepInputTokens, stepOutputTokens);
+    const stepCost = calculateCost(
+      options.provider,
+      stepInputTokens,
+      stepOutputTokens,
+      options.model
+    );
     recordMetric(options.provider, options.model, latencyMs, stepInputTokens, stepOutputTokens);
     UsageTracker.trackUsage(
       options.provider,
@@ -314,7 +322,12 @@ export async function runAgent(options: RunnerOptions) {
     );
 
     // Budget guard: stop if session cost exceeds limit
-    const totalCostSoFar = calculateCost(options.provider, inputTokensTotal, outputTokensTotal);
+    const totalCostSoFar = calculateCost(
+      options.provider,
+      inputTokensTotal,
+      outputTokensTotal,
+      options.model
+    );
     if (totalCostSoFar > LIMITS.MAX_SESSION_COST_USD) {
       options.onChunk(
         `<agent_step step="${step}" status="error">Session cost ($${totalCostSoFar.toFixed(4)}) exceeded budget limit ($${LIMITS.MAX_SESSION_COST_USD}). Stopping.</agent_step>`

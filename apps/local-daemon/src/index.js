@@ -78,7 +78,7 @@ function startTerminalMode() {
         messages.push({ role: "assistant", content: responseBuffer });
 
         const totalTokens = agentResult.inputTokens + agentResult.outputTokens;
-        const cost = calculateCost(provider, agentResult.inputTokens, agentResult.outputTokens);
+        const cost = calculateCost(provider, agentResult.inputTokens, agentResult.outputTokens, model);
         console.log("\n-----------------------------------------------");
         console.log(`Cost: $${cost.toFixed(6)} | Tokens: ${totalTokens}`);
         console.log("-----------------------------------------------");
