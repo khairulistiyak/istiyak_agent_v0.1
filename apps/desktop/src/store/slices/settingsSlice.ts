@@ -61,7 +61,16 @@ export const createSettingsSlice: StateCreator<SettingsSlice> = (set, get) => ({
   loadSettings: async () => {
     set({ isLoading: true, error: null });
     try {
-      const config: Record<string, any> = await invoke("load_config");
+      const isTauri = typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__ !== undefined;
+      let config: Record<string, any> = {};
+      if (isTauri) {
+        config = await invoke("load_config");
+      } else {
+        const stored = localStorage.getItem("companion_config");
+        if (stored) {
+          try { config = JSON.parse(stored); } catch { config = {}; }
+        }
+      }
       const provider = (config.PROVIDER || "gemini") as SettingsSlice["provider"];
       const authMethod = (config.AUTH_METHOD || "apiKey") as SettingsSlice["authMethod"];
       const apiKey =
@@ -149,7 +158,12 @@ async function saveToRustConfig(state: SettingsSlice) {
       INSTALLED_PROMPTS: state.installedPrompts,
       INSTALLED_EXTENSIONS: state.installedExtensions,
     };
-    await invoke("save_config", { config });
+    const isTauri = typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__ !== undefined;
+    if (isTauri) {
+      await invoke("save_config", { config });
+    } else {
+      localStorage.setItem("companion_config", JSON.stringify(config));
+    }
   } catch (err) {
     console.error("Failed to save settings to Rust config:", err);
   }

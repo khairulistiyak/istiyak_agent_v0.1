@@ -434,14 +434,25 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     </button>
                   </div>
 
-                  {/* Workspace Context settings */}
+                  {/* Workspace Context settings — matching 12-settings-drawer.svg */}
                   {workspacePath && (
-                    <div className="space-y-2 pt-2 border-t border-[#16181d]/40">
-                      <div className="flex justify-between items-center text-[10px]">
-                        <span className="font-bold text-[#44444a]">Git Repository Branch</span>
+                    <div className="space-y-2.5 pt-2 border-t border-[#16181d]/40">
+                      <div className="flex flex-col space-y-0.5">
+                        <span className="font-bold text-[#44444a] text-[10px]">Active Workspace Directory</span>
+                        <span className="font-mono text-[9px] text-slate-400 truncate">
+                          {workspacePath}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="font-bold text-[#44444a]">Git Branch</span>
                         <span className="font-mono font-bold text-[#d1d5db]">
                           {gitInitialized ? gitBranch : "No Repo"}
                         </span>
+                      </div>
+                      {/* Session Cost Budget Guard (12 spec) */}
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-[#44444a] text-[10px]">Session Cost Budget Guard</span>
+                        <span className="font-mono text-[9px] text-emerald-400">$10.00 max (Active)</span>
                       </div>
                       <button
                         disabled={isIndexing}

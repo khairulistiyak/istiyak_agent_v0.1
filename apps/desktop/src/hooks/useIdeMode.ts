@@ -9,7 +9,15 @@ interface UseIdeModeOptions {
 }
 
 export function useIdeMode({ workspacePath }: UseIdeModeOptions) {
-  const appWindow = getCurrentWindow();
+  const isTauri = typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__ !== undefined;
+  const appWindow = isTauri
+    ? getCurrentWindow()
+    : {
+        setSize: async () => {},
+        close: async () => {},
+        minimize: async () => {},
+        toggleMaximize: async () => {},
+      };
 
   const [isIdeMode, setIsIdeMode] = useState(false);
   const [openedFile, setOpenedFile] = useState<string | null>(null);

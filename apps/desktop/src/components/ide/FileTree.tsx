@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { Folder, FolderOpen, File, Plus } from "lucide-react";
+import { Folder, FolderOpen, Plus } from "lucide-react";
 import { buildTree } from "../../utils/fileTree.js";
 import { FileNode } from "../../types/chat.js";
+
+import { FileIcon } from "../ui/FileIcon.js";
 
 interface FileExplorerPanelProps {
   workspacePath: string | null;
@@ -42,7 +44,7 @@ export const FileExplorerPanel = React.memo(({
   const renderFileTree = (nodes: FileNode[], depth = 0): React.ReactNode[] => {
     return nodes.map((node) => {
       const isExpanded = !!openDirs[node.path];
-      const paddingLeft = `${depth * 12 + 8}px`;
+      const paddingLeft = "6px";
 
       if (node.isDir) {
         return (
@@ -50,17 +52,17 @@ export const FileExplorerPanel = React.memo(({
             <div
               onClick={() => toggleDir(node.path)}
               style={{ paddingLeft }}
-              className="flex items-center space-x-1.5 py-1 px-2 hover:bg-cyber-primary/10 rounded cursor-pointer text-xs text-cyber-textPrimary/90 hover:text-white transition-colors"
+              className="flex items-center space-x-1.5 py-1 px-1.5 hover:bg-[#d97706]/10 rounded cursor-pointer text-xs text-cyber-textPrimary/90 hover:text-white transition-colors"
             >
               {isExpanded ? (
-                <FolderOpen size={14} className="text-cyber-primary shrink-0" />
+                <FolderOpen size={13} className="text-[#d97706]/85 shrink-0" />
               ) : (
-                <Folder size={14} className="text-cyber-primary shrink-0" />
+                <Folder size={13} className="text-[#d97706]/85 shrink-0" />
               )}
-              <span className="truncate">{node.name}</span>
+              <span className="truncate font-semibold">{node.name}</span>
             </div>
             {isExpanded && (
-              <div className="mt-0.5">
+              <div className="ml-[12px] pl-1.5 border-l border-[#1f2937]/50 mt-0.5 space-y-0.5">
                 {renderFileTree(node.children, depth + 1)}
               </div>
             )}
@@ -73,13 +75,15 @@ export const FileExplorerPanel = React.memo(({
             key={node.path}
             onClick={() => onFileSelect(node.path)}
             style={{ paddingLeft }}
-            className={`flex items-center space-x-1.5 py-1 px-2 rounded cursor-pointer text-xs transition-colors truncate select-none ${
+            className={`flex items-center space-x-2 py-1 px-1.5 rounded cursor-pointer text-xs transition-all duration-150 truncate select-none ${
               isCurrent
-                ? "bg-cyber-primary/20 text-cyber-primary font-medium"
+                ? "bg-cyber-primary/15 text-cyber-primary font-medium"
                 : "text-cyber-textSecondary hover:bg-white/5 hover:text-cyber-textPrimary"
             }`}
           >
-            <File size={13} className={`shrink-0 ${isCurrent ? "text-cyber-primary" : "text-cyber-textSecondary"}`} />
+            <span className="shrink-0 scale-90 origin-left">
+              <FileIcon filename={node.name} />
+            </span>
             <span className="truncate">{node.name}</span>
           </div>
         );

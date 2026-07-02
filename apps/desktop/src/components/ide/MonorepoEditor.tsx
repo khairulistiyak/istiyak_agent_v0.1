@@ -9,6 +9,8 @@ interface EditorPanelProps {
   isSaving: boolean;
   onContentChange: (val: string) => void;
   onSave: () => void;
+  lastCompileError?: string | null;
+  onAutoFixError?: () => void;
 }
 
 export const EditorPanel = React.memo(({
@@ -17,7 +19,9 @@ export const EditorPanel = React.memo(({
   editorLanguage,
   isSaving,
   onContentChange,
-  onSave
+  onSave,
+  lastCompileError,
+  onAutoFixError
 }: EditorPanelProps) => {
   return (
     <div className="flex-1 flex flex-col overflow-hidden border-r border-cyber-cardBorder bg-cyber-card">
@@ -39,7 +43,28 @@ export const EditorPanel = React.memo(({
       </div>
 
       {/* Monaco Editor Container */}
-      <div className="flex-1 relative overflow-hidden bg-cyber-dark">
+      <div className="flex-1 relative flex flex-col overflow-hidden bg-cyber-dark">
+        {lastCompileError && (
+          <div className="mx-3 my-2.5 rounded-xl border border-red-500/35 bg-[#2d1313]/30 p-3.5 text-xs select-none shrink-0">
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                <span className="font-bold text-red-400 uppercase tracking-wider text-[9px]">Lint compilation check failed</span>
+              </div>
+              {onAutoFixError && (
+                <button
+                  onClick={onAutoFixError}
+                  className="text-[9px] bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 font-bold px-2 py-0.5 rounded transition-all cursor-pointer"
+                >
+                  AUTO-FIX ERROR
+                </button>
+              )}
+            </div>
+            <p className="font-mono text-[10.5px] text-[#fca5a5] break-all leading-normal">
+              {lastCompileError}
+            </p>
+          </div>
+        )}
         {openedFile ? (
           <Editor
             height="100%"

@@ -47,3 +47,52 @@ html, body, #root {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(6, 182, 212, 0.3);
 }
+
+/* Glassmorphism Capsule & Panel styling matching states-suite specs */
+.glass-capsule {
+  background: rgba(30, 41, 59, 0.15);
+  border: 0.75px solid rgba(51, 65, 85, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+.glass-pill-button {
+  background: rgba(31, 41, 55, 0.15);
+  border: 0.75px solid rgba(31, 41, 55, 1);
+  backdrop-filter: blur(4px);
+  transition: all 0.2s ease-in-out;
+}
+
+.glass-pill-button:hover {
+  background: rgba(51, 65, 85, 0.25);
+  border-color: rgba(75, 85, 99, 1);
+}
+
+.glass-pill-button-active {
+  background: rgba(6, 182, 212, 0.1);
+  border: 0.75px solid rgba(6, 182, 212, 1);
+  color: #22d3ee;
+  backdrop-filter: blur(4px);
+}
+
+.glass-key-cap {
+  background: rgba(6, 182, 212, 0.15);
+  border: 0.5px solid rgba(6, 182, 212, 0.5);
+  color: #22d3ee;
+}
+
+.glass-key-cap-reject {
+  background: rgba(45, 21, 21, 1);
+  border: 0.5px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+/* Micro-animations */
+@keyframes zenglow {
+  0% { opacity: 0.3; }
+  50% { opacity: 0.9; }
+  100% { opacity: 0.3; }
+}
+
+.animate-zenglow {
+  animation: zenglow 2.5s infinite ease-in-out;
+}

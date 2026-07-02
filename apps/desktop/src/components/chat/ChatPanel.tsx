@@ -55,11 +55,12 @@ const MODES: Array<{
   id: AgentMode;
   label: string;
   hint: string;
+  shortcut: string;
 }> = [
-  { id: "chat", label: "Chat", hint: "No tools" },
-  { id: "plan", label: "Plan", hint: "No edits" },
-  { id: "assist", label: "Assist", hint: "Read only" },
-  { id: "agent", label: "Agent", hint: "Approve" },
+  { id: "chat", label: "Chat", hint: "No tools", shortcut: "⌥C" },
+  { id: "plan", label: "Plan", hint: "No edits", shortcut: "⌥P" },
+  { id: "assist", label: "Assist", hint: "Read only", shortcut: "⌥S" },
+  { id: "agent", label: "Agent", hint: "Approve", shortcut: "⌥A" },
 ];
 
 export { MODE_POLICY, MODES };
@@ -126,15 +127,25 @@ export const ChatPanel = React.memo(
                     key={item.id}
                     type="button"
                     onClick={() => onModeChange?.(item.id)}
-                    className={`rounded-xl border px-2 py-2 text-left transition-all duration-200 ${getModeClasses(item.id, active)}`}
+                    className={`relative rounded-xl border px-2 py-2 text-left transition-all duration-200 ${getModeClasses(item.id, active)}`}
                   >
                     <div className="flex items-center gap-1.5">
                       <span
-                        className={`h-2 w-2 rounded-full ${active ? "bg-current" : "bg-cyber-textMuted"}`}
+                        className={`h-2 w-2 rounded-full ${active ? "bg-current" : "bg-slate-600"}`}
                       />
                       <span className="text-[11px] font-bold leading-none">{item.label}</span>
                     </div>
                     <p className="mt-1 text-[8px] opacity-70 truncate">{item.hint}</p>
+                    {/* Shortcut badge matching 09 spec */}
+                    <span
+                      className="absolute right-1 top-1 rounded px-1 py-0.5 text-[6px] font-bold text-slate-600"
+                      style={{
+                        backgroundColor: "rgba(30, 41, 59, 0.5)",
+                        border: "0.5px solid rgba(31, 41, 55, 0.5)",
+                      }}
+                    >
+                      {item.shortcut}
+                    </span>
                   </button>
                 );
               })}
@@ -160,6 +171,7 @@ export const ChatPanel = React.memo(
           permissionStates={permissionStates}
           resolvedPermissionIds={resolvedPermissionIds}
           onPermissionResponse={onPermissionResponse}
+          onSuggestionClick={setInput}
         />
         <ChatInputBar
           input={input}

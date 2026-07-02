@@ -146,8 +146,13 @@ export function parseAgentMessage(rawText: string): ParsedAgentMessage {
   cleanText = cleanText.replace(/<permission_request[^>]*?><\/permission_request>/gi, "");
   
   // Replace any unclosed tags at the end of streaming text
-  if (unclosedTagText) {
-    cleanText = cleanText.replace(unclosedTagText, "");
+  const lastOpenIndex = cleanText.toLowerCase().lastIndexOf("<agent_step");
+  if (lastOpenIndex > -1) {
+    cleanText = cleanText.substring(0, lastOpenIndex);
+  }
+  const lastPermOpenIndexClean = cleanText.toLowerCase().lastIndexOf("<permission_request");
+  if (lastPermOpenIndexClean > -1) {
+    cleanText = cleanText.substring(0, lastPermOpenIndexClean);
   }
   
   // Clean up cost metadata patterns

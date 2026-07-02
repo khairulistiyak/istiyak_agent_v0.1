@@ -32,10 +32,6 @@ export class ApprovalManager {
     "pwd", "whoami", "hostname",                               // System info
     "git status", "git log", "git diff", "git branch",        // Read-only git
     "npm list", "npm ls", "npm outdated", "npm audit",        // Read-only npm
-    "npm run build", "npm run test", "npm run dev",            // Standard npm scripts
-    "npm run lint", "npm run start", "npm run preview",        // Standard npm scripts
-    "npx tsc", "npx vitest", "npx jest", "npx eslint",       // Standard dev tools
-    "tsc", "vitest", "jest",                                   // Direct dev tool calls
     "node --version", "npm --version", "tsc --version",       // Version checks
     "grep", "find", "which", "type",                          // Search
   ];

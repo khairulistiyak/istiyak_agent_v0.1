@@ -28,6 +28,48 @@ import { usePolling } from "../hooks/usePolling.js";
 import { usePermissions } from "../hooks/usePermissions.js";
 import { useIdeMode } from "../hooks/useIdeMode.js";
 
+const getSidebarActiveStyles = (modeId: AgentMode) => {
+  const themes: Record<AgentMode, { border: string; bg: string; text: string; dot: string; badgeBg: string; badgeBorder: string; badgeText: string }> = {
+    chat: {
+      border: "0.75px solid rgba(6, 182, 212, 0.6)",
+      bg: "bg-[#0c1926]/40",
+      text: "text-cyan-200",
+      dot: "bg-cyan-400",
+      badgeBg: "rgba(6, 182, 212, 0.15)",
+      badgeBorder: "0.5px solid rgba(6, 182, 212, 0.4)",
+      badgeText: "text-cyan-300",
+    },
+    plan: {
+      border: "0.75px solid rgba(168, 85, 247, 0.6)",
+      bg: "bg-[#180c26]/40",
+      text: "text-violet-200",
+      dot: "bg-violet-400",
+      badgeBg: "rgba(168, 85, 247, 0.15)",
+      badgeBorder: "0.5px solid rgba(168, 85, 247, 0.4)",
+      badgeText: "text-violet-300",
+    },
+    assist: {
+      border: "0.75px solid rgba(245, 158, 11, 0.6)",
+      bg: "bg-[#26150c]/40",
+      text: "text-amber-200",
+      dot: "bg-amber-400",
+      badgeBg: "rgba(245, 158, 11, 0.15)",
+      badgeBorder: "0.5px solid rgba(245, 158, 11, 0.4)",
+      badgeText: "text-amber-300",
+    },
+    agent: {
+      border: "0.75px solid rgba(16, 185, 129, 0.6)",
+      bg: "bg-[#0c2619]/40",
+      text: "text-emerald-200",
+      dot: "bg-emerald-400",
+      badgeBg: "rgba(16, 185, 129, 0.15)",
+      badgeBorder: "0.5px solid rgba(16, 185, 129, 0.4)",
+      badgeText: "text-emerald-300",
+    },
+  };
+  return themes[modeId];
+};
+
 const getMessageText = (msg: UIMessage): string => {
   const raw = msg as UIMessage & { content?: string };
   if (raw.content) return raw.content;
@@ -377,7 +419,15 @@ export default function ChatUI() {
     setInput("");
   }, [input, isLoading, sendMessage]);
 
-  const appWindow = getCurrentWindow();
+  const isTauri = typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__ !== undefined;
+  const appWindow = isTauri
+    ? getCurrentWindow()
+    : {
+        setSize: async () => {},
+        close: async () => {},
+        minimize: async () => {},
+        toggleMaximize: async () => {},
+      };
 
   const handleClose = useCallback(async () => {
     try {
@@ -516,13 +566,14 @@ export default function ChatUI() {
                 </p>
               </div>
 
-              <p className="mt-8 text-[10px] font-bold uppercase tracking-[0.22em] text-cyber-textMuted">
+              <p className="mt-8 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
                 Mode selector
               </p>
-              <div className="mt-3 space-y-2.5">
+              <div className="mt-3 space-y-1.5">
                 {AGENT_MODES.map((mode) => {
                   const active = mode.id === agentMode;
                   const policy = MODE_POLICY[mode.id];
+                  const theme = getSidebarActiveStyles(mode.id as AgentMode);
                   return (
                     <button
                       key={mode.id}
@@ -530,17 +581,38 @@ export default function ChatUI() {
                       onClick={() => {
                         if (activeId) updateConversationMode(activeId, mode.id);
                       }}
-                      className={`w-full rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${active ? policy.card : "border-[#1e2533] bg-[#0b0e14] text-cyber-textSecondary hover:border-cyber-primary/40 hover:text-white"}`}
+                      className={`w-full rounded-xl px-3.5 py-2.5 text-left transition-all duration-200 ${
+                        active
+                          ? `border ${theme.bg} ${theme.text}`
+                          : "border-0 bg-transparent text-slate-400 hover:bg-slate-800/30 hover:text-white"
+                      }`}
+                      style={active ? { border: theme.border } : {}}
                     >
-                      <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2.5">
                           <span
-                            className={`h-2.5 w-2.5 rounded-full ${active ? policy.dot : "bg-slate-600"}`}
+                            className={`h-2 w-2 rounded-full ${active ? theme.dot : "bg-slate-600"}`}
                           />
                           <span className="text-sm font-bold">{mode.label}</span>
                         </div>
-                        <span className="text-[10px] opacity-70">{mode.hint}</span>
+                        <div className="flex items-center gap-1.5">
+                          {active && (
+                            <span
+                              className={`rounded px-1.5 py-0.5 text-[8px] font-bold ${theme.badgeText}`}
+                              style={{
+                                backgroundColor: theme.badgeBg,
+                                border: theme.badgeBorder,
+                              }}
+                            >
+                              ACTIVE
+                            </span>
+                          )}
+                          <span className="text-[9px] text-slate-600 font-mono">{mode.hint}</span>
+                        </div>
                       </div>
+                      <p className={`mt-1 text-[10px] leading-relaxed ${active ? "text-slate-400" : "text-slate-600"}`}>
+                        {policy.detail}
+                      </p>
                     </button>
                   );
                 })}

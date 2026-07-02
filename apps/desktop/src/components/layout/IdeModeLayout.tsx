@@ -129,6 +129,8 @@ export const IdeModeLayout = React.memo(({
           isSaving={isSaving}
           onContentChange={onContentChange}
           onSave={onSaveFile}
+          lastCompileError={lastCompileError}
+          onAutoFixError={onAutoFixError}
         />
         <TerminalPanel
           logs={terminalLogs}
