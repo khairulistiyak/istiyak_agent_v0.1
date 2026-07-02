@@ -49,10 +49,21 @@ export async function executeCommandInSandbox(
   }
 
   // Spawn command shell execution in this directory
+  const allowedCommands = ["ls", "cat", "echo", "pwd", "node", "npm", "npx", "python3", "git", "curl"];
+  const cmdBase = command.split(/\s+/)[0];
+  if (!allowedCommands.includes(cmdBase)) {
+    throw new Error(`Command not allowed: ${cmdBase}`);
+  }
+  // Strip sensitive env vars before passing to sandbox
+  const sandboxEnv: Record<string, string | undefined> = {
+    PATH: process.env.PATH,
+    HOME: process.env.HOME,
+    USER: process.env.USER,
+  };
   return new Promise<void>((resolve, reject) => {
     const child = spawn("/bin/sh", ["-c", command], {
       cwd: sandboxDir,
-      env: { ...process.env, PATH: process.env.PATH }
+      env: sandboxEnv,
     });
 
     child.stdout.on("data", (data) => {

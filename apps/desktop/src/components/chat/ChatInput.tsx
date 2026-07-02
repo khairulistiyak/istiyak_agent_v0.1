@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { memo, useState, useEffect } from "react";
 import { Paperclip, Terminal, Settings, Send, X } from "lucide-react";
 
 interface PromptItem {
@@ -10,7 +10,7 @@ type AgentMode = "chat" | "plan" | "assist" | "agent";
 
 interface ChatInputBarProps {
   input: string;
-  setInput: React.Dispatch<React.SetStateAction<string>>;
+  setInput: (value: string) => void;
   isLoading: boolean;
   onSend: () => void;
   onAbort: () => void;
@@ -26,7 +26,7 @@ const MODE_PLACEHOLDER: Record<AgentMode, string> = {
   agent: "Ask me to implement, fix, or run tasks...",
 };
 
-export const ChatInputBar = React.memo(
+export const ChatInputBar = memo(
   ({
     input,
     setInput,
@@ -127,7 +127,7 @@ export const ChatInputBar = React.memo(
                         <button
                           key={idx}
                           onClick={() => {
-                            setInput((prev) => (prev ? `${prev}\n${p.prompt}` : p.prompt));
+                            setInput(input ? `${input}\n${p.prompt}` : p.prompt);
                             setPromptsDropdownOpen(false);
                           }}
                           className="w-full text-left px-2 py-1.5 hover:bg-cyan-400/15 rounded text-[10px] text-white truncate transition-colors cursor-pointer"
@@ -180,4 +180,4 @@ export const ChatInputBar = React.memo(
 );
 
 ChatInputBar.displayName = "ChatInputBar";
-export { ChatInputBar as ChatInput }; // Keep alias for backward compatibility
+

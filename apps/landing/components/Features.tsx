@@ -1,4 +1,3 @@
-import React from "react";
 import { Zap, Shield, Code, Cpu } from "lucide-react";
 
 export const Features = () => {

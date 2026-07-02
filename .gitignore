@@ -32,3 +32,13 @@ credentials/
 Thumbs.db
 ._*
 
+# Idea/R&D knowledge — user proprietary design documents
+my rnd/
+uiDesign/
+
+# Generated plan/analysis/changelog documents (idea/discussion content)
+FOCUSED_CHANGELOG.md
+GOD_MODE_CHANGELOG.md
+.plans/
+.kilo/
+

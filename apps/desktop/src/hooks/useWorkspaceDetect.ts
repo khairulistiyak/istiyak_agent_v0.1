@@ -39,7 +39,7 @@ export function useWorkspaceDetect(
   const hasAutoSelected = useRef(false);
   const isTauri =
     typeof window !== "undefined" &&
-    (window as any).__TAURI_INTERNALS__ !== undefined;
+    "__TAURI_INTERNALS__" in window;
 
   const detect = useCallback(async () => {
     if (!isTauri) return;

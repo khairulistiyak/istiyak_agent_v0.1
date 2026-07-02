@@ -1,11 +1,11 @@
-import React from "react";
-import { CostMeta } from "../../types/chat.js";
+import { memo } from "react";
+import type { CostMeta } from "../../types/chat.js";
 
 interface CostBadgeProps {
   costMeta: CostMeta | null;
 }
 
-export const CostBadge = React.memo(({ costMeta }: CostBadgeProps) => {
+export const CostBadge = memo(({ costMeta }: CostBadgeProps) => {
   if (!costMeta) return null;
 
   return (

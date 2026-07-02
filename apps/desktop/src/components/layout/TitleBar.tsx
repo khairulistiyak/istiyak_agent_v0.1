@@ -1,4 +1,4 @@
-import React from "react";
+import { memo } from "react";
 import { User, Settings, History } from "lucide-react";
 
 interface TitleBarProps {
@@ -14,7 +14,7 @@ interface TitleBarProps {
   onHistoryOpen: () => void;
 }
 
-export const TitleBar = React.memo(({
+export const TitleBar = memo(({
   engineStatus,
   isLoading,
   token,

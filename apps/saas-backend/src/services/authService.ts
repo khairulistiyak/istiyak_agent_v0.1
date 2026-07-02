@@ -22,7 +22,7 @@ export async function registerUser(email: string, password: string, name: string
 
   const hashedPassword = await bcrypt.hash(password, 10);
   const user = await createUser({ email, password: hashedPassword, name, registeredIp: ip });
-  await logIpAddress(user.id || user._id, ip);
+  await logIpAddress(ip);
 
   const token = jwt.sign({ userId: user.id || user._id, email: user.email }, JWT_SECRET, { expiresIn: "7d" });
 
@@ -48,7 +48,7 @@ export async function loginUser(email: string, password: string, ip: string) {
     throw new Error("Access denied. Account is blocked.");
   }
 
-  await logIpAddress(user.id || user._id, ip);
+  await logIpAddress(ip);
 
   const token = jwt.sign({ userId: user.id || user._id, email: user.email }, JWT_SECRET, { expiresIn: "7d" });
 

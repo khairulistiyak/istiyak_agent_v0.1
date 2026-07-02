@@ -1,6 +1,6 @@
 import { IpLog } from "@istiyak/database";
 
-export async function logIpAddress(userId: string, ip: string) {
+export async function logIpAddress(ip: string) {
   if (!ip) return null;
   let logEntry = await IpLog.findOne({ ip });
   if (logEntry) {

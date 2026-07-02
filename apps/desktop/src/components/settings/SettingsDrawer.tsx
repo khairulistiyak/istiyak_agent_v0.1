@@ -262,7 +262,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                                   updateSettings({ serviceAccountPath: selected });
                                 }
                               } catch (err) {
-                                console.log("File selection cancelled or failed:", err);
+                                // User cancelled or Tauri command failed silently
                               }
                             }}
                             className="px-2.5 py-1 bg-cyber-primary/20 hover:bg-cyber-primary/30 border border-cyber-primary/45 text-cyber-primary rounded text-[9.5px] font-bold transition-all cursor-pointer"

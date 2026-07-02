@@ -402,8 +402,7 @@ export default function ChatUI() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
-      const data = await res.json();
-      console.log("[ChatUI] Abort response:", data);
+      await res.json();
     } catch (err) {
       console.error("Failed to abort agent:", err);
     }
@@ -422,7 +421,7 @@ export default function ChatUI() {
     setInput("");
   }, [input, isLoading, sendMessage]);
 
-  const isTauri = typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__ !== undefined;
+  const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
   const appWindow = isTauri
     ? getCurrentWindow()
     : {
@@ -495,12 +494,12 @@ export default function ChatUI() {
             {workspace.activeIde || "No IDE"}
           </span>
           <span className="text-[10px] text-slate-600 shrink-0">·</span>
-          <p
-            className="truncate font-mono text-[11px] text-slate-300 min-w-0"
-            title={workspacePath || "No workspace selected"}
-          >
-            {workspacePath ? workspacePath.split(/[\\/]/).pop() : "No workspace"}
-          </p>
+              <span
+                className="truncate font-mono text-[11px] text-slate-300 min-w-0"
+                title={workspacePath || "No workspace selected"}
+              >
+                {workspacePath ? workspacePath.split(/[\\/]/).pop() : "No workspace"}
+              </span>
         </div>
         <div className="relative">
           <button
@@ -568,12 +567,12 @@ export default function ChatUI() {
             </div>
 
             <div className="mt-5 rounded-xl border border-[#1e2533] bg-[#0c0f16] px-3 py-3">
-              <p
+              <span
                 className="truncate font-mono text-[11px] text-slate-300"
                 title={workspacePath || "No workspace selected"}
               >
                 {workspacePath ? workspacePath.split(/[\\/]/).pop() : "No workspace"}
-              </p>
+              </span>
             </div>
 
             <p className="mt-8 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">

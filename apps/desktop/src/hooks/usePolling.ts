@@ -27,7 +27,7 @@ async function fetchWithTimeout(url: string, options?: RequestInit, timeoutMs = 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetchWithTimeout(url, { ...options, signal: controller.signal });
+    const res = await fetch(url, { ...options, signal: controller.signal });
     return res;
   } finally {
     clearTimeout(timer);
@@ -133,10 +133,7 @@ export function usePolling({ workspacePath }: UsePollingOptions): UsePollingResu
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ workspacePath: path }),
       });
-      if (res.ok && isMountedRef.current) {
-        const data = await res.json();
-        console.log("[usePolling] Watcher status:", data);
-      } else if (isMountedRef.current) {
+      if (!res.ok && isMountedRef.current) {
         setPollingError("Failed to start file watcher.");
       }
     } catch {

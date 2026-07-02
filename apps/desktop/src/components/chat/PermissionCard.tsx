@@ -1,5 +1,5 @@
-import React from "react";
-import { PermissionRequest } from "../../types/chat.js";
+import { memo } from "react";
+import type { PermissionRequest } from "../../types/chat.js";
 import { FileCapsule } from "../ui/FileCapsule.js";
 
 interface PermissionCardProps {
@@ -21,7 +21,7 @@ const extractFilePath = (req: PermissionRequest): string | null => {
   return null;
 };
 
-export const PermissionCard = React.memo(({
+export const PermissionCard = memo(({
   request,
   state,
   onApprove,

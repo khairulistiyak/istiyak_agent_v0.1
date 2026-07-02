@@ -8,6 +8,7 @@ import adminRoutes from "./routes/admin.js";
 import billingRoutes from "./routes/billing.js";
 import updateRoutes from "./routes/update.js";
 import sandboxRoutes from "./routes/sandbox.js";
+import { connectDatabase } from "@istiyak/database";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { initPassport } from "./config/passport.js";
 
@@ -74,8 +75,6 @@ if (process.env.SENTRY_DSN) {
 }
 
 app.use(errorHandler);
-
-import { connectDatabase } from "@istiyak/database";
 
 // Establish MongoDB Connection and Start Server
 connectDatabase(MONGODB_URI)

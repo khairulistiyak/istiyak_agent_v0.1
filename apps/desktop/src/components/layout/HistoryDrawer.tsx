@@ -1,6 +1,6 @@
-import React from "react";
+import { memo } from "react";
 import { X, Plus, Trash2 } from "lucide-react";
-import { Conversation } from "../../store/slices/chatSlice.js";
+import type { Conversation } from "../../store/slices/chatSlice.js";
 
 interface HistoryDrawerProps {
   isOpen: boolean;
@@ -12,7 +12,7 @@ interface HistoryDrawerProps {
   onDeleteConversation: (id: string) => void;
 }
 
-export const HistoryDrawer = React.memo(({
+export const HistoryDrawer = memo(({
   isOpen,
   onClose,
   conversations,

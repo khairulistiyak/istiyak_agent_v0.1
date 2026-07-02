@@ -1,18 +1,10 @@
-import React, { useRef, useEffect } from "react";
-import { UIMessage } from "ai";
+import { memo, useRef, useEffect } from "react";
+import type { UIMessage } from "ai";
 import { Bot } from "lucide-react";
 import { parseAgentMessage } from "../../utils/parser.js";
 import type { ParsedAgentMessage } from "../../types/chat.js";
 import { UserMessage } from "./MessageBubble.js";
 import { AssistantMessage } from "./AssistantMessage.js";
-
-interface MessageListProps {
-  messages: UIMessage[];
-  isLoading: boolean;
-  permissionStates: { [reqId: string]: "pending" | "approved" | "rejected" | "timed_out" };
-  resolvedPermissionIds: Set<string>;
-  onPermissionResponse: (reqId: string, approved: boolean) => void;
-}
 
 const getMessageText = (msg: UIMessage): string => {
   const raw = msg as UIMessage & { content?: string };
@@ -77,16 +69,18 @@ function WelcomeScreen({ onSuggestionClick }: { onSuggestionClick?: (prompt: str
   );
 }
 
+
+
 interface MessageListProps {
   messages: UIMessage[];
   isLoading: boolean;
   permissionStates: { [reqId: string]: "pending" | "approved" | "rejected" | "timed_out" };
   resolvedPermissionIds: Set<string>;
   onPermissionResponse: (reqId: string, approved: boolean) => void;
-  onSuggestionClick?: (prompt: string) => void;
+  onSuggestionClick?: (value: string) => void;
 }
 
-export const MessageList = React.memo(
+export const MessageList = memo(
   ({
     messages,
     isLoading,

@@ -1,5 +1,5 @@
-import React from "react";
-import { UIMessage } from "ai";
+import { memo } from "react";
+import type { UIMessage } from "ai";
 import { MarkdownRenderer } from "./MarkdownRenderer.js";
 
 interface UserMessageProps {
@@ -17,7 +17,7 @@ const getMessageText = (msg: UIMessage): string => {
     .join("");
 };
 
-export const UserMessage = React.memo(({ msg }: UserMessageProps) => {
+export const UserMessage = memo(({ msg }: UserMessageProps) => {
   const text = getMessageText(msg);
 
   return (
@@ -30,4 +30,4 @@ export const UserMessage = React.memo(({ msg }: UserMessageProps) => {
 });
 
 UserMessage.displayName = "UserMessage";
-export { UserMessage as MessageBubble }; // Keep alias for backward compatibility if needed
+

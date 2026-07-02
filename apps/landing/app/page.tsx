@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Bot, Download, ArrowRight, Check } from "lucide-react";
+import { useState } from "react";
+import { Bot, Download, Check } from "lucide-react";
 import Hero from "../components/Hero";
 import Features from "../components/Features";
 import CheckoutButton from "../components/CheckoutButton";

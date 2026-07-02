@@ -63,8 +63,8 @@ export const createSettingsSlice: StateCreator<SettingsSlice> = (set, get) => ({
 loadSettings: async () => {
      set({ isLoading: true, error: null });
      try {
-       const isTauri = typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__ !== undefined;
-       let config: Record<string, any> = {};
+       const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+       let config: Record<string, unknown> = {};
        if (isTauri) {
          config = await invoke("load_config");
        } else {
@@ -175,7 +175,7 @@ async function saveToRustConfig(state: SettingsSlice) {
        API_KEY: state.apiKey,
        TOKEN: state.token,
      };
-     const isTauri = typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__ !== undefined;
+      const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
      if (isTauri) {
        const fullConfig = { ...config, ...secrets };
        await invoke("save_config", { config: fullConfig });

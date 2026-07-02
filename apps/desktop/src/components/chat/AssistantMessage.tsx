@@ -1,6 +1,6 @@
-import React from "react";
-import { UIMessage } from "ai";
-import { ParsedAgentMessage } from "../../types/chat.js";
+import { useState, memo } from "react";
+import type { UIMessage } from "ai";
+import type { ParsedAgentMessage } from "../../types/chat.js";
 import { AgentWorkflowPanel } from "./AgentWorkflowPanel.js";
 import { PermissionCard } from "./PermissionCard.js";
 import { MarkdownRenderer } from "./MarkdownRenderer.js";
@@ -17,7 +17,7 @@ interface AssistantMessageProps {
 
 /* ── Tool card helpers ── */
 
-function extractFilePath(content: string, _actionName?: string, params?: Record<string, string>): string | null {
+function extractFilePath(content: string, params?: Record<string, string>): string | null {
   if (params?.file_path) return params.file_path;
   if (params?.path) return params.path;
   if (params?.target_path) return params.target_path;
@@ -26,8 +26,7 @@ function extractFilePath(content: string, _actionName?: string, params?: Record<
   return match ? match[1] : null;
 }
 
-function extractFilePaths(_content: string): string[] {
-  const content = _content;
+function extractFilePaths(content: string): string[] {
   const paths: string[] = [];
   const regex = /`([^`]+)`/g;
   let match;
@@ -196,7 +195,8 @@ function MemoryCard({ content }: { content: string }) {
 }
 
 /* Session walkthrough — `10-session-walkthrough.svg` */
-function SessionWalkthroughCard({ content, costMeta }: { content: string; costMeta: any }) {
+type CostMeta = { cost: string; tokens: number };
+function SessionWalkthroughCard({ content, costMeta }: { content: string; costMeta?: CostMeta }) {
   const isComplete = content.toLowerCase().includes("task completed") || content.toLowerCase().includes("successfully");
   if (!isComplete) return null;
 
@@ -270,7 +270,7 @@ function tryParsePlanningJson(text: string): PlanningData | null {
 }
 
 function PlanningCard({ data }: { data: PlanningData }) {
-  const [completed, setCompleted] = React.useState<Record<string, boolean>>({});
+  const [completed, setCompleted] = useState<Record<string, boolean>>({});
 
   const toggleTask = (key: string) => {
     setCompleted(prev => ({
@@ -291,7 +291,7 @@ function PlanningCard({ data }: { data: PlanningData }) {
 
       <h3 className="text-base font-bold text-white mb-2">{data.title}</h3>
       {data.objective && (
-        <p className="text-[11.5px] text-slate-350 mb-4 leading-relaxed bg-[#1c1426]/30 p-2.5 rounded-lg border border-violet-900/20 italic">
+        <p className="text-[11.5px] text-slate-400 mb-4 leading-relaxed bg-[#1c1426]/30 p-2.5 rounded-lg border border-violet-900/20 italic">
           <strong className="text-violet-300 font-semibold not-italic mr-1.5">Objective:</strong> {data.objective}
         </p>
       )}
@@ -313,7 +313,7 @@ function PlanningCard({ data }: { data: PlanningData }) {
                       onClick={() => toggleTask(key)}
                       className={`mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border transition-all duration-200 ${
                         isDone
-                          ? "bg-violet-500/20 border-violet-450 text-violet-300"
+                          ? "bg-violet-500/20 border-violet-400 text-violet-300"
                           : "border-slate-700 bg-slate-800/40 hover:border-violet-500/50"
                       }`}
                     >
@@ -331,7 +331,7 @@ function PlanningCard({ data }: { data: PlanningData }) {
   );
 }
 
-export const AssistantMessage = React.memo(
+export const AssistantMessage = memo(
   ({
     msg,
     parsed,
@@ -389,7 +389,7 @@ export const AssistantMessage = React.memo(
             .slice(-1)
             .map((s, i) => {
               const kind = classifyStep(s.actionName);
-              const filePath = extractFilePath(s.content, s.actionName, s.params);
+              const filePath = extractFilePath(s.content, s.params);
 
               switch (kind) {
                 case "file_search":

@@ -1,5 +1,5 @@
-import React from "react";
-import { AgentStep } from "../../types/chat.js";
+import { memo } from "react";
+import type { AgentStep } from "../../types/chat.js";
 import { FileCapsule } from "../ui/FileCapsule.js";
 
 interface AgentWorkflowPanelProps {
@@ -90,14 +90,15 @@ function isAgentAction(name?: string) {
   return name === "delegate_agent" || name === "spawn_sub_agent" || name === "merge_result";
 }
 
-function getActionBadge(name?: string) {
-  if (isWriteAction(name)) return { label: "write", color: "text-purple-400", dot: "bg-purple-400" };
-  if (isReadAction(name)) return { label: "read", color: "text-blue-400", dot: "bg-blue-400" };
-  if (isCommandAction(name)) return { label: "cmd", color: "text-amber-400", dot: "bg-amber-400" };
-  if (isGitAction(name)) return { label: "git", color: "text-emerald-400", dot: "bg-emerald-400" };
-  if (isWebAction(name)) return { label: "web", color: "text-cyan-400", dot: "bg-cyan-400" };
-  if (isMemoryAction(name)) return { label: "memory", color: "text-violet-400", dot: "bg-violet-400" };
-  if (isAgentAction(name)) return { label: "agent", color: "text-pink-400", dot: "bg-pink-400" };
+type BadgeDef = { label: string; color: string; dot: string; bg: string };
+function getActionBadge(name?: string): BadgeDef | null {
+  if (isWriteAction(name)) return { label: "write", color: "text-purple-400", dot: "bg-purple-400", bg: "#a855f7" };
+  if (isReadAction(name)) return { label: "read", color: "text-blue-400", dot: "bg-blue-400", bg: "#3b82f6" };
+  if (isCommandAction(name)) return { label: "cmd", color: "text-amber-400", dot: "bg-amber-400", bg: "#f59e0b" };
+  if (isGitAction(name)) return { label: "git", color: "text-emerald-400", dot: "bg-emerald-400", bg: "#10b981" };
+  if (isWebAction(name)) return { label: "web", color: "text-cyan-400", dot: "bg-cyan-400", bg: "#06b6d4" };
+  if (isMemoryAction(name)) return { label: "memory", color: "text-violet-400", dot: "bg-violet-400", bg: "#8b5cf6" };
+  if (isAgentAction(name)) return { label: "agent", color: "text-pink-400", dot: "bg-pink-400", bg: "#ec4899" };
   return null;
 }
 
@@ -117,7 +118,7 @@ function extractCommand(content: string, params?: Record<string, string>): strin
   return null;
 }
 
-export const AgentWorkflowPanel = React.memo(({ steps }: AgentWorkflowPanelProps) => {
+export const AgentWorkflowPanel = memo(({ steps }: AgentWorkflowPanelProps) => {
   const completedCount = steps.filter((s) => s.status === "success").length;
   const totalSteps = steps.length;
   const percent = totalSteps > 0 ? Math.round((completedCount / totalSteps) * 100) : 0;
@@ -181,7 +182,7 @@ export const AgentWorkflowPanel = React.memo(({ steps }: AgentWorkflowPanelProps
                   )}
                   {badge && (
                     <span className={`inline-flex items-center gap-1 rounded px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider ${badge.color}`}
-                      style={{ backgroundColor: `${badge.color === "text-purple-400" ? "#a855f7" : badge.color === "text-blue-400" ? "#3b82f6" : badge.color === "text-amber-400" ? "#f59e0b" : badge.color === "text-emerald-400" ? "#10b981" : badge.color === "text-cyan-400" ? "#06b6d4" : badge.color === "text-violet-400" ? "#8b5cf6" : "#ec4899"}15` }}
+                      style={{ backgroundColor: `${badge.bg}15` }}
                     >
                       <span className={`h-1 w-1 rounded-full ${badge.dot}`} />
                       {badge.label}

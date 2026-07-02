@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { Bot, CheckCircle, ArrowRight } from "lucide-react";
+import { Bot, CheckCircle } from "lucide-react";
 
 export default function SuccessPage() {
   return (

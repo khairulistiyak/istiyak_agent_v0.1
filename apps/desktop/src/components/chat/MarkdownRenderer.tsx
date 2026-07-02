@@ -1,11 +1,11 @@
-import React from "react";
+import { memo, useState, useCallback, type ReactNode } from "react";
 
 interface MarkdownRendererProps {
   text: string;
   messageId: string;
 }
 
-function highlightSyntax(code: string, language: string): React.ReactNode {
+function highlightSyntax(code: string, language: string): ReactNode {
   if (!language || !["ts", "tsx", "js", "jsx", "typescript", "javascript", "json"].includes(language)) {
     return <pre className="text-[11px] leading-relaxed text-slate-300 whitespace-pre-wrap font-mono">{code}</pre>;
   }
@@ -23,10 +23,10 @@ function highlightSyntax(code: string, language: string): React.ReactNode {
   );
 }
 
-const CopyButton = React.memo(({ code, btnId }: { code: string; btnId: string }) => {
-  const [copied, setCopied] = React.useState(false);
+const CopyButton = memo(({ code, btnId }: { code: string; btnId: string }) => {
+  const [copied, setCopied] = useState(false);
 
-  const handleCopy = React.useCallback(() => {
+  const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(code).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -64,7 +64,7 @@ const CopyButton = React.memo(({ code, btnId }: { code: string; btnId: string })
 });
 CopyButton.displayName = "CopyButton";
 
-export const MarkdownRenderer = React.memo(({ text, messageId }: MarkdownRendererProps) => {
+export const MarkdownRenderer = memo(({ text, messageId }: MarkdownRendererProps) => {
   const codeBlocks = text.split("```");
   
   return (

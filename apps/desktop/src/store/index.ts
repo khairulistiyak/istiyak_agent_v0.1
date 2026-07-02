@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist, createJSONStorage, StateStorage } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import type { StateStorage } from "zustand/middleware";
 import { createChatSlice, ChatSlice } from "./slices/chatSlice.js";
 import { createSettingsSlice, SettingsSlice } from "./slices/settingsSlice.js";
 import { createUiSlice, UiSlice } from "./slices/uiSlice.js";
@@ -34,7 +35,7 @@ const indexedDBStorage: StateStorage = {
     try {
       const localValue = localStorage.getItem(name);
       if (localValue !== null) {
-        console.log(`Migrating store ${name} from localStorage to IndexedDB...`);
+        console.warn(`Migrating store ${name} from localStorage to IndexedDB...`);
         // Save to IndexedDB so it's migrated
         await indexedDBStorage.setItem(name, localValue);
         // Remove from localStorage to free up space

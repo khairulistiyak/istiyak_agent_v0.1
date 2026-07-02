@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { AlertCircle, XCircle } from "lucide-react";
+import { XCircle } from "lucide-react";
 
 export default function CancelPage() {
   return (

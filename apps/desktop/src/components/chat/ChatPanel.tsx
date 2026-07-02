@@ -1,5 +1,5 @@
-import React from "react";
-import { UIMessage } from "ai";
+import { memo } from "react";
+import type { UIMessage } from "ai";
 import { MessageList } from "./MessageList.js";
 import { ChatInputBar } from "./ChatInput.js";
 
@@ -13,7 +13,7 @@ export type AgentMode = "chat" | "plan" | "assist" | "agent";
 interface ChatPanelProps {
   messages: UIMessage[];
   input: string;
-  setInput: React.Dispatch<React.SetStateAction<string>>;
+  setInput: (value: string) => void;
   isLoading: boolean;
   onSend: () => void;
   onAbort: () => void;
@@ -83,7 +83,7 @@ const getModeClasses = (mode: AgentMode, active: boolean) => {
   return styles[mode];
 };
 
-export const ChatPanel = React.memo(
+export const ChatPanel = memo(
   ({
     messages,
     input,

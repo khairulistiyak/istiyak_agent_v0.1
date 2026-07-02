@@ -2,7 +2,7 @@ import express from "express";
 import passport from "passport";
 import jwt from "jsonwebtoken";
 import { handleRegister, handleLogin } from "../controllers/authController.js";
-import { findUserByEmail, createUser } from "../repositories/userRepository.js";
+
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -98,8 +98,8 @@ function renderSuccessPage(res: express.Response, token: string, email: string) 
     <p id="message">Connecting with Istiyak AI Companion application...</p>
   </div>
   <script>
-    const token = "${token}";
-    const email = "${email}";
+    const token = ${JSON.stringify(token)};
+    const email = ${JSON.stringify(email)};
     
     fetch("http://localhost:3001/api/watcher/oauth-callback", {
       method: "POST",
