@@ -26,7 +26,6 @@ interface SettingsDrawerProps {
   dockerSandboxEnabled: boolean;
   sandboxImage: string;
   cloudSandboxEnabled: boolean;
-  isIdeMode: boolean;
   isActiveLicense: boolean;
   gitInitialized: boolean;
   gitBranch: string;
@@ -34,7 +33,6 @@ interface SettingsDrawerProps {
   userEmail: string;
   todos: WorkspaceTodo[];
   updateSettings: (settings: Partial<SettingsSlice>) => void;
-  toggleIdeMode: () => void;
   setTelemetryOpen: (open: boolean) => void;
   setMarketplaceOpen: (open: boolean) => void;
   handleReindex: () => void;
@@ -58,7 +56,6 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   dockerSandboxEnabled,
   sandboxImage,
   cloudSandboxEnabled,
-  isIdeMode,
   isActiveLicense,
   gitInitialized,
   gitBranch,
@@ -66,7 +63,6 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   userEmail,
   todos,
   updateSettings,
-  toggleIdeMode,
   setTelemetryOpen,
   setMarketplaceOpen,
   handleReindex,
@@ -383,17 +379,6 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         !isActiveLicense
                       )}
                     </div>
-                  </div>
-
-                  {/* Full IDE Split Mode */}
-                  <div className="flex flex-col space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-[#d1d5db] text-[10px]">Full IDE Mode</span>
-                      {renderToggle(isIdeMode, toggleIdeMode)}
-                    </div>
-                    <span className="text-[#44444a] text-[8px]">
-                      Enable split pane file explorer and editor layout
-                    </span>
                   </div>
 
                   {/* Telemetry & Cost Dashboard */}

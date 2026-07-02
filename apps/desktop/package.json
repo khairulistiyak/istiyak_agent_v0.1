@@ -13,7 +13,6 @@
   "dependencies": {
     "@ai-sdk/react": "^3.0.210",
     "@google/generative-ai": "^0.24.1",
-    "@monaco-editor/react": "^4.7.0",
     "@istiyak/shared-types": "*",
     "@sentry/react": "^10.60.0",
     "@tauri-apps/api": "^2",

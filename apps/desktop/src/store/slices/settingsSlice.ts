@@ -36,6 +36,8 @@ export interface SettingsSlice {
   ) => Promise<void>;
 }
 
+let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+
 export const createSettingsSlice: StateCreator<SettingsSlice> = (set, get) => ({
   provider: "gemini",
   authMethod: "apiKey",
@@ -58,19 +60,28 @@ export const createSettingsSlice: StateCreator<SettingsSlice> = (set, get) => ({
   isLoading: false,
   error: null,
 
-  loadSettings: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const isTauri = typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__ !== undefined;
-      let config: Record<string, any> = {};
-      if (isTauri) {
-        config = await invoke("load_config");
-      } else {
-        const stored = localStorage.getItem("companion_config");
-        if (stored) {
-          try { config = JSON.parse(stored); } catch { config = {}; }
-        }
-      }
+loadSettings: async () => {
+     set({ isLoading: true, error: null });
+     try {
+       const isTauri = typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__ !== undefined;
+       let config: Record<string, any> = {};
+       if (isTauri) {
+         config = await invoke("load_config");
+       } else {
+         // In dev mode: load non-sensitive settings from localStorage,
+         // secrets from sessionStorage (session-only, more secure)
+         const stored = localStorage.getItem("companion_config");
+         const secrets = sessionStorage.getItem("companion_secrets");
+         if (stored) {
+           try { config = JSON.parse(stored); } catch { config = {}; }
+         }
+         if (secrets) {
+           try {
+             const secretConfig = JSON.parse(secrets);
+             config = { ...config, ...secretConfig };
+           } catch { /* ignore */ }
+         }
+       }
       const provider = (config.PROVIDER || "gemini") as SettingsSlice["provider"];
       const authMethod = (config.AUTH_METHOD || "apiKey") as SettingsSlice["authMethod"];
       const apiKey =
@@ -128,43 +139,52 @@ export const createSettingsSlice: StateCreator<SettingsSlice> = (set, get) => ({
   },
 
   updateSettings: async (newSettings) => {
-    set((state) => ({
-      ...state,
-      ...newSettings,
-    }));
-    await saveToRustConfig(get());
-  },
+     set((state) => ({
+       ...state,
+       ...newSettings,
+     }));
+     // Debounce save: wait 300ms after last update before writing
+     if (saveTimeout) clearTimeout(saveTimeout);
+     saveTimeout = setTimeout(() => saveToRustConfig(get()), 300);
+   },
 });
 
 async function saveToRustConfig(state: SettingsSlice) {
-  try {
-    const config = {
-      PROVIDER: state.provider,
-      AUTH_METHOD: state.authMethod,
-      API_KEY: state.apiKey,
-      SERVICE_ACCOUNT_PATH: state.serviceAccountPath,
-      PROJECT_ID: state.projectId,
-      LOCATION: state.location,
-      SELECTED_MODEL: state.selectedModel,
-      CUSTOM_MODEL: state.customModel,
-      WORKSPACE_PATH: state.workspacePath,
-      GOOGLE_SEARCH_ENABLED: state.googleSearchEnabled,
-      DOCKER_SANDBOX_ENABLED: state.dockerSandboxEnabled,
-      CLOUD_SANDBOX_ENABLED: state.cloudSandboxEnabled,
-      SANDBOX_IMAGE: state.sandboxImage,
-      TOKEN: state.token,
-      USER_EMAIL: state.userEmail,
-      ACTIVE_THEME: state.activeTheme,
-      INSTALLED_PROMPTS: state.installedPrompts,
-      INSTALLED_EXTENSIONS: state.installedExtensions,
-    };
-    const isTauri = typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__ !== undefined;
-    if (isTauri) {
-      await invoke("save_config", { config });
-    } else {
-      localStorage.setItem("companion_config", JSON.stringify(config));
-    }
-  } catch (err) {
-    console.error("Failed to save settings to Rust config:", err);
-  }
-}
+   try {
+     // Non-sensitive settings
+     const config = {
+       PROVIDER: state.provider,
+       AUTH_METHOD: state.authMethod,
+       SERVICE_ACCOUNT_PATH: state.serviceAccountPath,
+       PROJECT_ID: state.projectId,
+       LOCATION: state.location,
+       SELECTED_MODEL: state.selectedModel,
+       CUSTOM_MODEL: state.customModel,
+       WORKSPACE_PATH: state.workspacePath,
+       GOOGLE_SEARCH_ENABLED: state.googleSearchEnabled,
+       DOCKER_SANDBOX_ENABLED: state.dockerSandboxEnabled,
+       CLOUD_SANDBOX_ENABLED: state.cloudSandboxEnabled,
+       SANDBOX_IMAGE: state.sandboxImage,
+       USER_EMAIL: state.userEmail,
+       ACTIVE_THEME: state.activeTheme,
+       INSTALLED_PROMPTS: state.installedPrompts,
+       INSTALLED_EXTENSIONS: state.installedExtensions,
+     };
+     // Secrets - store in sessionStorage (more secure, cleared on tab close)
+     const secrets = {
+       API_KEY: state.apiKey,
+       TOKEN: state.token,
+     };
+     const isTauri = typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__ !== undefined;
+     if (isTauri) {
+       const fullConfig = { ...config, ...secrets };
+       await invoke("save_config", { config: fullConfig });
+     } else {
+       // Dev mode: separate storage for secrets
+       localStorage.setItem("companion_config", JSON.stringify(config));
+       sessionStorage.setItem("companion_secrets", JSON.stringify(secrets));
+     }
+   } catch (err) {
+     console.error("Failed to save settings to Rust config:", err);
+   }
+ }

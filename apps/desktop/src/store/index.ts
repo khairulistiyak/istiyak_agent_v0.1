@@ -86,37 +86,36 @@ const indexedDBStorage: StateStorage = {
 };
 
 export const useGlobalStore = create<GlobalStoreState>()(
-  persist(
-    (...a) => ({
-      ...createChatSlice(...a),
-      ...createSettingsSlice(...a),
-      ...createUiSlice(...a),
-    }),
-    {
-      name: "istiyak-companion-global-store",
-      storage: createJSONStorage(() => indexedDBStorage),
-      partialize: (state) => ({
-        conversations: state.conversations,
-        activeId: state.activeId,
-        provider: state.provider,
-        authMethod: state.authMethod,
-        apiKey: state.apiKey,
-        serviceAccountPath: state.serviceAccountPath,
-        projectId: state.projectId,
-        location: state.location,
-        selectedModel: state.selectedModel,
-        customModel: state.customModel,
-        workspacePath: state.workspacePath,
-        googleSearchEnabled: state.googleSearchEnabled,
-        dockerSandboxEnabled: state.dockerSandboxEnabled,
-        cloudSandboxEnabled: state.cloudSandboxEnabled,
-        sandboxImage: state.sandboxImage,
-        token: state.token,
-        userEmail: state.userEmail,
-        activeTheme: state.activeTheme,
-        installedPrompts: state.installedPrompts,
-        installedExtensions: state.installedExtensions,
-      }),
-    }
-  )
-);
+   persist(
+     (...a) => ({
+       ...createChatSlice(...a),
+       ...createSettingsSlice(...a),
+       ...createUiSlice(...a),
+     }),
+     {
+       name: "istiyak-companion-global-store",
+       storage: createJSONStorage(() => indexedDBStorage),
+       // Only persist non-sensitive settings; secrets use memory/session storage
+       partialize: (state) => ({
+         conversations: state.conversations,
+         activeId: state.activeId,
+         provider: state.provider,
+         authMethod: state.authMethod,
+         serviceAccountPath: state.serviceAccountPath,
+         projectId: state.projectId,
+         location: state.location,
+         selectedModel: state.selectedModel,
+         customModel: state.customModel,
+         workspacePath: state.workspacePath,
+         googleSearchEnabled: state.googleSearchEnabled,
+         dockerSandboxEnabled: state.dockerSandboxEnabled,
+         cloudSandboxEnabled: state.cloudSandboxEnabled,
+         sandboxImage: state.sandboxImage,
+         userEmail: state.userEmail,
+         activeTheme: state.activeTheme,
+         installedPrompts: state.installedPrompts,
+         installedExtensions: state.installedExtensions,
+       }),
+     }
+   )
+ );

@@ -241,6 +241,169 @@ fn select_file() -> Result<String, String> {
     }
 }
 
+#[tauri::command]
+fn detect_ide_workspaces() -> Result<serde_json::Value, String> {
+    let home = std::env::var("HOME")
+        .or_else(|_| std::env::var("USERPROFILE"))
+        .map_err(|_| "Could not locate home directory".to_string())?;
+    let home_path = Path::new(&home);
+
+    // Step 1: Detect running IDEs via process list
+    let running_ides = detect_running_ides();
+
+    // Step 2: Scan workspace storage for each known IDE
+    let mut workspaces: Vec<serde_json::Value> = Vec::new();
+
+    let ide_configs: Vec<(&str, PathBuf)> = {
+        let mut configs = Vec::new();
+        #[cfg(target_os = "macos")]
+        {
+            let app_support = PathBuf::from(&home).join("Library/Application Support");
+            configs.push(("VS Code", app_support.join("Code/User/workspaceStorage")));
+            configs.push(("Cursor", app_support.join("Cursor/User/workspaceStorage")));
+        }
+        #[cfg(target_os = "windows")]
+        {
+            if let Ok(appdata) = std::env::var("APPDATA") {
+                let appdata = PathBuf::from(appdata);
+                configs.push(("VS Code", appdata.join("Code/User/workspaceStorage")));
+                configs.push(("Cursor", appdata.join("Cursor/User/workspaceStorage")));
+            }
+        }
+        #[cfg(target_os = "linux")]
+        {
+            let config_dir = PathBuf::from(&home).join(".config");
+            configs.push(("VS Code", config_dir.join("Code/User/workspaceStorage")));
+            configs.push(("Cursor", config_dir.join("Cursor/User/workspaceStorage")));
+        }
+        configs
+    };
+
+    for (ide_name, storage_path) in &ide_configs {
+        if !storage_path.exists() {
+            continue;
+        }
+        // Collect workspace dirs sorted by modification time (most recent first)
+        let mut dirs: Vec<(PathBuf, std::time::SystemTime)> = Vec::new();
+        if let Ok(entries) = fs::read_dir(storage_path) {
+            for entry in entries.flatten() {
+                let dir = entry.path();
+                if dir.is_dir() {
+                    let ws_json = dir.join("workspace.json");
+                    if ws_json.exists() {
+                        let mtime = dir.metadata()
+                            .and_then(|m| m.modified())
+                            .unwrap_or(std::time::UNIX_EPOCH);
+                        dirs.push((ws_json, mtime));
+                    }
+                }
+            }
+        }
+        dirs.sort_by(|a, b| b.1.cmp(&a.1));
+
+        // Take top 10 most recent
+        for (ws_json, mtime) in dirs.into_iter().take(10) {
+            if let Ok(content) = fs::read_to_string(&ws_json) {
+                if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&content) {
+                    if let Some(folder_uri) = parsed.get("folder").and_then(|v| v.as_str()) {
+                        // Decode file:///path → /path (URL decode)
+                        let decoded_path = folder_uri
+                            .strip_prefix("file://")
+                            .unwrap_or(folder_uri);
+                        let decoded_path = url_decode(decoded_path);
+
+                        // Canonicalize and verify path is within home directory
+                        let canonical = fs::canonicalize(&decoded_path).ok();
+                        let is_safe = canonical.as_ref()
+                            .map(|p| p.starts_with(home_path))
+                            .unwrap_or(false);
+                        if !is_safe {
+                            continue;
+                        }
+                        let safe_path = canonical.unwrap();
+
+                        let is_active = running_ides.contains(&ide_name.to_string());
+                        let folder_name = safe_path
+                            .file_name()
+                            .and_then(|n| n.to_str())
+                            .unwrap_or("unknown")
+                            .to_string();
+
+                        let elapsed_secs = mtime
+                            .duration_since(std::time::UNIX_EPOCH)
+                            .map(|d| d.as_secs())
+                            .unwrap_or(0);
+
+                        workspaces.push(serde_json::json!({
+                            "path": safe_path.to_string_lossy(),
+                            "folderName": folder_name,
+                            "ide": ide_name,
+                            "lastUsed": elapsed_secs,
+                            "isActive": is_active,
+                        }));
+                    }
+                }
+            }
+        }
+    }
+
+    let active_ide = if !running_ides.is_empty() {
+        serde_json::Value::String(running_ides[0].clone())
+    } else {
+        serde_json::Value::Null
+    };
+
+    Ok(serde_json::json!({
+        "workspaces": workspaces,
+        "activeIde": active_ide,
+    }))
+}
+
+fn detect_running_ides() -> Vec<String> {
+    let mut ides = Vec::new();
+    let check = |process_pattern: &str, ide_label: &str, list: &mut Vec<String>| {
+        let result = std::process::Command::new("pgrep")
+            .args(&["-f", process_pattern])
+            .output();
+        if let Ok(output) = result {
+            if output.status.success() && !output.stdout.is_empty() {
+                list.push(ide_label.to_string());
+            }
+        }
+    };
+
+    check("Visual Studio Code", "VS Code", &mut ides);
+    check("Cursor.app", "Cursor", &mut ides);
+    check("IntelliJ IDEA.app", "IntelliJ IDEA", &mut ides);
+    check("WebStorm.app", "WebStorm", &mut ides);
+    check("PyCharm.app", "PyCharm", &mut ides);
+
+    ides
+}
+
+fn url_decode(s: &str) -> String {
+    let mut bytes: Vec<u8> = Vec::with_capacity(s.len());
+    let mut chars = s.chars();
+    while let Some(c) = chars.next() {
+        if c == '%' {
+            let hex: String = chars.by_ref().take(2).collect();
+            if let Ok(byte) = u8::from_str_radix(&hex, 16) {
+                bytes.push(byte);
+            } else {
+                bytes.push(b'%');
+                bytes.extend_from_slice(hex.as_bytes());
+            }
+        } else if c.len_utf8() == 1 {
+            bytes.push(c as u8);
+        } else {
+            let mut buf = [0u8; 4];
+            let encoded = c.encode_utf8(&mut buf);
+            bytes.extend_from_slice(encoded.as_bytes());
+        }
+    }
+    String::from_utf8(bytes).unwrap_or_default()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // Load .env variables before starting the application builder
@@ -258,7 +421,8 @@ pub fn run() {
             write_file,
             scan_project,
             select_directory,
-            select_file
+            select_file,
+            detect_ide_workspaces
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -3,6 +3,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { API_BASE } from "../utils/config.js";
 import { WorkspaceTodo, TelemetryStats } from "../types/chat.js";
 
+const FETCH_TIMEOUT_MS = 5_000;
+
 interface UsePollingOptions {
   workspacePath: string | null;
 }
@@ -19,6 +21,17 @@ export interface UsePollingResult {
   indexMessage: string;
   handleReindex: () => Promise<void>;
   refreshFiles: () => Promise<void>;
+}
+
+async function fetchWithTimeout(url: string, options?: RequestInit, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetchWithTimeout(url, { ...options, signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export function usePolling({ workspacePath }: UsePollingOptions): UsePollingResult {
@@ -47,7 +60,7 @@ export function usePolling({ workspacePath }: UsePollingOptions): UsePollingResu
 
   const fetchTelemetry = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/telemetry/stats`);
+      const res = await fetchWithTimeout(`${API_BASE}/api/telemetry/stats`);
       if (res.ok && isMountedRef.current) {
         const data = await res.json();
         setTelemetry(data);
@@ -61,7 +74,7 @@ export function usePolling({ workspacePath }: UsePollingOptions): UsePollingResu
   const fetchGitStatus = useCallback(async () => {
     if (!workspacePath) return;
     try {
-      const res = await fetch(
+      const res = await fetchWithTimeout(
         `${API_BASE}/api/git/status?workspacePath=${encodeURIComponent(workspacePath)}`
       );
       if (res.ok) {
@@ -90,7 +103,7 @@ export function usePolling({ workspacePath }: UsePollingOptions): UsePollingResu
     setIndexMessage("Indexing codebase...");
     setPollingError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/rag/reindex`, {
+      const res = await fetchWithTimeout(`${API_BASE}/api/rag/reindex`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ workspacePath }),
@@ -115,7 +128,7 @@ export function usePolling({ workspacePath }: UsePollingOptions): UsePollingResu
 
   const startWatcher = useCallback(async (path: string) => {
     try {
-      const res = await fetch(`${API_BASE}/api/watcher/start`, {
+      const res = await fetchWithTimeout(`${API_BASE}/api/watcher/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ workspacePath: path }),
@@ -135,7 +148,7 @@ export function usePolling({ workspacePath }: UsePollingOptions): UsePollingResu
 
   const stopWatcher = useCallback(async (path: string) => {
     try {
-      await fetch(`${API_BASE}/api/watcher/stop`, {
+      await fetchWithTimeout(`${API_BASE}/api/watcher/stop`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ workspacePath: path }),
@@ -160,7 +173,7 @@ export function usePolling({ workspacePath }: UsePollingOptions): UsePollingResu
   const fetchTodos = useCallback(async () => {
     if (!workspacePath) return;
     try {
-      const res = await fetch(`${API_BASE}/api/watcher/todos`);
+      const res = await fetchWithTimeout(`${API_BASE}/api/watcher/todos`);
       if (res.ok && isMountedRef.current) {
         const data = await res.json();
         if (Array.isArray(data)) setTodos(data);
@@ -187,7 +200,7 @@ export function usePolling({ workspacePath }: UsePollingOptions): UsePollingResu
 
         // Health check every poll (8s)
         try {
-          const res = await fetch(`${API_BASE}/api/health`);
+          const res = await fetchWithTimeout(`${API_BASE}/api/health`);
           if (isMountedRef.current) {
             setEngineStatus(res.ok ? "online" : "offline");
           }

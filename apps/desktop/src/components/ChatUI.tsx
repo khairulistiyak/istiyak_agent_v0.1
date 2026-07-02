@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { invoke } from "@tauri-apps/api/core";
 import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport, UIMessage } from "ai";
 import { useChatStore } from "../store/chatStore.js";
@@ -11,7 +10,6 @@ import { parseAgentMessage } from "../utils/parser.js";
 // Layout components
 import { TitleBar } from "./layout/TitleBar.js";
 import { HistoryDrawer } from "./layout/HistoryDrawer.js";
-import { IdeModeLayout } from "./layout/IdeModeLayout.js";
 
 // Chat components
 import { ChatPanel, MODES as AGENT_MODES, type AgentMode } from "./chat/ChatPanel.js";
@@ -26,7 +24,7 @@ import { Toggle } from "./ui/Toggle.js";
 // Custom hooks
 import { usePolling } from "../hooks/usePolling.js";
 import { usePermissions } from "../hooks/usePermissions.js";
-import { useIdeMode } from "../hooks/useIdeMode.js";
+import { useWorkspaceDetect } from "../hooks/useWorkspaceDetect.js";
 
 const getSidebarActiveStyles = (modeId: AgentMode) => {
   const themes: Record<AgentMode, { border: string; bg: string; text: string; dot: string; badgeBg: string; badgeBorder: string; badgeText: string }> = {
@@ -147,7 +145,12 @@ export default function ChatUI() {
   // Custom hooks
   const polling = usePolling({ workspacePath });
   const permissions = usePermissions();
-  const ide = useIdeMode({ workspacePath });
+  const workspace = useWorkspaceDetect(workspacePath || "", (path: string) =>
+    updateSettings({ workspacePath: path })
+  );
+
+  // Workspace picker dropdown state
+  const [wsPickerOpen, setWsPickerOpen] = useState(false);
 
   // UI state
   const [input, setInput] = useState("");
@@ -457,17 +460,6 @@ export default function ChatUI() {
     return <Toggle active={checked} onChange={onChange} disabled={disabled} />;
   }, []);
 
-  const handleOpenWorkspace = useCallback(async () => {
-    try {
-      const selected: string = await invoke("select_directory");
-      if (selected) {
-        updateSettings({ workspacePath: selected });
-      }
-    } catch (err) {
-      console.log("Directory selection cancelled or failed:", err);
-    }
-  }, [updateSettings]);
-
   const currentPolicy = MODE_POLICY[agentMode];
 
   return (
@@ -492,203 +484,220 @@ export default function ChatUI() {
         </div>
       )}
 
-      {ide.isIdeMode ? (
-        <IdeModeLayout
-          workspacePath={workspacePath}
-          workspaceFiles={polling.workspaceFiles}
-          openedFile={ide.openedFile}
-          gitBranch={polling.gitBranch}
-          gitInitialized={polling.gitInitialized}
-          isIndexing={polling.isIndexing}
-          indexMessage={polling.indexMessage}
-          onFileSelect={ide.handleOpenFile}
-          onRefreshExplorer={polling.refreshFiles}
-          onSelectWorkspace={handleOpenWorkspace}
-          onReindex={polling.handleReindex}
-          fileContent={ide.fileContent}
-          editorLanguage={ide.editorLanguage}
-          isSaving={ide.isSaving}
-          onContentChange={ide.setFileContent}
-          onSaveFile={ide.handleSaveFile}
-          terminalLogs={ide.logs}
-          terminalInput={ide.terminalInput}
-          isTerminalRunning={ide.isTerminalRunning}
-          lastCompileError={ide.lastCompileError}
-          installedExtensions={installedExtensions}
-          onTerminalInputChange={ide.setTerminalInput}
-          onExecuteCommand={ide.handleExecuteTerminalCommand}
-          onClearTerminalLogs={() =>
-            ide.setLogs([
-              {
-                time: new Date().toLocaleTimeString(),
-                message: "Terminal logs cleared.",
-                type: "info",
-              },
-            ])
-          }
-          onAutoFixError={() => {
-            setInput(
-              `I encountered the following execution error in the terminal:\n\n${ide.lastCompileError}\n\nPlease diagnose and edit the codebase to fix this error.`
-            );
-            ide.setLastCompileError(null);
-          }}
-          onShortcutClick={ide.setTerminalInput}
-          messages={messages}
-          chatInput={input}
-          setChatInput={setInput}
-          isChatLoading={isLoading}
-          onSendChatMessage={handleSend}
-          onAbortAgent={handleAbortAgent}
-          onSettingsOpen={() => setSettingsOpen(true)}
-          installedPrompts={installedPrompts}
-          permissionStates={permissions.permissionStates}
-          resolvedPermissionIds={permissions.resolvedPermissionIds}
-          onPermissionResponse={permissions.handlePermissionResponse}
-        />
-      ) : (
-        <div className="flex-1 min-h-0 p-5 bg-gradient-to-br from-[#05060a] via-[#080a10] to-[#090b12]">
-          <div className="grid h-full grid-cols-[236px_minmax(420px,1fr)_248px] gap-5">
-            <aside className="flex flex-col rounded-[22px] border border-[#171b25] bg-gradient-to-b from-[#10131b] to-[#07080d] p-5">
-              <div className="flex items-center gap-3">
-                <div className="h-7 w-7 rounded-full bg-gradient-to-br from-cyan-400 to-violet-500" />
-                <div>
-                  <h2 className="text-sm font-bold text-white">Istiyak Agent</h2>
-                  <p className="text-[10px] text-cyber-textMuted">Current workspace</p>
-                </div>
-              </div>
-
-              <div className="mt-5 rounded-xl border border-[#1e2533] bg-[#0c0f16] px-3 py-3">
-                <p
-                  className="truncate font-mono text-[11px] text-slate-300"
-                  title={workspacePath || "No workspace selected"}
-                >
-                  {workspacePath ? workspacePath.split(/[\\/]/).pop() : "No workspace"}
-                </p>
-              </div>
-
-              <p className="mt-8 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
-                Mode selector
-              </p>
-              <div className="mt-3 space-y-1.5">
-                {AGENT_MODES.map((mode) => {
-                  const active = mode.id === agentMode;
-                  const policy = MODE_POLICY[mode.id];
-                  const theme = getSidebarActiveStyles(mode.id as AgentMode);
-                  return (
-                    <button
-                      key={mode.id}
-                      type="button"
-                      onClick={() => {
-                        if (activeId) updateConversationMode(activeId, mode.id);
-                      }}
-                      className={`w-full rounded-xl px-3.5 py-2.5 text-left transition-all duration-200 ${
-                        active
-                          ? `border ${theme.bg} ${theme.text}`
-                          : "border-0 bg-transparent text-slate-400 hover:bg-slate-800/30 hover:text-white"
-                      }`}
-                      style={active ? { border: theme.border } : {}}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2.5">
-                          <span
-                            className={`h-2 w-2 rounded-full ${active ? theme.dot : "bg-slate-600"}`}
-                          />
-                          <span className="text-sm font-bold">{mode.label}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          {active && (
-                            <span
-                              className={`rounded px-1.5 py-0.5 text-[8px] font-bold ${theme.badgeText}`}
-                              style={{
-                                backgroundColor: theme.badgeBg,
-                                border: theme.badgeBorder,
-                              }}
-                            >
-                              ACTIVE
-                            </span>
-                          )}
-                          <span className="text-[9px] text-slate-600 font-mono">{mode.hint}</span>
-                        </div>
-                      </div>
-                      <p className={`mt-1 text-[10px] leading-relaxed ${active ? "text-slate-400" : "text-slate-600"}`}>
-                        {policy.detail}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="mt-auto rounded-[18px] border border-emerald-500/25 bg-emerald-500/5 px-4 py-4">
-                <h3 className="text-sm font-bold text-white">Safety Guard</h3>
-                <p className="mt-2 text-[11px] leading-5 text-cyber-textSecondary">
-                  Tool execution blocked until the selected mode allows it.
-                </p>
-              </div>
-            </aside>
-
-            <main className="flex min-h-0 flex-col overflow-hidden rounded-[22px] border border-[#171b25] bg-[#0a0d14] shadow-2xl">
-              <div className="flex items-center justify-between border-b border-[#171b25] bg-[#0d111a] px-6 py-4">
-                <div>
-                  <h1 className="text-base font-bold text-white">Chat-first Agent</h1>
-                  <p className="text-[11px] text-cyber-textMuted">
-                    Switch mode before giving an action.
-                  </p>
-                </div>
-                <span
-                  className={`rounded-full border px-3 py-1 text-[11px] font-bold ${currentPolicy.card}`}
-                >
-                  {currentPolicy.title}
-                </span>
-              </div>
-              <ChatPanel
-                messages={messages}
-                input={input}
-                setInput={setInput}
-                isLoading={isLoading}
-                onSend={handleSend}
-                onAbort={handleAbortAgent}
-                onSettingsOpen={() => setSettingsOpen(true)}
-                installedPrompts={installedPrompts}
-                permissionStates={permissions.permissionStates}
-                resolvedPermissionIds={permissions.resolvedPermissionIds}
-                onPermissionResponse={permissions.handlePermissionResponse}
-                mode={agentMode}
-                showModeHeader={false}
-                className="flex-1 min-h-0 flex flex-col overflow-hidden bg-transparent"
-              />
-            </main>
-
-            <aside className="rounded-[22px] border border-[#171b25] bg-[#0a0d14] p-6">
-              <h2 className="text-base font-bold text-white">Permission Policy</h2>
-              <p className="mt-1 text-xs text-cyber-textMuted">Backend-enforced rules</p>
-
-              <div className="mt-8 space-y-4">
-                {AGENT_MODES.map((mode) => {
-                  const policy = MODE_POLICY[mode.id];
-                  const active = mode.id === agentMode;
-                  return (
-                    <div
-                      key={mode.id}
-                      className={`rounded-[18px] border p-4 transition-all ${active ? policy.card : "border-[#1e2533] bg-[#0b0e14] text-cyber-textSecondary"}`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className={`h-2 w-2 rounded-full ${policy.dot}`} />
-                        <h3 className="text-sm font-bold">{mode.label.toUpperCase()}</h3>
-                      </div>
-                      <p className="mt-3 text-xs leading-5 opacity-80">{policy.detail}</p>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mt-8 rounded-[18px] border border-[#1f2937] bg-[#111827] p-4">
-                <h3 className="text-sm font-bold text-white">Result</h3>
-                <p className="mt-2 text-xs text-cyber-textSecondary">No accidental actions.</p>
-              </div>
-            </aside>
-          </div>
+      {/* Workspace Bar — compact bar above chat */}
+      <div className="flex items-center justify-between px-4 py-2 border-b border-cyber-cardBorder/40 bg-[#0a0d14]">
+        <div className="flex items-center gap-2 min-w-0">
+          <span
+            className={`h-2 w-2 rounded-full shrink-0 ${workspace.activeIde ? "bg-emerald-400" : "bg-slate-600"}`}
+            title={workspace.activeIde ? `${workspace.activeIde} running` : "No IDE detected"}
+          />
+          <span className="text-[10px] text-slate-400 shrink-0">
+            {workspace.activeIde || "No IDE"}
+          </span>
+          <span className="text-[10px] text-slate-600 shrink-0">·</span>
+          <p
+            className="truncate font-mono text-[11px] text-slate-300 min-w-0"
+            title={workspacePath || "No workspace selected"}
+          >
+            {workspacePath ? workspacePath.split(/[\\/]/).pop() : "No workspace"}
+          </p>
         </div>
-      )}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setWsPickerOpen(!wsPickerOpen)}
+            className="px-2 py-1 rounded-lg text-[10px] text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-700/50 transition-colors cursor-pointer"
+          >
+            Change
+          </button>
+          {wsPickerOpen && (
+            <div className="absolute right-0 top-full mt-1 w-72 bg-[#0d0f16] border border-slate-700 rounded-xl shadow-2xl z-50 p-2 max-h-64 overflow-y-auto">
+              <p className="text-[9px] text-slate-500 px-2 py-1 font-semibold uppercase tracking-wider border-b border-slate-800/40 mb-1">
+                Detected Workspaces
+              </p>
+              {workspace.workspaces.length === 0 && (
+                <p className="text-[10px] text-slate-500 px-2 py-2">No workspaces detected.</p>
+              )}
+              {workspace.workspaces.map((ws, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    workspace.selectWorkspace(ws.path);
+                    setWsPickerOpen(false);
+                  }}
+                  className={`w-full text-left px-2 py-2 rounded-lg text-[10px] transition-colors cursor-pointer ${
+                    ws.path === workspacePath
+                      ? "bg-cyan-400/15 text-cyan-200"
+                      : "text-white hover:bg-slate-800"
+                  }`}
+                  title={ws.path}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`h-1.5 w-1.5 rounded-full ${ws.isActive ? "bg-emerald-400" : "bg-slate-600"}`} />
+                    <span className="font-bold truncate">{ws.folderName}</span>
+                    <span className="text-[8px] text-slate-500 ml-auto shrink-0">{ws.ide}</span>
+                  </div>
+                </button>
+              ))}
+              <div className="border-t border-slate-800/40 mt-1 pt-1">
+                <button
+                  onClick={() => {
+                    workspace.openManualPicker();
+                    setWsPickerOpen(false);
+                  }}
+                  className="w-full text-left px-2 py-2 rounded-lg text-[10px] text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Pick folder manually...
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Chat-only layout */}
+      <div className="flex-1 min-h-0 p-5 bg-gradient-to-br from-[#05060a] via-[#080a10] to-[#090b12]">
+        <div className="grid h-full grid-cols-[236px_minmax(420px,1fr)_248px] gap-5">
+          <aside className="flex flex-col rounded-[22px] border border-[#171b25] bg-gradient-to-b from-[#10131b] to-[#07080d] p-5">
+            <div className="flex items-center gap-3">
+              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-cyan-400 to-violet-500" />
+              <div>
+                <h2 className="text-sm font-bold text-white">Istiyak Agent</h2>
+                <p className="text-[10px] text-cyber-textMuted">Current workspace</p>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-xl border border-[#1e2533] bg-[#0c0f16] px-3 py-3">
+              <p
+                className="truncate font-mono text-[11px] text-slate-300"
+                title={workspacePath || "No workspace selected"}
+              >
+                {workspacePath ? workspacePath.split(/[\\/]/).pop() : "No workspace"}
+              </p>
+            </div>
+
+            <p className="mt-8 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+              Mode selector
+            </p>
+            <div className="mt-3 space-y-1.5">
+              {AGENT_MODES.map((mode) => {
+                const active = mode.id === agentMode;
+                const policy = MODE_POLICY[mode.id];
+                const theme = getSidebarActiveStyles(mode.id as AgentMode);
+                return (
+                  <button
+                    key={mode.id}
+                    type="button"
+                    onClick={() => {
+                      if (activeId) updateConversationMode(activeId, mode.id);
+                    }}
+                    className={`w-full rounded-xl px-3.5 py-2.5 text-left transition-all duration-200 ${
+                      active
+                        ? `border ${theme.bg} ${theme.text}`
+                        : "border-0 bg-transparent text-slate-400 hover:bg-slate-800/30 hover:text-white"
+                    }`}
+                    style={active ? { border: theme.border } : {}}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <span
+                          className={`h-2 w-2 rounded-full ${active ? theme.dot : "bg-slate-600"}`}
+                        />
+                        <span className="text-sm font-bold">{mode.label}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {active && (
+                          <span
+                            className={`rounded px-1.5 py-0.5 text-[8px] font-bold ${theme.badgeText}`}
+                            style={{
+                              backgroundColor: theme.badgeBg,
+                              border: theme.badgeBorder,
+                            }}
+                          >
+                            ACTIVE
+                          </span>
+                        )}
+                        <span className="text-[9px] text-slate-600 font-mono">{mode.hint}</span>
+                      </div>
+                    </div>
+                    <p className={`mt-1 text-[10px] leading-relaxed ${active ? "text-slate-400" : "text-slate-600"}`}>
+                      {policy.detail}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-auto rounded-[18px] border border-emerald-500/25 bg-emerald-500/5 px-4 py-4">
+              <h3 className="text-sm font-bold text-white">Safety Guard</h3>
+              <p className="mt-2 text-[11px] leading-5 text-cyber-textSecondary">
+                Tool execution blocked until the selected mode allows it.
+              </p>
+            </div>
+          </aside>
+
+          <main className="flex min-h-0 flex-col overflow-hidden rounded-[22px] border border-[#171b25] bg-[#0a0d14] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#171b25] bg-[#0d111a] px-6 py-4">
+              <div>
+                <h1 className="text-base font-bold text-white">Chat-first Agent</h1>
+                <p className="text-[11px] text-cyber-textMuted">
+                  Switch mode before giving an action.
+                </p>
+              </div>
+              <span
+                className={`rounded-full border px-3 py-1 text-[11px] font-bold ${currentPolicy.card}`}
+              >
+                {currentPolicy.title}
+              </span>
+            </div>
+            <ChatPanel
+              messages={messages}
+              input={input}
+              setInput={setInput}
+              isLoading={isLoading}
+              onSend={handleSend}
+              onAbort={handleAbortAgent}
+              onSettingsOpen={() => setSettingsOpen(true)}
+              installedPrompts={installedPrompts}
+              permissionStates={permissions.permissionStates}
+              resolvedPermissionIds={permissions.resolvedPermissionIds}
+              onPermissionResponse={permissions.handlePermissionResponse}
+              mode={agentMode}
+              showModeHeader={false}
+              className="flex-1 min-h-0 flex flex-col overflow-hidden bg-transparent"
+            />
+          </main>
+
+          <aside className="rounded-[22px] border border-[#171b25] bg-[#0a0d14] p-6">
+            <h2 className="text-base font-bold text-white">Permission Policy</h2>
+            <p className="mt-1 text-xs text-cyber-textMuted">Backend-enforced rules</p>
+
+            <div className="mt-8 space-y-4">
+              {AGENT_MODES.map((mode) => {
+                const policy = MODE_POLICY[mode.id];
+                const active = mode.id === agentMode;
+                return (
+                  <div
+                    key={mode.id}
+                    className={`rounded-[18px] border p-4 transition-all ${active ? policy.card : "border-[#1e2533] bg-[#0b0e14] text-cyber-textSecondary"}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className={`h-2 w-2 rounded-full ${policy.dot}`} />
+                      <h3 className="text-sm font-bold">{mode.label.toUpperCase()}</h3>
+                    </div>
+                    <p className="mt-3 text-xs leading-5 opacity-80">{policy.detail}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-8 rounded-[18px] border border-[#1f2937] bg-[#111827] p-4">
+              <h3 className="text-sm font-bold text-white">Result</h3>
+              <p className="mt-2 text-xs text-cyber-textSecondary">No accidental actions.</p>
+            </div>
+          </aside>
+        </div>
+      </div>
 
       <HistoryDrawer
         isOpen={sidebarOpen}
@@ -716,15 +725,13 @@ export default function ChatUI() {
         dockerSandboxEnabled={dockerSandboxEnabled}
         sandboxImage={sandboxImage}
         cloudSandboxEnabled={cloudSandboxEnabled}
-        isIdeMode={ide.isIdeMode}
-        isActiveLicense={false} // wait, this will fetch in AuthModal. Keep mock or get from state
+        isActiveLicense={false}
         gitInitialized={polling.gitInitialized}
         gitBranch={polling.gitBranch}
         isIndexing={polling.isIndexing}
         userEmail={userEmail}
         todos={polling.todos}
         updateSettings={updateSettings}
-        toggleIdeMode={ide.toggleIdeMode}
         setTelemetryOpen={setTelemetryOpen}
         setMarketplaceOpen={setMarketplaceOpen}
         handleReindex={polling.handleReindex}

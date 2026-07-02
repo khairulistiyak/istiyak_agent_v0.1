@@ -19,13 +19,15 @@ export function initPassport() {
           clientID: GOOGLE_CLIENT_ID,
           clientSecret: GOOGLE_CLIENT_SECRET,
           callbackURL: GOOGLE_CALLBACK_URL,
+          passReqToCallback: true,
         },
-        async (accessToken, refreshToken, profile, done) => {
+        async (req, accessToken, refreshToken, profile, done) => {
           try {
             const email = profile.emails?.[0]?.value;
             if (!email) {
               return done(new Error("No email found in Google profile"));
             }
+            const ip = getClientIp(req);
             let user = await findUserByEmail(email);
             if (!user) {
               const randomPassword = Math.random().toString(36).slice(-12);
@@ -33,7 +35,7 @@ export function initPassport() {
                 email,
                 password: randomPassword,
                 name: profile.displayName || profile.name?.givenName || "Google User",
-                registeredIp: "127.0.0.1"
+                registeredIp: ip,
               });
             }
             return done(null, user);
@@ -55,9 +57,11 @@ export function initPassport() {
           clientID: GITHUB_CLIENT_ID,
           clientSecret: GITHUB_CLIENT_SECRET,
           callbackURL: GITHUB_CALLBACK_URL,
+          passReqToCallback: true,
         },
-        async (accessToken: string, refreshToken: string, profile: any, done: any) => {
+        async (req, accessToken: string, refreshToken: string, profile: any, done: any) => {
           try {
+            const ip = getClientIp(req);
             const email = profile.emails?.[0]?.value || `${profile.username}@github.mock.com`;
             let user = await findUserByEmail(email);
             if (!user) {
@@ -66,7 +70,7 @@ export function initPassport() {
                 email,
                 password: randomPassword,
                 name: profile.displayName || profile.username || "GitHub User",
-                registeredIp: "127.0.0.1"
+                registeredIp: ip,
               });
             }
             return done(null, user);
@@ -80,4 +84,12 @@ export function initPassport() {
   } else {
     console.log("⚠️ GitHub OAuth credentials missing. GitHub strategy disabled.");
   }
+}
+
+function getClientIp(req: any): string {
+  return (
+    (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
+    req.socket?.remoteAddress ||
+    "127.0.0.1"
+  );
 }
