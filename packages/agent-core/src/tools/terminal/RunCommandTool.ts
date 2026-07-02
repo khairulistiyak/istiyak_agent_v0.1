@@ -60,8 +60,8 @@ export class RunCommandTool extends BaseTool {
             resolve(output.join("\n"));
           });
         });
-      } catch (err: any) {
-        return `Sandbox Error: Failed to initialize execution script. Details: ${err.message}`;
+      } catch (err: unknown) {
+        return `Sandbox Error: Failed to initialize execution script. Details: ${err instanceof Error ? err.message : String(err)}`;
       }
     }
 

@@ -7,12 +7,13 @@ interface UserMessageProps {
 }
 
 const getMessageText = (msg: UIMessage): string => {
-  const rawMsg = msg as any;
-  if (rawMsg.content) return rawMsg.content;
+  // `content` exists at runtime on UIMessage but isn't in the public type
+  const raw = msg as UIMessage & { content?: string };
+  if (raw.content) return raw.content;
   if (!msg.parts) return "";
   return msg.parts
     .filter((part) => part.type === "text")
-    .map((part: any) => part.text)
+    .map((part) => (part as { type: "text"; text: string }).text)
     .join("");
 };
 

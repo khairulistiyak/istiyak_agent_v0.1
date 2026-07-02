@@ -76,8 +76,9 @@ export class GeminiProvider {
         if (onChunk) onChunk(text);
       }
       return accumulatedText;
-    } catch (error: any) {
-      if (error.status === 429) {
+    } catch (error: unknown) {
+      const httpErr = error as { status?: number; message?: string };
+      if (httpErr.status === 429) {
         if (retryCount < 3) {
           const delay = 10000 * Math.pow(2, retryCount); // 10s, 20s, 40s
           console.warn(

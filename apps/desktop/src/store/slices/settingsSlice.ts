@@ -2,8 +2,8 @@ import { StateCreator } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
 
 export interface SettingsSlice {
-  provider: 'gemini' | 'openai' | 'claude' | 'ollama' | 'custom';
-  authMethod: 'apiKey' | 'serviceAccount';
+  provider: "gemini" | "openai" | "claude" | "ollama" | "custom";
+  authMethod: "apiKey" | "serviceAccount";
   apiKey: string;
   serviceAccountPath: string;
   projectId: string;
@@ -20,16 +20,20 @@ export interface SettingsSlice {
   isLoading: boolean;
   error: string | null;
   activeTheme: string;
-  installedPrompts: Array<{ title: string, prompt: string }>;
+  installedPrompts: Array<{ title: string; prompt: string }>;
   installedExtensions: Array<{
     id: string;
     name: string;
     description: string;
-    commands: Array<{ name: string, command: string }>;
-    prompts: Array<{ title: string, prompt: string }>;
+    commands: Array<{ name: string; command: string }>;
+    prompts: Array<{ title: string; prompt: string }>;
   }>;
   loadSettings: () => Promise<void>;
-  updateSettings: (settings: Partial<Omit<SettingsSlice, 'isLoading' | 'error' | 'loadSettings' | 'updateSettings'>>) => Promise<void>;
+  updateSettings: (
+    settings: Partial<
+      Omit<SettingsSlice, "isLoading" | "error" | "loadSettings" | "updateSettings">
+    >
+  ) => Promise<void>;
 }
 
 export const createSettingsSlice: StateCreator<SettingsSlice> = (set, get) => ({
@@ -57,10 +61,15 @@ export const createSettingsSlice: StateCreator<SettingsSlice> = (set, get) => ({
   loadSettings: async () => {
     set({ isLoading: true, error: null });
     try {
-      const config: any = await invoke("load_config");
-      const provider = (config.PROVIDER || "gemini") as any;
-      const authMethod = (config.AUTH_METHOD || "apiKey") as any;
-      const apiKey = config.API_KEY || config.GEMINI_API_KEY || config.OPENAI_API_KEY || config.CLAUDE_API_KEY || "";
+      const config: Record<string, any> = await invoke("load_config");
+      const provider = (config.PROVIDER || "gemini") as SettingsSlice["provider"];
+      const authMethod = (config.AUTH_METHOD || "apiKey") as SettingsSlice["authMethod"];
+      const apiKey =
+        config.API_KEY ||
+        config.GEMINI_API_KEY ||
+        config.OPENAI_API_KEY ||
+        config.CLAUDE_API_KEY ||
+        "";
       const serviceAccountPath = config.SERVICE_ACCOUNT_PATH || "";
       const projectId = config.PROJECT_ID || "";
       const location = config.LOCATION || "global";
@@ -74,8 +83,12 @@ export const createSettingsSlice: StateCreator<SettingsSlice> = (set, get) => ({
       const token = config.TOKEN || "";
       const userEmail = config.USER_EMAIL || "";
       const activeTheme = config.ACTIVE_THEME || "zen-dark";
-      const installedPrompts = Array.isArray(config.INSTALLED_PROMPTS) ? config.INSTALLED_PROMPTS : [];
-      const installedExtensions = Array.isArray(config.INSTALLED_EXTENSIONS) ? config.INSTALLED_EXTENSIONS : [];
+      const installedPrompts = Array.isArray(config.INSTALLED_PROMPTS)
+        ? config.INSTALLED_PROMPTS
+        : [];
+      const installedExtensions = Array.isArray(config.INSTALLED_EXTENSIONS)
+        ? config.INSTALLED_EXTENSIONS
+        : [];
 
       set({
         provider,
@@ -98,22 +111,23 @@ export const createSettingsSlice: StateCreator<SettingsSlice> = (set, get) => ({
         installedExtensions,
         isLoading: false,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to load settings";
       console.error("Failed to load settings:", err);
-      set({ error: err.message || "Failed to load settings", isLoading: false });
+      set({ error: msg, isLoading: false });
     }
   },
 
   updateSettings: async (newSettings) => {
-    set((state: any) => ({
+    set((state) => ({
       ...state,
       ...newSettings,
     }));
-    await saveToRustConfig(get() as any);
+    await saveToRustConfig(get());
   },
 });
 
-async function saveToRustConfig(state: any) {
+async function saveToRustConfig(state: SettingsSlice) {
   try {
     const config = {
       PROVIDER: state.provider,

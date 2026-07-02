@@ -21,8 +21,8 @@ export class VertexProvider {
     let fileContent: string;
     try {
       fileContent = fs.readFileSync(this.serviceAccountPath, "utf8");
-    } catch (err: any) {
-      throw new Error(`Failed to read Service Account JSON file at '${this.serviceAccountPath}': ${err.message}`);
+    } catch (err: unknown) {
+      throw new Error(`Failed to read Service Account JSON file at '${this.serviceAccountPath}': ${err instanceof Error ? err.message : String(err)}`);
     }
 
     const creds = JSON.parse(fileContent);

@@ -5,7 +5,10 @@ import { handleRegister, handleLogin } from "../controllers/authController.js";
 import { findUserByEmail, createUser } from "../repositories/userRepository.js";
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || "istiyak_super_secret_token_key";
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error("FATAL: JWT_SECRET environment variable is required. Set it in apps/saas-backend/.env");
+}
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;

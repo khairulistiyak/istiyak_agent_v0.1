@@ -25,13 +25,24 @@ function loadLocalConfig() {
       return JSON.parse(fs.readFileSync(configPath, "utf-8"));
     }
   } catch (err) {
-    console.error("[Config Loader] Failed to load config:", err.message);
+    console.error(
+      "[Config Loader] Failed to load config:",
+      err instanceof Error ? err.message : String(err)
+    );
   }
   return {};
 }
 
 let isAgentRunning = false;
 let currentAbortController = null;
+const pendingPermissionTimeouts = new Map(); // reqId -> timeoutId
+
+function clearPendingPermissions() {
+  for (const timeoutId of pendingPermissionTimeouts.values()) {
+    globalThis.clearTimeout(timeoutId);
+  }
+  pendingPermissionTimeouts.clear();
+}
 
 async function onTodoFound(filePath, todoText) {
   if (isAgentRunning) {
@@ -85,7 +96,10 @@ async function onTodoFound(filePath, todoText) {
     });
     console.log(`[Auto-Pilot] Successfully resolved TODO in ${relativePath}.`);
   } catch (err) {
-    console.error(`[Auto-Pilot] Failed to resolve TODO in ${filePath}:`, err.message);
+    console.error(
+      `[Auto-Pilot] Failed to resolve TODO in ${filePath}:`,
+      err instanceof Error ? err.message : String(err)
+    );
   } finally {
     unlockFile(filePath);
     isAgentRunning = false;
@@ -148,6 +162,7 @@ export function startDaemon() {
       currentAbortController.abort();
       currentAbortController = null;
     }
+    clearPendingPermissions();
 
     resetSessionCost();
     // Create abort controller for this chat session
@@ -189,8 +204,6 @@ export function startDaemon() {
     res.setHeader("Connection", "keep-alive");
 
     try {
-      let currentOutput = "";
-
       const agentResult = await runAgent({
         messages,
         provider: provider || "gemini",
@@ -203,7 +216,6 @@ export function startDaemon() {
         workspacePath,
         googleSearchEnabled,
         onChunk: (chunk) => {
-          currentOutput += chunk;
           res.write(chunk);
         },
         cloudSandboxEnabled,
@@ -215,19 +227,21 @@ export function startDaemon() {
         requestPermission: (reqId, command) => {
           return new Promise((resolve) => {
             pendingPermissions.set(reqId, resolve);
-            // Auto-reject after 5 minutes if user doesn't respond
-            setTimeout(
+            // Track timeout so we can clear on abort
+            const timeoutId = setTimeout(
               () => {
                 if (pendingPermissions.has(reqId)) {
                   console.warn(
                     `[daemon] Permission request ${reqId} timed out after 5 minutes. Auto-rejecting.`
                   );
                   pendingPermissions.delete(reqId);
+                  pendingPermissionTimeouts.delete(reqId);
                   resolve(false);
                 }
               },
               5 * 60 * 1000
             );
+            pendingPermissionTimeouts.set(reqId, timeoutId);
           });
         },
       });
@@ -248,11 +262,12 @@ export function startDaemon() {
     } catch (error) {
       console.error("[daemon.js] Error in chat execution:", error);
       res.write(
-        `\n\n<agent_step step="0" status="error">Engine Error: ${(error.message || error).replace(/</g, "&lt;").replace(/>/g, "&gt;")}</agent_step>`
+        `\n\n<agent_step step="0" status="error">Engine Error: ${(error instanceof Error ? error.message : String(error)).replace(/</g, "&lt;").replace(/>/g, "&gt;")}</agent_step>`
       );
       res.end();
     } finally {
       currentAbortController = null;
+      clearPendingPermissions();
     }
   });
 
@@ -261,6 +276,7 @@ export function startDaemon() {
     if (currentAbortController) {
       currentAbortController.abort();
       currentAbortController = null;
+      clearPendingPermissions();
       res.json({ success: true, message: "Agent execution aborted." });
     } else {
       res.json({ success: false, message: "No agent is currently running." });

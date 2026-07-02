@@ -7,7 +7,7 @@ import { invoke } from "@tauri-apps/api/core";
 
 // Initialize Sentry client-side if DSN environment variable is found
 invoke("get_env_var", { name: "SENTRY_DSN" })
-  .then((dsn: any) => {
+  .then((dsn) => {
     if (dsn) {
       Sentry.init({
         dsn: String(dsn),
@@ -31,7 +31,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             </div>
             <h1 className="text-lg font-bold tracking-tight text-white">Something went wrong</h1>
             <p className="text-xs text-zinc-400 bg-black/40 p-3 rounded-lg border border-zinc-800 text-left overflow-auto max-h-40 font-mono">
-              {(error as any)?.message || String(error)}
+              {error instanceof Error ? error.message : String(error)}
             </p>
             <button
               onClick={resetError}
@@ -45,5 +45,5 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     >
       <App />
     </Sentry.ErrorBoundary>
-  </React.StrictMode>,
+  </React.StrictMode>
 );

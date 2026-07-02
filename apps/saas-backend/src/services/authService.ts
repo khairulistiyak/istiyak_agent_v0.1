@@ -3,7 +3,10 @@ import jwt from "jsonwebtoken";
 import { createUser, findUserByEmail } from "../repositories/userRepository.js";
 import { logIpAddress, getIpLog } from "../repositories/ipLogRepository.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "istiyak_super_secret_token_key";
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error("FATAL: JWT_SECRET environment variable is required. Set it in apps/saas-backend/.env");
+}
 
 export async function registerUser(email: string, password: string, name: string, ip: string) {
   const existing = await findUserByEmail(email);

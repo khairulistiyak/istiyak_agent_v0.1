@@ -46,8 +46,8 @@ export class StreamManager {
     for (const listener of this.listeners) {
       try {
         listener(chunk);
-      } catch (err: any) {
-        console.error("[StreamManager] Listener error:", err.message);
+      } catch (err: unknown) {
+        console.error("[StreamManager] Listener error:", err instanceof Error ? err.message : String(err));
       }
     }
   }

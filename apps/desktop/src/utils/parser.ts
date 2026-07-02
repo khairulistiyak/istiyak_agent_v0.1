@@ -1,4 +1,4 @@
-import { ParsedAgentMessage, AgentStep, PermissionRequest } from "../types/chat.js";
+import { ParsedAgentMessage, AgentStep, PermissionRequest, CostMeta } from "../types/chat.js";
 
 export function parseAgentMessage(rawText: string): ParsedAgentMessage {
   const steps: AgentStep[] = [];
@@ -23,7 +23,7 @@ export function parseAgentMessage(rawText: string): ParsedAgentMessage {
     
     const stepNum = stepAttr ? parseInt(stepAttr, 10) : 1;
     
-    const params: any = {};
+    const params: Record<string, string> = {};
     const attrPairs = attrsStr.matchAll(/([a-zA-Z0-9_-]+)="([^"]*?)"/gi);
     for (const ap of attrPairs) {
       const k = ap[1];
@@ -35,7 +35,7 @@ export function parseAgentMessage(rawText: string): ParsedAgentMessage {
 
     steps.push({
       step: stepNum,
-      status: (statusAttr || 'thought') as any,
+      status: (statusAttr || 'thought') as AgentStep['status'],
       content: content.replace(/&lt;/g, '<').replace(/&gt;/g, '>'),
       actionName: nameAttr,
       params
@@ -65,7 +65,7 @@ export function parseAgentMessage(rawText: string): ParsedAgentMessage {
     
     const stepNum = stepAttr ? parseInt(stepAttr, 10) : (steps.length + 1);
     
-    const params: any = {};
+    const params: Record<string, string> = {};
     const attrPairs = attrsStr.matchAll(/([a-zA-Z0-9_-]+)="([^"]*?)"/gi);
     for (const ap of attrPairs) {
       const k = ap[1];
@@ -77,7 +77,7 @@ export function parseAgentMessage(rawText: string): ParsedAgentMessage {
 
     steps.push({
       step: stepNum,
-      status: (statusAttr || 'thought') as any,
+      status: (statusAttr || 'thought') as AgentStep['status'],
       content: content.replace(/&lt;/g, '<').replace(/&gt;/g, '>'),
       actionName: nameAttr,
       params
@@ -96,7 +96,7 @@ export function parseAgentMessage(rawText: string): ParsedAgentMessage {
     if (id && type && command) {
       const decodedCommand = command.replace(/&quot;/g, '"');
       const decodedReason = reason?.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
-      permissionRequests.push({ id, type: type as any, command: decodedCommand, reason: decodedReason });
+      permissionRequests.push({ id, type, command: decodedCommand, reason: decodedReason });
     }
   }
 
@@ -121,13 +121,13 @@ export function parseAgentMessage(rawText: string): ParsedAgentMessage {
       const decodedCommand = command.replace(/&quot;/g, '"');
       const decodedReason = reason?.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
       if (!permissionRequests.some(r => r.id === id)) {
-        permissionRequests.push({ id, type: type as any, command: decodedCommand, reason: decodedReason });
+        permissionRequests.push({ id, type, command: decodedCommand, reason: decodedReason });
       }
     }
   }
 
   // 4. Parse real cost metadata appended by daemon at end of stream
-  let costMeta: { cost: string; tokens: string; tokensIn: string; tokensOut: string } | null = null;
+  let costMeta: CostMeta | null = null;
   const costMatch = rawText.match(/\*Session Cost: \$([0-9.]+) \| Tokens: (\d+) \((\d+) in \/ (\d+) out\)\*/);
   if (costMatch) {
     costMeta = {

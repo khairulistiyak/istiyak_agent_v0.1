@@ -105,7 +105,12 @@ export async function runAgent(options: RunnerOptions) {
   if (options.workspacePath && !isDirectResponseMode) {
     try {
       if (lastUserMsg) {
-        const matches = searchWorkspace(lastUserMsg.content, 3, options.workspacePath);
+        const matches = await searchWorkspace(
+          lastUserMsg.content,
+          3,
+          options.workspacePath,
+          options.apiKey
+        );
         if (matches.length > 0) {
           const contextText =
             "\n\n[System RAG Context: The following relevant codebase snippets were automatically retrieved from the workspace index. Use them to answer accurately if applicable]\n" +
@@ -124,8 +129,11 @@ export async function runAgent(options: RunnerOptions) {
           });
         }
       }
-    } catch (err: any) {
-      console.warn("[runner] Automatic RAG search context retrieval failed:", err.message);
+    } catch (err: unknown) {
+      console.warn(
+        "[runner] Automatic RAG search context retrieval failed:",
+        err instanceof Error ? err.message : String(err)
+      );
     }
   }
 
@@ -264,13 +272,25 @@ export async function runAgent(options: RunnerOptions) {
         options.location,
         (chunk) => streamManager.append(chunk)
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Retry logic for rate limit (429) errors
-      if (err.message?.includes("429") || err.message?.toLowerCase().includes("rate limit")) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (errMsg.includes("429") || errMsg.toLowerCase().includes("rate limit")) {
         options.onChunk(
           `<agent_step step="${step}" status="error">Rate limit hit. Waiting 30 seconds before retry...</agent_step>`
         );
-        await sleep(30000);
+        // Abortable sleep: check signal every 1s so user can cancel
+        const sleepEnd = Date.now() + 30000;
+        while (Date.now() < sleepEnd) {
+          if (options.abortSignal?.aborted) {
+            options.onChunk(
+              `<agent_step step="${step}" status="error">Rate limit retry cancelled by user.</agent_step>`
+            );
+            await workflow.failTask("Rate limit retry cancelled by user");
+            return;
+          }
+          await sleep(1000);
+        }
         try {
           rawResponse = await streamLLM(
             maskedHistory,
@@ -283,18 +303,19 @@ export async function runAgent(options: RunnerOptions) {
             options.location,
             (chunk) => streamManager.append(chunk)
           );
-        } catch (retryErr: any) {
+        } catch (retryErr: unknown) {
+          const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
           options.onChunk(
-            `<agent_step step="${step}" status="error">LLM request failed after retry: ${retryErr.message}</agent_step>`
+            `<agent_step step="${step}" status="error">LLM request failed after retry: ${retryMsg}</agent_step>`
           );
-          await workflow.failTask(retryErr.message);
+          await workflow.failTask(retryMsg);
           throw retryErr;
         }
       } else {
         options.onChunk(
-          `<agent_step step="${step}" status="error">LLM request failed: ${err.message}</agent_step>`
+          `<agent_step step="${step}" status="error">LLM request failed: ${errMsg}</agent_step>`
         );
-        await workflow.failTask(err.message);
+        await workflow.failTask(errMsg);
         throw err;
       }
     }
@@ -343,10 +364,11 @@ export async function runAgent(options: RunnerOptions) {
     try {
       decision = parseResponse(rawResponse);
       consecutiveParseErrors = 0; // Reset on successful parse
-    } catch (parseErr: any) {
+    } catch (parseErr: unknown) {
       consecutiveParseErrors++;
 
       const text = rawResponse.trim();
+      const parseMsg = parseErr instanceof Error ? parseErr.message : String(parseErr);
       const hasJsonBrackets = text.includes("{") || text.includes("}") || text.includes('"action"');
 
       // If the response is plain text (no json brackets) OR we've had consecutive parsing failures,
@@ -376,7 +398,7 @@ Example response format:
 }
 
 Your invalid response started with: "${rawResponse.substring(0, 150)}"
-Error details: ${parseErr.message}`;
+Error details: ${parseMsg}`;
 
         agentHistory.push({ role: "user", content: errorMsg });
         options.onChunk(
@@ -522,7 +544,7 @@ Error details: ${parseErr.message}`;
       );
       stepSpan.log(`Result: ${String(toolResult || "").substring(0, 200)}`);
       stepSpan.end();
-    } catch (toolErr: any) {
+    } catch (toolErr: unknown) {
       const formattedError = ExceptionHandler.handle(toolErr);
       toolResult = `Action [${action}] failed: ${formattedError}`;
       options.onChunk(

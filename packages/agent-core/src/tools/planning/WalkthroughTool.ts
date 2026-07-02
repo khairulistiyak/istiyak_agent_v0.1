@@ -69,8 +69,8 @@ export class WalkthroughTool extends BaseTool {
       await fs.writeFile(walkthroughPath, walkthroughContent, "utf-8");
 
       return `Walkthrough generated and saved to: ${walkthroughPath}\n\n${walkthroughContent}`;
-    } catch (err: any) {
-      return `Failed to generate walkthrough: ${err.message}`;
+    } catch (err: unknown) {
+      return `Failed to generate walkthrough: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 }

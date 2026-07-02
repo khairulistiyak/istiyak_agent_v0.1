@@ -1,0 +1,88 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Ultra-Minimal Premium Zen Palette -->
+    <style>
+      .font-sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      .font-mono { font-family: "SF Mono", "Fira Code", Monaco, Consolas, monospace; }
+      
+      .title { font-weight: 600; fill: #ffffff; font-size: 13px; letter-spacing: -0.01em; }
+      .subtitle { font-weight: 500; fill: #52525b; font-size: 10px; letter-spacing: 0.05em; }
+      .lbl-tool { font-weight: 600; fill: #52525b; font-size: 9px; letter-spacing: 0.08em; }
+      .txt-main { font-weight: 400; fill: #d4d4d8; font-size: 11.5px; }
+      .txt-bold { font-weight: 600; fill: #ffffff; font-size: 11.5px; }
+      .txt-muted { font-weight: 400; fill: #52525b; font-size: 10.5px; }
+      
+      .pulse { animation: zenglow 2.5s infinite ease-in-out; }
+      @keyframes zenglow {
+        0% { opacity: 0.3; }
+        50% { opacity: 0.9; }
+        100% { opacity: 0.3; }
+      }
+    </style>
+  </defs>
+
+  <!-- Clean dark backdrop (Zero heavy grids, zero heavy borders) -->
+  <rect width="800" height="600" rx="8" fill="#050508"/>
+  <rect x="0.5" y="0.5" width="799" height="599" rx="7.5" stroke="#121215" stroke-opacity="0.8"/>
+
+  <!-- ==================== HEADER ==================== -->
+  <g transform="translate(32, 28)">
+    <text x="0" y="14" class="font-sans title">Filesystem Tools Spec</text>
+    <text x="135" y="12" class="font-sans txt-muted">/</text>
+    <text x="146" y="14" class="font-mono subtitle">02_FILESYSTEM_ENGINE</text>
+    <line x1="0" y1="26" x2="736" y2="26" stroke="#121215" stroke-width="1"/>
+  </g>
+
+  <!-- ==================== scan_project / list_files / search_workspace ==================== -->
+  <g transform="translate(32, 80)">
+    <text x="0" y="12" class="font-sans lbl-tool">01 • scan_project / list_files / search_workspace</text>
+    <circle cx="6" cy="28" r="2.5" fill="#3b82f6"/>
+    <text x="20" y="32" class="font-sans txt-bold" fill="#3b82f6">Workspace Search:</text>
+    <text x="120" y="32" class="font-mono txt-main">"indexedDBStorage"</text>
+    
+    <!-- Flat search result counts -->
+    <g transform="translate(20, 52)">
+      <text x="0" y="12" class="font-sans txt-muted">Matched 2 instances in codebase (140ms)</text>
+      <text x="240" y="12" class="font-mono txt-main" fill="#38bdf8">src/store/index.ts (score: 0.94)</text>
+      <text x="460" y="12" class="font-mono txt-main" fill="#38bdf8">src/components/ChatUI.tsx (score: 0.78)</text>
+    </g>
+  </g>
+
+  <!-- ==================== read_file ==================== -->
+  <g transform="translate(32, 180)">
+    <text x="0" y="12" class="font-sans lbl-tool">02 • read_file</text>
+    <circle cx="6" cy="28" r="2.5" fill="#38bdf8"/>
+    <text x="20" y="32" class="font-sans txt-bold" fill="#38bdf8">Read file:</text>
+    <text x="80" y="32" class="font-mono txt-main">src/store/index.ts</text>
+    <text x="220" y="32" class="font-sans txt-muted">(14.8KB • 123 lines • cache: HIT • 180ms)</text>
+  </g>
+
+  <!-- ==================== write_file / precise_edit / ASTEdit ==================== -->
+  <g transform="translate(32, 270)">
+    <text x="0" y="12" class="font-sans lbl-tool">03 • write_file / precise_edit / ASTEdit</text>
+    <circle cx="6" cy="28" r="2.5" fill="#a855f7"/>
+    <text x="20" y="32" class="font-sans txt-bold" fill="#c084fc">Write modifications:</text>
+    <text x="145" y="32" class="font-mono txt-main">src/store/index.ts</text>
+    <text x="280" y="32" class="font-sans txt-muted">Applying diff (Lines: <tspan fill="#10b981">+148</tspan> <tspan fill="#ef4444">-43</tspan>)</text>
+
+    <!-- Inline Diff visual -->
+    <g transform="translate(20, 52)">
+      <line x1="0" y1="0" x2="0" y2="90" stroke="#121215" stroke-width="1.5"/>
+      <g transform="translate(10, 0)" class="font-mono" font-size="10.5">
+        <text y="12" fill="#ef4444">-   { name: "chat-storage" }</text>
+        <text y="28" fill="#10b981">+   { name: "chat-storage",</text>
+        <text y="44" fill="#10b981">+     storage: createJSONStorage(() =&gt; indexedDBStorage),</text>
+        <text y="60" fill="#10b981">+   }</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ==================== rename / move / delete / create_directory ==================== -->
+  <g transform="translate(32, 470)">
+    <text x="0" y="12" class="font-sans lbl-tool">04 • rename / move / delete / create_directory</text>
+    <circle cx="6" cy="28" r="2.5" fill="#e11d48"/>
+    <text x="20" y="32" class="font-sans txt-bold" fill="#f43f5e">FileSystem write action:</text>
+    <text x="170" y="32" class="font-mono txt-main">delete src/store/backup_index.ts</text>
+    <text x="400" y="32" class="font-sans txt-muted">Status: Success (80ms)</text>
+  </g>
+</svg>

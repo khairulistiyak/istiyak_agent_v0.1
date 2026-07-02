@@ -43,8 +43,9 @@ export class OpenAIProvider {
         }
       }
       return accumulatedText;
-    } catch (error: any) {
-      if (error.status === 429) {
+    } catch (error: unknown) {
+      const httpErr = error as { status?: number; message?: string };
+      if (httpErr.status === 429) {
         if (retryCount < 3) {
           const delay = Math.pow(2, retryCount) * 1000;
           console.warn(`OpenAI Rate limit hit. Retrying in ${delay / 1000} seconds...`);

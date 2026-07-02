@@ -50,7 +50,7 @@ export async function executeSandboxCommand(req: any, res: Response, next: NextF
     if (!res.headersSent) {
       next(err);
     } else {
-      res.write(`\n\n[Execution Error: ${err.message || err}]`);
+      res.write(`\n\n[Execution Error: ${err instanceof Error ? err.message : String(err)}]`);
       res.end();
     }
   }

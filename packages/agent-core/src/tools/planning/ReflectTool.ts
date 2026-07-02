@@ -35,8 +35,8 @@ export class ReflectTool extends BaseTool {
         `*Reflection triggered at step ${stepCount}.` +
         (lastError ? ` Last error: ${lastError}` : ` No errors detected.`) +
         `*`;
-    } catch (err: any) {
-      return `Failed to generate reflection: ${err.message}`;
+    } catch (err: unknown) {
+      return `Failed to generate reflection: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 }

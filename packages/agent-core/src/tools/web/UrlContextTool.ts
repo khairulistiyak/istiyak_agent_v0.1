@@ -28,11 +28,12 @@ export class UrlContextTool extends BaseTool {
         .replace(/\s+/g, " ")
         .trim();
       return clean.substring(0, 10000);
-    } catch (e: any) {
-      if (e.name === "AbortError") {
+    } catch (e: unknown) {
+      const abortErr = e as { name?: string };
+      if (abortErr.name === "AbortError") {
         return `Failed to get URL context: Request timed out after 10 seconds for URL: ${params.url}`;
       }
-      return `Failed to get URL context: ${e.message}`;
+      return `Failed to get URL context: ${e instanceof Error ? e.message : String(e)}`;
     } finally {
       clearTimeout(timeoutId);
     }

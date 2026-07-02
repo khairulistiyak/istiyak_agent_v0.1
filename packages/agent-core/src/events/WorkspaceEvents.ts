@@ -30,23 +30,25 @@ export function emitFileChange(filePath: string, changeType: "modified" | "creat
                     changeType === "deleted" ? WORKSPACE_EVENTS.FILE_DELETED :
                     WORKSPACE_EVENTS.FILE_CHANGED;
 
-  EventBus.emit(eventName, {
+  const payload: FileChangePayload = {
     filePath,
     changeType,
     timestamp: Date.now(),
-  } as FileChangePayload);
+  };
+  EventBus.emit(eventName, payload);
 }
 
 /**
  * Emits a TODO discovered event.
  */
 export function emitTodoDiscovered(filePath: string, line: number, text: string): void {
-  EventBus.emit(WORKSPACE_EVENTS.TODO_DISCOVERED, {
+  const payload: TodoPayload = {
     filePath,
     line,
     text,
     timestamp: Date.now(),
-  } as TodoPayload);
+  };
+  EventBus.emit(WORKSPACE_EVENTS.TODO_DISCOVERED, payload);
 }
 
 /**
@@ -62,8 +64,8 @@ export function emitIndexUpdated(fileCount: number): void {
 /**
  * Registers a listener for all workspace events.
  */
-export function onWorkspaceEvent(callback: (event: string, payload: any) => void): void {
+export function onWorkspaceEvent(callback: (event: string, payload: FileChangePayload | TodoPayload) => void): void {
   for (const eventName of Object.values(WORKSPACE_EVENTS)) {
-    EventBus.on(eventName, (payload: any) => callback(eventName, payload));
+    EventBus.on(eventName, (payload) => callback(eventName, payload));
   }
 }

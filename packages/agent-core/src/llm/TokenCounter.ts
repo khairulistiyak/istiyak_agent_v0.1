@@ -65,8 +65,9 @@ export function countTokensForMessages(messages: Message[]): number {
     total += estimateTokens(msg.content);
 
     // If message has a name/id field, add small overhead
-    if ((msg as any).name) {
-      total += estimateTokens((msg as any).name);
+    const msgWithName = msg as { content: string; name?: string };
+    if (msgWithName.name) {
+      total += estimateTokens(msgWithName.name);
     }
   }
 

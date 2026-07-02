@@ -20,7 +20,7 @@ export const createUiSlice: StateCreator<UiSlice> = (set) => ({
   isPermissionAlertOpen: false,
   activePermissionRequest: null,
 
-  toggleSidebar: () => set((state: any) => ({ isSidebarOpen: !state.isSidebarOpen })),
+  toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   setSettingsOpen: (isOpen) => set({ isSettingsOpen: isOpen }),
   setMarketplaceOpen: (isOpen) => set({ isMarketplaceOpen: isOpen }),
   setPermissionRequest: (req) => set({

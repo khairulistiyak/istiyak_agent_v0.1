@@ -47,8 +47,8 @@ export class CrashReporter {
       const filePath = path.join(CrashReporter.CRASH_DIR, `${crashId}.json`);
       fs.writeFileSync(filePath, JSON.stringify(report, null, 2), "utf-8");
       CrashReporter.pruneOldLogs();
-    } catch (writeErr: any) {
-      console.error(`[CrashReporter] Failed to write crash log: ${writeErr.message}`);
+    } catch (writeErr: unknown) {
+      console.error(`[CrashReporter] Failed to write crash log: ${writeErr instanceof Error ? writeErr.message : String(writeErr)}`);
     }
 
     return crashId;

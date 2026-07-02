@@ -21,8 +21,10 @@ export class CommitTool extends BaseTool {
       await execFilePromise("git", ["add", "."], { cwd });
       const { stdout, stderr } = await execFilePromise("git", ["commit", "-m", params.message], { cwd });
       return stdout || stderr || "git commit succeeded";
-    } catch (error: any) {
-      return error.stdout || error.stderr || error.message;
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      const execErr = error as { stdout?: string; stderr?: string };
+      return execErr.stdout || execErr.stderr || errMsg;
     }
   }
 }

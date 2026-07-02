@@ -26,11 +26,12 @@ export class FetchUrlTool extends BaseTool {
         return `Fetch error: ${res.status} ${res.statusText}`;
       }
       return await res.text();
-    } catch (e: any) {
-      if (e.name === "AbortError") {
+    } catch (e: unknown) {
+      const abortErr = e as { name?: string };
+      if (abortErr.name === "AbortError") {
         return `Fetch error: Request timed out after 10 seconds for URL: ${params.url}`;
       }
-      return `Fetch error: ${e.message}`;
+      return `Fetch error: ${e instanceof Error ? e.message : String(e)}`;
     } finally {
       clearTimeout(timeoutId);
     }

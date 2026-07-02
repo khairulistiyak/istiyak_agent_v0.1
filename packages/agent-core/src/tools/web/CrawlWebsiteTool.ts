@@ -127,9 +127,9 @@ export class CrawlWebsiteTool extends BaseTool {
           await this.crawlPage(link, baseDomain, depth + 1, maxDepth, maxPages, visited, results);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Skip failed pages silently
-      console.warn(`[CrawlWebsite] Failed to crawl ${url}: ${err.message}`);
+      console.warn(`[CrawlWebsite] Failed to crawl ${url}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 }

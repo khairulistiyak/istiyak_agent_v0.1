@@ -10,12 +10,13 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "openai": "^4.76.0",
+    "@istiyak/agent-memory": "*",
+    "@istiyak/agent-prompts": "*",
+    "@istiyak/agent-tools": "*",
     "@istiyak/shared-types": "*",
     "@istiyak/shared-utils": "*",
-    "@istiyak/agent-tools": "*",
-    "@istiyak/agent-memory": "*",
-    "@istiyak/agent-prompts": "*"
+    "headroom-ai": "^0.22.4",
+    "openai": "^4.76.0"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",

@@ -4,17 +4,18 @@ import os from "os";
 
 /**
  * A simple key-value store backed by a local JSON file in the user's home directory.
- * NOTE: Despite the class name, this does NOT use SQLite — it uses a flat JSON file.
- * The name is kept for backwards compatibility with WorkspaceMemoryStore.
+ * Used by WorkspaceMemoryStore for persisting workspace-level rules/conventions.
  * Data is loaded once at construction and persisted synchronously on every write.
+ *
+ * Note: renamed from SQLiteMemoryStore (which was misleading — it never used SQLite).
  */
-export class SQLiteMemoryStore {
+export class JsonFileStore {
   private filePath: string;
   private data: Record<string, any> = {};
 
   constructor() {
     const home = os.homedir();
-    this.filePath = path.join(home, ".istiyak_sqlite_memory.json");
+    this.filePath = path.join(home, ".istiyak_json_store.json");
     this.load();
   }
 
@@ -32,7 +33,7 @@ export class SQLiteMemoryStore {
     try {
       fs.writeFileSync(this.filePath, JSON.stringify(this.data, null, 2), "utf-8");
     } catch (e) {
-      console.error("[SQLiteMemoryStore] Save failed:", e);
+      console.error("[JsonFileStore] Save failed:", e);
     }
   }
 

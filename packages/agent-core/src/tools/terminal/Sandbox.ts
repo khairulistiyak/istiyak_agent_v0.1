@@ -69,11 +69,12 @@ export class Sandbox extends BaseTool {
       }
 
       return `🏖️ Sandbox output:\n${output || "(no output)"}`;
-    } catch (err: any) {
-      if (err.killed) {
+    } catch (err: unknown) {
+      const killed = (err as { killed?: boolean }).killed;
+      if (killed) {
         return `🏖️ Sandbox: Command timed out after ${timeout}ms.`;
       }
-      return `🏖️ Sandbox error: ${err.message}`;
+      return `🏖️ Sandbox error: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 }

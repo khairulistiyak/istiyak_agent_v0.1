@@ -11,9 +11,11 @@ export interface Conversation {
   id: string;
   title: string;
   messages: Message[];
+  agentMode: "chat" | "plan" | "assist" | "agent";
   createdAt: string;
 }
 
+// Re-export full slice type so Zustand `set` callback infers correct types
 export interface ChatSlice {
   conversations: Conversation[];
   activeId: string | null;
@@ -23,6 +25,7 @@ export interface ChatSlice {
   addMessage: (conversationId: string, message: Omit<Message, "createdAt">) => void;
   updateLastMessageContent: (conversationId: string, content: string) => void;
   updateConversationTitle: (conversationId: string, title: string) => void;
+  updateConversationMode: (conversationId: string, mode: Conversation["agentMode"]) => void;
   clearAllConversations: () => void;
 }
 
@@ -31,17 +34,15 @@ export const createChatSlice: StateCreator<ChatSlice> = (set) => ({
   activeId: null,
 
   createConversation: () => {
-    // Use crypto.randomUUID() instead of Date.now() to guarantee unique IDs.
-    // Date.now() is millisecond-precision and can produce duplicate IDs if two
-    // conversations are created within the same millisecond (e.g., rapid clicks or automation).
     const id = crypto.randomUUID();
     const newConversation: Conversation = {
       id,
       title: "New Chat",
       messages: [],
+      agentMode: "chat",
       createdAt: new Date().toISOString(),
     };
-    set((state: any) => ({
+    set((state) => ({
       conversations: [newConversation, ...state.conversations],
       activeId: id,
     }));
@@ -49,8 +50,8 @@ export const createChatSlice: StateCreator<ChatSlice> = (set) => ({
   },
 
   deleteConversation: (id) => {
-    set((state: any) => {
-      const filtered = state.conversations.filter((c: any) => c.id !== id);
+    set((state) => {
+      const filtered = state.conversations.filter((c) => c.id !== id);
       let newActiveId = state.activeId;
       if (state.activeId === id) {
         newActiveId = filtered.length > 0 ? filtered[0].id : null;
@@ -67,8 +68,8 @@ export const createChatSlice: StateCreator<ChatSlice> = (set) => ({
   },
 
   addMessage: (conversationId, message) => {
-    set((state: any) => {
-      const updatedConversations = state.conversations.map((c: any) => {
+    set((state) => {
+      const updatedConversations = state.conversations.map((c) => {
         if (c.id === conversationId) {
           const updatedMessages = [
             ...c.messages,
@@ -79,9 +80,10 @@ export const createChatSlice: StateCreator<ChatSlice> = (set) => ({
           ];
           let title = c.title;
           if (c.title === "New Chat" && message.role === "user") {
-            title = message.content.length > 25 
-              ? message.content.substring(0, 25).trim() + "..." 
-              : message.content;
+            title =
+              message.content.length > 25
+                ? message.content.substring(0, 25).trim() + "..."
+                : message.content;
           }
           return {
             ...c,
@@ -96,8 +98,8 @@ export const createChatSlice: StateCreator<ChatSlice> = (set) => ({
   },
 
   updateLastMessageContent: (conversationId, content) => {
-    set((state: any) => {
-      const updatedConversations = state.conversations.map((c: any) => {
+    set((state) => {
+      const updatedConversations = state.conversations.map((c) => {
         if (c.id === conversationId) {
           const messages = [...c.messages];
           if (messages.length > 0) {
@@ -116,9 +118,17 @@ export const createChatSlice: StateCreator<ChatSlice> = (set) => ({
   },
 
   updateConversationTitle: (conversationId, title) => {
-    set((state: any) => ({
-      conversations: state.conversations.map((c: any) =>
+    set((state) => ({
+      conversations: state.conversations.map((c) =>
         c.id === conversationId ? { ...c, title } : c
+      ),
+    }));
+  },
+
+  updateConversationMode: (conversationId, mode) => {
+    set((state) => ({
+      conversations: state.conversations.map((c) =>
+        c.id === conversationId ? { ...c, agentMode: mode } : c
       ),
     }));
   },

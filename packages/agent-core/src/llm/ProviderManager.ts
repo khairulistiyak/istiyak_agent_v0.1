@@ -8,9 +8,22 @@ import { DeepseekProvider } from "./providers/deepseek/DeepseekProvider.js";
 import { CustomProvider } from "./providers/custom/CustomProvider.js";
 import { classifyAndRoute } from "./ModelManager.js";
 
-export let mockStreamLLMFn: any = null;
+type StreamChatFn = (
+  messages: unknown[],
+  provider: string,
+  model: string,
+  authMethod?: string,
+  apiKey?: string,
+  serviceAccountPath?: string,
+  projectId?: string,
+  location?: string,
+  onChunk?: (text: string) => void,
+  jsonMode?: boolean
+) => Promise<string>;
 
-export function setMockStreamLLM(mockFn: any) {
+export let mockStreamLLMFn: StreamChatFn | null = null;
+
+export function setMockStreamLLM(mockFn: StreamChatFn) {
   mockStreamLLMFn = mockFn;
 }
 

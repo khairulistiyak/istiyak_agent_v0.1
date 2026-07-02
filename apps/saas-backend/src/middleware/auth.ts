@@ -2,7 +2,10 @@ import { Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { User } from "@istiyak/database";
 
-const JWT_SECRET = process.env.JWT_SECRET || "istiyak_super_secret_token_key";
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error("FATAL: JWT_SECRET environment variable is required. Set it in apps/saas-backend/.env");
+}
 
 export async function authenticateToken(req: any, res: Response, next: NextFunction) {
   const authHeader = req.headers["authorization"];

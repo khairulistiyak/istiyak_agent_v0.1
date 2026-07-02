@@ -3,9 +3,14 @@
  * Classifies errors and returns human-readable messages for the agent.
  */
 export class ExceptionHandler {
-  static handle(error: any): string {
-    const message = error?.message || String(error);
-    const status = error?.status || error?.statusCode || 0;
+  static handle(error: unknown): string {
+    const message = error instanceof Error ? error.message : String(error);
+    const status =
+      typeof error === "object" && error !== null
+        ? ((error as Record<string, number>).status ??
+          (error as Record<string, number>).statusCode ??
+          0)
+        : 0;
     console.error(`[ExceptionHandler] Caught error:`, message);
 
     // File system errors
@@ -29,7 +34,12 @@ export class ExceptionHandler {
     if (status === 429 || message.includes("429") || message.toLowerCase().includes("rate limit")) {
       return `Error: Rate limit exceeded. The LLM API is throttling requests. Wait and retry.`;
     }
-    if (status === 401 || message.includes("401") || message.toLowerCase().includes("unauthorized") || message.toLowerCase().includes("invalid api key")) {
+    if (
+      status === 401 ||
+      message.includes("401") ||
+      message.toLowerCase().includes("unauthorized") ||
+      message.toLowerCase().includes("invalid api key")
+    ) {
       return `Error: Authentication failed. The API key is invalid or expired. Check settings.`;
     }
     if (status === 403 || message.includes("403") || message.toLowerCase().includes("forbidden")) {
@@ -38,13 +48,21 @@ export class ExceptionHandler {
     if (status === 404 || message.includes("404")) {
       return `Error: Resource not found (404). Check the URL or model name.`;
     }
-    if (status === 500 || message.includes("500") || message.toLowerCase().includes("internal server error")) {
+    if (
+      status === 500 ||
+      message.includes("500") ||
+      message.toLowerCase().includes("internal server error")
+    ) {
       return `Error: LLM provider returned a server error (500). This is usually temporary. Retry the step.`;
     }
     if (message.toLowerCase().includes("timeout") || message.toLowerCase().includes("timed out")) {
       return `Error: Operation timed out. The command or request took too long. Try a shorter command or break the task into smaller parts.`;
     }
-    if (message.toLowerCase().includes("network") || message.toLowerCase().includes("econnrefused") || message.toLowerCase().includes("enotfound")) {
+    if (
+      message.toLowerCase().includes("network") ||
+      message.toLowerCase().includes("econnrefused") ||
+      message.toLowerCase().includes("enotfound")
+    ) {
       return `Error: Network connection failed. Check internet connection and API endpoint.`;
     }
 
@@ -76,9 +94,14 @@ export class ExceptionHandler {
   /**
    * Determines if an error is retryable (transient).
    */
-  static isRetryable(error: any): boolean {
-    const message = (error?.message || String(error)).toLowerCase();
-    const status = error?.status || error?.statusCode || 0;
+  static isRetryable(error: unknown): boolean {
+    const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
+    const status =
+      typeof error === "object" && error !== null
+        ? ((error as Record<string, number>).status ??
+          (error as Record<string, number>).statusCode ??
+          0)
+        : 0;
     return (
       status === 429 ||
       status === 500 ||

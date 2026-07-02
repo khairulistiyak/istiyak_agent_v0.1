@@ -21,7 +21,7 @@ interface MarketplaceModalProps {
   activeTheme: string;
   installedPrompts: PromptItem[];
   installedExtensions: ExtensionItem[];
-  updateSettings: (settings: any) => Promise<void>;
+  updateSettings: (settings: Record<string, unknown>) => Promise<void>;
 }
 
 const curatedPrompts: PromptItem[] = [

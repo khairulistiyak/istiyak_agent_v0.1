@@ -1,0 +1,110 @@
+<svg width="800" height="520" viewBox="0 0 800 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Dark Mode Architecture Theme Palette (Unified Spec Theme) -->
+    <linearGradient id="solid-bg" x1="0" y1="0" x2="800" y2="520" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#05060b"/>
+      <stop offset="100%" stop-color="#0c0d15"/>
+    </linearGradient>
+
+    <style>
+      .font-sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      .font-mono { font-family: "SF Mono", "Fira Code", Monaco, Consolas, monospace; }
+      
+      .title { font-weight: 700; fill: #ffffff; font-size: 13px; letter-spacing: 0.05em; }
+      .subtitle { font-weight: 500; fill: #52525b; font-size: 10px; letter-spacing: 0.05em; }
+      .lbl-flow { font-weight: 600; fill: #52525b; font-size: 9px; letter-spacing: 0.08em; }
+      .txt-main { font-weight: 400; fill: #cbd5e1; font-size: 11.5px; }
+      .txt-bold { font-weight: 600; fill: #ffffff; font-size: 11.5px; }
+      .txt-muted { font-weight: 400; fill: #52525b; font-size: 10.5px; }
+    </style>
+  </defs>
+
+  <!-- Clean dark backdrop -->
+  <rect width="800" height="520" rx="12" fill="url(#solid-bg)"/>
+  <rect x="0.5" y="0.5" width="799" height="519" rx="11.5" stroke="#1f2937" stroke-opacity="0.8"/>
+
+  <!-- ==================== HEADER ==================== -->
+  <g transform="translate(32, 28)">
+    <polygon points="5,0 13,0 17,7 13,14 5,14 0,7" fill="#06b6d4"/>
+    <text x="24" y="12" class="font-sans title">FILESYSTEM TOOLS SPECIFICATION</text>
+    <text x="260" y="11" class="font-sans txt-muted">/</text>
+    <text x="274" y="12" class="font-mono subtitle">02_FILESYSTEM_ENGINE_SPEC</text>
+    <line x1="0" y1="26" x2="736" y2="26" stroke="#1f2937" stroke-width="0.75"/>
+  </g>
+
+  <!-- ==================== scan_project / list_files / search_workspace ==================== -->
+  <g transform="translate(32, 80)">
+    <text x="0" y="12" class="font-sans lbl-flow">01 • scan_project / list_files / search_workspace</text>
+    <circle cx="6" cy="28" r="2.5" fill="#3b82f6"/>
+    <text x="20" y="32" class="font-sans txt-bold" fill="#3b82f6">Workspace Search:</text>
+    <text x="120" y="32" class="font-mono txt-main">"indexedDBStorage"</text>
+    
+    <!-- Flat search result counts -->
+    <g transform="translate(20, 52)">
+      <text x="0" y="12" class="font-sans txt-muted">Matched 2 instances in codebase (140ms)</text>
+      <rect x="238" y="2" width="24" height="14" rx="7" fill="#3178c6" fill-opacity="0.1" stroke="#3178c6" stroke-width="0.5"/>
+      <circle cx="244" cy="9" r="1.5" fill="#3178c6"/>
+      <text x="249" y="12" class="font-mono txt-bold" font-size="6.5" fill="#cbd5e1">ts</text>
+      <text x="272" y="12" class="font-mono txt-main" fill="#38bdf8">src/store/index.ts (score: 0.94)</text>
+
+      <rect x="458" y="2" width="28" height="14" rx="7" fill="#0ea5e9" fill-opacity="0.1" stroke="#0ea5e9" stroke-width="0.5"/>
+      <circle cx="464" cy="9" r="1.5" fill="#0ea5e9"/>
+      <text x="469" y="12" class="font-mono txt-bold" font-size="6.5" fill="#00f3ff">tsx</text>
+      <text x="496" y="12" class="font-mono txt-main" fill="#38bdf8">src/components/ChatUI.tsx (score: 0.78)</text>
+    </g>
+  </g>
+
+  <!-- ==================== read_file ==================== -->
+  <g transform="translate(32, 175)">
+    <text x="0" y="12" class="font-sans lbl-flow">02 • read_file</text>
+    <circle cx="6" cy="28" r="2.5" fill="#38bdf8"/>
+    <text x="20" y="32" class="font-sans txt-bold" fill="#38bdf8">Read file:</text>
+    <g transform="translate(80, 20)">
+      <rect width="24" height="14" rx="7" fill="#3178c6" fill-opacity="0.1" stroke="#3178c6" stroke-width="0.5"/>
+      <circle cx="6" cy="7" r="1.5" fill="#3178c6"/>
+      <text x="11" y="10" class="font-mono txt-bold" font-size="6.5" fill="#cbd5e1">ts</text>
+    </g>
+    <text x="114" y="32" class="font-mono txt-main">src/store/index.ts</text>
+    <text x="254" y="32" class="font-sans txt-muted">(14.8KB • 123 lines • cache: HIT • 180ms)</text>
+  </g>
+
+  <!-- ==================== write_file / precise_edit / ASTEdit ==================== -->
+  <g transform="translate(32, 240)">
+    <text x="0" y="12" class="font-sans lbl-flow">03 • write_file / precise_edit / ASTEdit</text>
+    <circle cx="6" cy="28" r="2.5" fill="#a855f7"/>
+    <text x="20" y="32" class="font-sans txt-bold" fill="#c084fc">Write modifications:</text>
+    <g transform="translate(145, 20)">
+      <rect width="24" height="14" rx="7" fill="#3178c6" fill-opacity="0.1" stroke="#3178c6" stroke-width="0.5"/>
+      <circle cx="6" cy="7" r="1.5" fill="#3178c6"/>
+      <text x="11" y="10" class="font-mono txt-bold" font-size="6.5" fill="#cbd5e1">ts</text>
+    </g>
+    <text x="179" y="32" class="font-mono txt-main">src/store/index.ts</text>
+    <text x="314" y="32" class="font-sans txt-muted">Applying diff (Lines: <tspan fill="#10b981">+148</tspan> <tspan fill="#ef4444">-43</tspan>)</text>
+
+    <!-- Inline Diff visual -->
+    <g transform="translate(20, 52)">
+      <line x1="0" y1="0" x2="0" y2="70" stroke="#1f2937" stroke-width="1.5"/>
+      <g transform="translate(10, 0)" class="font-mono" font-size="10.5">
+        <text y="12" fill="#ef4444">-   { name: "chat-storage" }</text>
+        <text y="28" fill="#10b981">+   { name: "chat-storage",</text>
+        <text y="44" fill="#10b981">+     storage: createJSONStorage(() =&gt; indexedDBStorage),</text>
+        <text y="60" fill="#10b981">+   }</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ==================== rename / move / delete / create_directory ==================== -->
+  <g transform="translate(32, 400)">
+    <text x="0" y="12" class="font-sans lbl-flow">04 • rename / move / delete / create_directory</text>
+    <circle cx="6" cy="28" r="2.5" fill="#e11d48"/>
+    <text x="20" y="32" class="font-sans txt-bold" fill="#f43f5e">FileSystem write action:</text>
+    <text x="170" y="32" class="font-sans txt-muted">delete</text>
+    <g transform="translate(210, 20)">
+      <rect width="24" height="14" rx="7" fill="#3178c6" fill-opacity="0.1" stroke="#3178c6" stroke-width="0.5"/>
+      <circle cx="6" cy="7" r="1.5" fill="#3178c6"/>
+      <text x="11" y="10" class="font-mono txt-bold" font-size="6.5" fill="#cbd5e1">ts</text>
+    </g>
+    <text x="244" y="32" class="font-mono txt-main">src/store/backup_index.ts</text>
+    <text x="424" y="32" class="font-sans txt-muted">Status: Success (80ms)</text>
+  </g>
+</svg>

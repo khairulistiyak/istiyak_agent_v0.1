@@ -1,11 +1,11 @@
-import { SQLiteMemoryStore } from "./SQLiteMemoryStore.js";
+import { JsonFileStore } from "./SQLiteMemoryStore.js";
 
 export class WorkspaceMemoryStore {
-  private store: SQLiteMemoryStore;
+  private store: JsonFileStore;
   private workspacePath: string;
 
   constructor(workspacePath: string) {
-    this.store = new SQLiteMemoryStore();
+    this.store = new JsonFileStore();
     this.workspacePath = workspacePath;
   }
 

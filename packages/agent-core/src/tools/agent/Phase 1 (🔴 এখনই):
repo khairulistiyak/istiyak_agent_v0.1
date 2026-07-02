@@ -1,0 +1,19 @@
+Phase 1 (🔴 এখনই):
+  P13: rateLimiter.ts → express-rate-limit ইমপ্লিমেন্ট
+  P14: JWT_SECRET fallback সরিয়ে process.env বাধ্যতামূলক
+  P16: EmbeddingClient.ts API key → header-based (Authorization)
+  P17: .env files → git rm --cached + .gitignore এনফোর্স
+
+Phase 2 (🟡 ১-২ দিন):
+  P19: agent-core থেকে as any সরানো (২১টি → ০)
+  P20: input validation middleware যোগ (express-validator বা zod)
+  P21: /api/health endpoint যোগ
+  P15: RunCommandTool-এ শেল escaping/arg sanitization
+
+Phase 3 (🟢 ব্যাকলগ):
+  P18: টেস্ট ফ্রেমওয়ার্ক + unit tests
+  P22: console.log → proper logger (pino/winston)
+  P23: GitHub Actions CI
+  P24: package.json স্ক্রিপ্ট স্ট্যান্ডার্ডাইজ
+  P25: Dockerfile
+  P26: টাইপেড ইভেন্ট সিস্টেম

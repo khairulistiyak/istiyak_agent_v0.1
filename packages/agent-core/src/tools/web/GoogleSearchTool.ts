@@ -41,7 +41,8 @@ export class GoogleSearchTool extends BaseTool {
   };
 
   async execute(params: { query: string }, context: ToolContext): Promise<string> {
-    if ((context as any).googleSearchEnabled === false) {
+    const ctx = context as ToolContext & { googleSearchEnabled?: boolean };
+    if (ctx.googleSearchEnabled === false) {
       return "Google Search is currently disabled in Settings. Enable it to use this tool.";
     }
 
@@ -56,11 +57,14 @@ export class GoogleSearchTool extends BaseTool {
       if (!res.ok) {
         return `Search failed with status: ${res.statusText}`;
       }
-      const data = await res.json() as any;
-      const items = data.items || [];
-      return items.map((item: any) => `Title: ${item.title}\nLink: ${item.link}\nSnippet: ${item.snippet}`).join("\n\n");
-    } catch (e: any) {
-      return `Search failed: ${e.message}`;
+      const data: { items?: Array<{ title: string; link: string; snippet: string }> } = await res.json();
+      if (!data.items) return "No results found.";
+      return data.items
+        .map((item) => `Title: ${item.title}\nLink: ${item.link}\nSnippet: ${item.snippet}`)
+        .join("\n\n");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return `Search failed: ${msg}`;
     }
   }
 }

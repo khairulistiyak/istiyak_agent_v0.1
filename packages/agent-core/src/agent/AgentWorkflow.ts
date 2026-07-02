@@ -57,8 +57,8 @@ export class AgentWorkflow {
     try {
       await Planner.writePlanToFile(workspacePath, task, steps);
       console.log(`[Workflow] Plan created with ${steps.length} steps.`);
-    } catch (err: any) {
-      console.warn(`[Workflow] Could not write plan file: ${err.message}`);
+    } catch (err: unknown) {
+      console.warn(`[Workflow] Could not write plan file: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     return steps;

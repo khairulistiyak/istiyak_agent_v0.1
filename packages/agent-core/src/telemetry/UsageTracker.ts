@@ -136,8 +136,8 @@ export class UsageTracker {
   static save(): void {
     try {
       fs.writeFileSync(USAGE_FILE, JSON.stringify(usageRecords, null, 2), "utf-8");
-    } catch (err: any) {
-      console.error(`[UsageTracker] Failed to save usage data: ${err.message}`);
+    } catch (err: unknown) {
+      console.error(`[UsageTracker] Failed to save usage data: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
@@ -153,8 +153,8 @@ export class UsageTracker {
           usageRecords = parsed;
         }
       }
-    } catch (err: any) {
-      console.error(`[UsageTracker] Failed to load usage data: ${err.message}`);
+    } catch (err: unknown) {
+      console.error(`[UsageTracker] Failed to load usage data: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 

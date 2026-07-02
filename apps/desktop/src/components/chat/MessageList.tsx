@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from "react";
 import { UIMessage } from "ai";
 import { Bot } from "lucide-react";
 import { parseAgentMessage } from "../../utils/parser.js";
+import type { ParsedAgentMessage } from "../../types/chat.js";
 import { UserMessage } from "./MessageBubble.js";
 import { AssistantMessage } from "./AssistantMessage.js";
 
@@ -14,12 +15,12 @@ interface MessageListProps {
 }
 
 const getMessageText = (msg: UIMessage): string => {
-  const rawMsg = msg as any;
-  if (rawMsg.content) return rawMsg.content;
+  const raw = msg as UIMessage & { content?: string };
+  if (raw.content) return raw.content;
   if (!msg.parts) return "";
   return msg.parts
     .filter((part) => part.type === "text")
-    .map((part: any) => part.text)
+    .map((part) => (part as { type: "text"; text: string }).text)
     .join("");
 };
 
@@ -32,10 +33,21 @@ export const MessageList = React.memo(
     onPermissionResponse,
   }: MessageListProps) => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const parseCacheRef = useRef<Map<string, { text: string; parsed: ParsedAgentMessage }>>(
+      new Map()
+    );
 
     useEffect(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, isLoading]);
+
+    // Clean stale parse cache entries when messages change
+    useEffect(() => {
+      const activeIds = new Set(messages.map((m) => m.id));
+      for (const id of parseCacheRef.current.keys()) {
+        if (!activeIds.has(id)) parseCacheRef.current.delete(id);
+      }
+    }, [messages]);
 
     return (
       <div className="flex-1 overflow-y-auto px-6 py-7 space-y-7 bg-[#0a0d14]">
@@ -66,9 +78,16 @@ export const MessageList = React.memo(
               return <UserMessage key={msg.id} msg={msg} />;
             }
 
-            // Compute parser only once per message
+            // Compute parser only once per message (R4: per-message cache)
             const rawText = getMessageText(msg);
-            const parsed = parseAgentMessage(rawText);
+            const cached = parseCacheRef.current.get(msg.id);
+            let parsed: ParsedAgentMessage;
+            if (cached && cached.text === rawText) {
+              parsed = cached.parsed;
+            } else {
+              parsed = parseAgentMessage(rawText);
+              parseCacheRef.current.set(msg.id, { text: rawText, parsed });
+            }
 
             return (
               <AssistantMessage

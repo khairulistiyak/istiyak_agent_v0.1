@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Bot, X } from "lucide-react";
 import { Button, Input } from "../ui/index.js";
-import { SAAS_BASE, API_BASE } from "../../utils/config.js";
+import { SAAS_BASE } from "../../utils/config.js";
 import { useSettingsStore } from "../../store/settingsStore.js";
 
 interface AuthModalProps {
@@ -9,7 +9,7 @@ interface AuthModalProps {
   onClose: () => void;
   token: string;
   userEmail: string;
-  updateSettings: (settings: any) => Promise<void>;
+  updateSettings: (settings: Record<string, unknown>) => Promise<void>;
 }
 
 export const AuthModal = React.memo(
@@ -120,8 +120,10 @@ export const AuthModal = React.memo(
         } else {
           throw new Error("No checkout URL returned from server.");
         }
-      } catch (err: any) {
-        setCheckoutError(err.message || "An unexpected error occurred during upgrade.");
+      } catch (err: unknown) {
+        setCheckoutError(
+          err instanceof Error ? err.message : "An unexpected error occurred during upgrade."
+        );
       } finally {
         setCheckoutLoading(false);
       }
@@ -159,8 +161,8 @@ export const AuthModal = React.memo(
           userEmail: data.email,
         });
         onClose();
-      } catch (err: any) {
-        setAuthError(err.message || "An unexpected error occurred.");
+      } catch (err: unknown) {
+        setAuthError(err instanceof Error ? err.message : "An unexpected error occurred.");
       } finally {
         setAuthLoading(false);
       }

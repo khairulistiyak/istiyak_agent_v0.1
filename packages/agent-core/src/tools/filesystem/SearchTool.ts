@@ -9,11 +9,13 @@ export class SearchTool extends BaseTool {
     required: ["query"],
     properties: {
       query: { type: "string" },
-      limit: { type: "number" }
-    }
+      limit: { type: "number" },
+    },
   };
 
   async execute(params: { query: string; limit?: number }, context: ToolContext): Promise<any> {
-    return searchWorkspace(params.query, params.limit || 5, context.workspacePath);
+    const ctx = context as ToolContext & { _agentConfig?: { apiKey?: string } };
+    const apiKey = ctx._agentConfig?.apiKey;
+    return searchWorkspace(params.query, params.limit || 5, context.workspacePath, apiKey);
   }
 }

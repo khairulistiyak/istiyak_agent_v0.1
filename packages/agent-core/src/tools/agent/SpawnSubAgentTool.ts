@@ -1,33 +1,40 @@
 import { BaseTool, ToolContext } from "@istiyak/agent-tools";
+import { AgentConfig } from "../../shared/types/index.js";
 
 export class SpawnSubAgentTool extends BaseTool {
   name = "spawn_sub_agent";
-  description = "Spawns a real sub-agent that executes a focused task using the same LLM provider. The sub-agent runs independently with its own context and returns the result.";
+  description =
+    "Spawns a real sub-agent that executes a focused task using the same LLM provider. The sub-agent runs independently with its own context and returns the result.";
   parameterSchema = {
     type: "object",
     required: ["instructions"],
     properties: {
       instructions: {
         type: "string",
-        description: "Detailed instructions for the sub-agent task"
+        description: "Detailed instructions for the sub-agent task",
       },
       scope: {
         type: "string",
-        description: "Scope of files/directories the sub-agent should focus on"
+        description: "Scope of files/directories the sub-agent should focus on",
       },
       maxSteps: {
         type: "number",
-        description: "Maximum steps for the sub-agent (default: 10, max: 20)"
-      }
-    }
+        description: "Maximum steps for the sub-agent (default: 10, max: 20)",
+      },
+    },
   };
 
-  async execute(params: { instructions: string; scope?: string; maxSteps?: number }, context: ToolContext): Promise<string> {
+  async execute(
+    params: { instructions: string; scope?: string; maxSteps?: number },
+    context: ToolContext
+  ): Promise<string> {
     try {
       const subAgentId = `sub-${Date.now().toString(36)}`;
       const maxSteps = Math.min(params.maxSteps || 10, 20);
 
-      console.log(`[SubAgent:${subAgentId}] Starting with instructions: ${params.instructions.substring(0, 100)}...`);
+      console.log(
+        `[SubAgent:${subAgentId}] Starting with instructions: ${params.instructions.substring(0, 100)}...`
+      );
 
       // Dynamically import runAgent to avoid circular dependency
       const { runAgent } = await import("../../agent/AgentRunner.js");
@@ -36,15 +43,15 @@ export class SpawnSubAgentTool extends BaseTool {
       const subAgentMessages = [
         {
           role: "user" as const,
-          content: `You are a focused sub-agent. Complete this specific task:\n\n${params.instructions}${scopeInfo}\n\nBe concise and efficient. Complete the task in minimal steps.`
-        }
+          content: `You are a focused sub-agent. Complete this specific task:\n\n${params.instructions}${scopeInfo}\n\nBe concise and efficient. Complete the task in minimal steps.`,
+        },
       ];
 
       // Get provider config from the parent context
-      const config = (context as any)._agentConfig || {};
-
+      const ctx = context as ToolContext & { _agentConfig?: Record<string, string | undefined> };
+      const config = ctx._agentConfig || {};
       let subAgentOutput = "";
-      const parentOnChunk = (context as any)._agentConfig?.onChunk;
+      const parentOnChunk = ctx._agentConfig?.onChunk as ((chunk: string) => void) | undefined;
 
       const result = await runAgent({
         messages: subAgentMessages,
@@ -60,20 +67,29 @@ export class SpawnSubAgentTool extends BaseTool {
         onChunk: (chunk: string) => {
           subAgentOutput += chunk;
           if (parentOnChunk) {
-            parentOnChunk(`<agent_step step="0" status="action" name="sub_agent">${chunk.replace(/</g, '&lt;').replace(/>/g, '&gt;').substring(0, 200)}</agent_step>`);
+            parentOnChunk(
+              `<agent_step step="0" status="action" name="sub_agent">${chunk.replace(/</g, "&lt;").replace(/>/g, "&gt;").substring(0, 200)}</agent_step>`
+            );
           }
-        }
+        },
       });
 
-      console.log(`[SubAgent:${subAgentId}] Completed. Tokens: ${result.inputTokens}in/${result.outputTokens}out`);
+      if (!result) {
+        return `## Sub-Agent ${subAgentId} Result\n\n**Error:** Sub-agent returned no result.`;
+      }
 
-      return `## Sub-Agent ${subAgentId} Result\n\n` +
+      console.log(
+        `[SubAgent:${subAgentId}] Completed. Tokens: ${result.inputTokens}in/${result.outputTokens}out`
+      );
+
+      return (
+        `## Sub-Agent ${subAgentId} Result\n\n` +
         `**Instructions:** ${params.instructions}\n` +
         `**Tokens Used:** ${result.inputTokens} in / ${result.outputTokens} out\n\n` +
-        `**Output:**\n${subAgentOutput.substring(0, 5000)}`;
-
-    } catch (err: any) {
-      return `Sub-agent execution failed: ${err.message}. Consider breaking the task into simpler steps and executing them directly.`;
+        `**Output:**\n${subAgentOutput.substring(0, 5000)}`
+      );
+    } catch (err: unknown) {
+      return `Sub-agent execution failed: ${err instanceof Error ? err.message : String(err)}. Consider breaking the task into simpler steps and executing them directly.`;
     }
   }
 }

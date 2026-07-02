@@ -99,8 +99,9 @@ export class DeepseekProvider {
       }
 
       return accumulatedText;
-    } catch (error: any) {
-      if (error.message?.includes("rate limit") && retryCount < 3) {
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      if (errMsg.toLowerCase().includes("rate limit") && retryCount < 3) {
         const delay = Math.pow(2, retryCount) * 1000;
         console.warn(`[Deepseek] Rate limit. Retrying in ${delay / 1000}s...`);
         await new Promise(resolve => setTimeout(resolve, delay));

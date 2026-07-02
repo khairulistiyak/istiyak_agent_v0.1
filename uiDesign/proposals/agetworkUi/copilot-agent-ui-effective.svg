@@ -1,0 +1,291 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Dark Mode Theme Gradients -->
+    <linearGradient id="editor-bg" x1="0" y1="0" x2="1200" y2="800" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#090a0f"/>
+      <stop offset="100%" stop-color="#0e1017"/>
+    </linearGradient>
+    <linearGradient id="neon-blue-grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00f3ff"/>
+      <stop offset="100%" stop-color="#0ea5e9"/>
+    </linearGradient>
+    <linearGradient id="neon-cyan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Filters for Glows -->
+    <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+
+    <style>
+      .font-sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
+      .font-mono { font-family: "Fira Code", "SF Mono", Consolas, monospace; }
+      
+      /* Typography hierarchy */
+      .title-text { font-weight: 700; fill: #ffffff; font-size: 13px; letter-spacing: 0.05em; }
+      .section-label { font-weight: 600; fill: #4b5563; font-size: 9.5px; letter-spacing: 0.1em; }
+      .bright-text { font-weight: 500; fill: #f3f4f6; font-size: 12px; }
+      .body-text { font-weight: 400; fill: #9ca3af; font-size: 12px; }
+      .muted-text { font-weight: 400; fill: #4b5563; font-size: 11px; }
+
+      .pulse { animation: status-glow 2s infinite ease-in-out; }
+      @keyframes status-glow {
+        0% { opacity: 0.4; }
+        50% { opacity: 1; }
+        100% { opacity: 0.4; }
+      }
+    </style>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="1200" height="800" rx="12" fill="url(#editor-bg)"/>
+  <rect x="0.5" y="0.5" width="1199" height="799" rx="11.5" stroke="#1f2937" stroke-opacity="0.5"/>
+
+  <!-- ==================== HEADER BAR ==================== -->
+  <g transform="translate(0, 0)">
+    <rect width="1200" height="48" fill="#090a0f" stroke="#1f2937" stroke-width="0.75"/>
+    
+    <!-- Window controls -->
+    <circle cx="20" cy="24" r="5" fill="#ef4444"/>
+    <circle cx="36" cy="24" r="5" fill="#f59e0b"/>
+    <circle cx="52" cy="24" r="5" fill="#10b981"/>
+
+    <!-- Breadcrumb Path -->
+    <g transform="translate(80, 14)">
+      <!-- Brand tag icon -->
+      <rect width="16" height="16" rx="4" fill="url(#neon-blue-grad)"/>
+      <path d="M4 8.5L7 11.5L12 5.5" stroke="#090a0f" stroke-width="2" stroke-linecap="round"/>
+      <text x="26" y="13" class="font-sans title-text">Companion Agent</text>
+      <text x="160" y="12" class="font-sans muted-text">/</text>
+      <text x="175" y="13" class="font-mono bright-text">apps/desktop/src/store/index.ts</text>
+    </g>
+
+    <!-- Top Telemetry Status -->
+    <g transform="translate(900, 14)">
+      <text x="0" y="11" class="font-sans section-label">AGENT MODE</text>
+      <rect x="80" y="0" width="76" height="18" rx="9" fill="#064e3b" stroke="#10b981" stroke-width="0.5"/>
+      <circle cx="88" cy="9" r="3" fill="#10b981" class="pulse"/>
+      <text x="96" y="12" class="font-sans" fill="#34d399" font-size="9" font-weight="bold">ACTIVE</text>
+      
+      <circle cx="176" cy="9" r="4.5" fill="#10b981" class="pulse"/>
+      <text x="188" y="12" class="font-sans bright-text" font-size="11">180ms</text>
+    </g>
+  </g>
+
+  <!-- ==================== MAIN SPLIT WORKSPACE ==================== -->
+
+  <!-- LEFT COLUMN: Chat input and Agent activity timeline (Width: 400) -->
+  <g transform="translate(0, 48)">
+    <rect width="400" height="752" fill="#090a0f" stroke="#1f2937" stroke-width="0.75"/>
+    <line x1="400" y1="0" x2="400" y2="752" stroke="#1f2937" stroke-width="0.75"/>
+
+    <!-- Timeline Title -->
+    <g transform="translate(24, 24)">
+      <text x="0" y="12" class="font-sans section-label">EXECUTION TIME-STREAM</text>
+      <line x1="0" y1="20" x2="352" y2="20" stroke="#1f2937" stroke-width="0.75"/>
+    </g>
+
+    <!-- Active timeline steps -->
+    <g transform="translate(24, 68)">
+      <!-- Line connecting steps -->
+      <line x1="8" y1="12" x2="8" y2="400" stroke="#1f2937" stroke-width="1.5" stroke-dasharray="3,3"/>
+
+      <!-- STEP 1: Analysing (Completed) -->
+      <g transform="translate(0, 0)">
+        <circle cx="8" cy="8" r="4.5" fill="#10b981" stroke="#047857" stroke-width="1"/>
+        <text x="24" y="12" class="font-sans bright-text" font-weight="600">Workspace Context Scanner</text>
+        <text x="24" y="26" class="font-sans body-text" font-size="11">Read 5 files in store/ directory (240ms)</text>
+      </g>
+
+      <!-- STEP 2: Writing Code (Active) -->
+      <g transform="translate(0, 60)">
+        <circle cx="8" cy="8" r="6" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5"/>
+        <circle cx="8" cy="8" r="2.5" fill="#6366f1" class="pulse" filter="url(#neon-glow)"/>
+        
+        <text x="24" y="12" class="font-sans bright-text" font-weight="600" fill="#6366f1">Writing Modified State Store</text>
+        <text x="24" y="26" class="font-sans body-text" font-size="11">Applying IndexedDB async persistence structure</text>
+        
+        <!-- Nested file write card -->
+        <g transform="translate(24, 38)">
+          <rect width="328" height="152" rx="8" fill="#11131e" stroke="#3730a3" stroke-width="0.75"/>
+          <rect width="328" height="24" fill="#1a1c2b" rx="7"/>
+          <circle cx="12" cy="12" r="3" fill="#6366f1" class="pulse"/>
+          <text x="22" y="15" class="font-sans title-text" font-size="9.5" fill="#a5b4fc">ACTIVE FILE WRITE</text>
+          <text x="316" y="15" class="font-sans bright-text" font-size="9" text-anchor="end" fill="#6366f1">84%</text>
+
+          <g transform="translate(12, 36)">
+            <text x="0" y="12" class="font-mono muted-text" font-size="9.5">FILE: src/store/index.ts</text>
+            <text x="0" y="26" class="font-sans body-text" font-size="10">Lines: +148 -43 | 1.2 chunks/s</text>
+            <line x1="0" y1="36" x2="304" y2="36" stroke="#1f2937" stroke-width="0.75"/>
+            
+            <text x="0" y="52" class="font-mono" fill="#10b981" font-size="10">+ import { createJSONStorage } from 'zustand'</text>
+            <text x="0" y="66" class="font-mono" fill="#10b981" font-size="10">+ const indexedDBStorage = { getItem: ... }</text>
+            <text x="0" y="80" class="font-mono" fill="#ef4444" font-size="10">- storage: createJSONStorage(() =&gt; localStorage)</text>
+            <text x="0" y="94" class="font-mono" fill="#10b981" font-size="10">+ storage: createJSONStorage(() =&gt; indexedDBStorage)</text>
+          </g>
+        </g>
+      </g>
+
+      <!-- STEP 3: Verification (Queued) -->
+      <g transform="translate(0, 270)">
+        <circle cx="8" cy="8" r="4.5" fill="#11131e" stroke="#1f2937" stroke-width="1.5"/>
+        <text x="24" y="12" class="font-sans muted-text" font-weight="600">Compiler Verification Shield</text>
+        <text x="24" y="26" class="font-sans muted-text" font-size="11">Planned: tsc &amp;&amp; npm run build (in apps/desktop)</text>
+      </g>
+    </g>
+
+    <!-- Bottom user input panel -->
+    <g transform="translate(24, 640)">
+      <rect width="352" height="74" rx="8" fill="#11131e" stroke="#1f2937" stroke-width="0.75"/>
+      <text x="16" y="28" class="font-sans bright-text" font-size="11.5">User Prompt</text>
+      <text x="16" y="44" class="font-sans body-text" font-size="11">Modify Zustand state store to use IndexedDB</text>
+      
+      <!-- Stop Execution button -->
+      <rect x="290" y="22" width="46" height="30" rx="4" fill="#7f1d1d" stroke="#b91c1c" stroke-width="0.5"/>
+      <text x="313" y="40" class="font-sans" fill="#fca5a5" font-size="11" font-weight="bold" text-anchor="middle">STOP</text>
+    </g>
+  </g>
+
+  <!-- RIGHT COLUMN: Side-by-Side Code Diff Reviewer (Width: 800) -->
+  <!-- This is the most effective UI for code assistant verification -->
+  <g transform="translate(400, 48)">
+    <rect width="800" height="752" fill="#090a0f" stroke="#1f2937" stroke-width="0.75"/>
+
+    <!-- Code Editor Tabs Header -->
+    <rect width="800" height="38" fill="#090a0f" stroke="#1f2937" stroke-width="0.75"/>
+    <g transform="translate(0, 0)">
+      <!-- Tab 1 -->
+      <rect width="180" height="38" fill="#11131e" stroke="#1f2937" stroke-width="0.5"/>
+      <line x1="0" y1="37" x2="180" y2="37" stroke="#0ea5e9" stroke-width="2"/>
+      <text x="30" y="23" class="font-sans bright-text" fill="#00f3ff">src/store/index.ts</text>
+      <!-- Diff View Badge -->
+      <rect x="130" y="11" width="36" height="15" rx="3" fill="#1e293b"/>
+      <text x="148" y="22" class="font-sans" fill="#38bdf8" font-size="8" font-weight="bold" text-anchor="middle">DIFF</text>
+    </g>
+
+    <!-- Side-by-Side Diff Panels -->
+    <!-- Left Split: Original (Before) -->
+    <g transform="translate(0, 38)">
+      <rect width="400" height="664" fill="#090a0f" stroke="#1f2937" stroke-width="0.5"/>
+      <!-- Header Label -->
+      <rect width="400" height="24" fill="#11131e" stroke="#1f2937" stroke-width="0.5"/>
+      <text x="16" y="16" class="font-sans section-label">ORIGINAL (BEFORE)</text>
+      
+      <!-- Code lines -->
+      <g transform="translate(16, 44)" class="font-mono" font-size="11">
+        <!-- Line Numbers -->
+        <g fill="#4b5563" text-anchor="end">
+          <text x="16" y="15">62</text>
+          <text x="16" y="35">63</text>
+          <text x="16" y="55">64</text>
+          <text x="16" y="75">65</text>
+          <text x="16" y="95">66</text>
+          <text x="16" y="115">67</text>
+          <text x="16" y="135">68</text>
+          <text x="16" y="155">69</text>
+        </g>
+        
+        <!-- Code Content -->
+        <g transform="translate(28, 0)">
+          <text y="15" fill="#9ca3af">export const useChatStore = create(</text>
+          <text y="35" fill="#9ca3af">  persist(</text>
+          <text y="55" fill="#9ca3af">    (set) =&gt; ({</text>
+          <text y="75" fill="#9ca3af">      messages: [],</text>
+          <text y="95" fill="#9ca3af">    }),</text>
+          
+          <!-- Removed chunk background -->
+          <rect x="-6" y="104" width="346" height="36" fill="#7f1d1d" fill-opacity="0.2"/>
+          <text y="115" fill="#f87171">-   {</text>
+          <text y="135" fill="#f87171">-     name: "chat-storage",</text>
+          
+          <text y="155" fill="#9ca3af">    }</text>
+        </g>
+      </g>
+    </g>
+
+    <!-- Right Split: Modified (After) -->
+    <g transform="translate(400, 38)">
+      <rect width="400" height="664" fill="#090a0f" stroke="#1f2937" stroke-width="0.5"/>
+      <!-- Header Label -->
+      <rect width="400" height="24" fill="#11131e" stroke="#1f2937" stroke-width="0.5"/>
+      <text x="16" y="16" class="font-sans section-label" fill="#10b981">MODIFIED (AFTER)</text>
+
+      <!-- Code lines -->
+      <g transform="translate(16, 44)" class="font-mono" font-size="11">
+        <!-- Line Numbers -->
+        <g fill="#4b5563" text-anchor="end">
+          <text x="16" y="15">62</text>
+          <text x="16" y="35">63</text>
+          <text x="16" y="55">64</text>
+          <text x="16" y="75">65</text>
+          <text x="16" y="95">66</text>
+          <text x="16" y="115">67</text>
+          <text x="16" y="135">68</text>
+          <text x="16" y="155">69</text>
+          <text x="16" y="175">70</text>
+          <text x="16" y="195">71</text>
+        </g>
+
+        <!-- Code Content -->
+        <g transform="translate(28, 0)">
+          <text y="15" fill="#9ca3af">export const useChatStore = create(</text>
+          <text y="35" fill="#9ca3af">  persist(</text>
+          <text y="55" fill="#9ca3af">    (set) =&gt; ({</text>
+          <text y="75" fill="#9ca3af">      messages: [],</text>
+          <text y="95" fill="#9ca3af">    }),</text>
+          
+          <!-- Added chunk background -->
+          <rect x="-6" y="104" width="346" height="76" fill="#064e3b" fill-opacity="0.2" stroke="#10b981" stroke-width="0.5" stroke-opacity="0.3"/>
+          <text y="115" fill="#34d399" font-weight="600">+   {</text>
+          <text y="135" fill="#34d399" font-weight="600">+     name: "chat-storage",</text>
+          <text y="155" fill="#34d399" font-weight="600">+     storage: createJSONStorage(</text>
+          <text y="175" fill="#34d399" font-weight="600">+       () =&gt; indexedDBStorage</text>
+          
+          <text y="195" fill="#9ca3af">    }</text>
+        </g>
+      </g>
+    </g>
+
+    <!-- ==================== FLOATING PERMISSION GATE (Bottom Right) ==================== -->
+    <g transform="translate(420, 610)">
+      <rect width="356" height="110" rx="8" fill="#11131e" stroke="#b45309" stroke-width="1.25" filter="url(#neon-glow)"/>
+      <rect width="356" height="24" fill="#2d1c10" rx="7"/>
+      <!-- Warning Icon -->
+      <polygon points="12,7 16,15 8,15" fill="#d97706"/>
+      <text x="24" y="15" class="font-sans title-text" font-size="9" fill="#fbbf24">RISKY TRANSACTION PENDING</text>
+
+      <g transform="translate(12, 34)">
+        <text x="0" y="12" class="font-mono muted-text" font-size="9">ACTION: execute_command</text>
+        <text x="0" y="26" class="font-sans bright-text" font-weight="bold">npm run build --workspace=desktop</text>
+
+        <!-- Decline and Approve buttons -->
+        <g transform="translate(0, 38)">
+          <!-- Decline Button -->
+          <rect x="0" y="0" width="156" height="26" rx="13" fill="#312e81" stroke="#4f46e5" stroke-width="0.5"/>
+          <text x="78" y="16" class="font-sans" fill="#c7d2fe" font-size="10" font-weight="bold" text-anchor="middle">Discard changes</text>
+
+          <!-- Approve Button -->
+          <rect x="176" y="0" width="156" height="26" rx="13" fill="#064e3b" stroke="#10b981" stroke-width="0.5"/>
+          <text x="254" y="16" class="font-sans" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">Approve &amp; Compile</text>
+        </g>
+      </g>
+    </g>
+  </g>
+
+  <!-- ==================== SYSTEM STATUS HUD BAR ==================== -->
+  <g transform="translate(0, 776)">
+    <rect width="1200" height="24" fill="#090a0f" stroke="#1f2937" stroke-width="0.75"/>
+    <circle cx="16" cy="12" r="3.5" fill="#10b981"/>
+    <text x="28" y="15" class="font-sans bright-text" font-size="9.5" font-weight="bold">DAEMON: PORT 3001</text>
+    
+    <g transform="translate(240, 0)">
+      <text x="0" y="15" class="font-sans muted-text">CPU: 12.8%</text>
+      <text x="120" y="15" class="font-sans muted-text">RAM: 512MB / 4.0GB</text>
+      <text x="280" y="15" class="font-sans muted-text">Session Cost: $0.0028</text>
+      <text x="440" y="15" class="font-sans muted-text">Active Pipeline: IndexedDB Migration</text>
+    </g>
+  </g>
+</svg>

@@ -44,7 +44,7 @@ export const GEMINI_MODELS_INFO: GeminiModelInfo[] = [
   },
 ];
 
-export const GEMINI_MODELS = GEMINI_MODELS_INFO.map(m => m.id) as unknown as readonly string[];
+export const GEMINI_MODELS: readonly string[] = GEMINI_MODELS_INFO.map(m => m.id);
 export type GeminiModelType = typeof GEMINI_MODELS[number];
 
 /**

@@ -1,0 +1,179 @@
+<svg width="800" height="500" viewBox="0 0 800 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Dark Mode Architecture Theme Palette (Zen Glass Capsule File Icons) -->
+    <linearGradient id="solid-bg" x1="0" y1="0" x2="800" y2="500" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#05060b"/>
+      <stop offset="100%" stop-color="#0c0d15"/>
+    </linearGradient>
+
+    <style>
+      .font-sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      .font-mono { font-family: "SF Mono", "Fira Code", Monaco, Consolas, monospace; }
+      
+      .title { font-weight: 700; fill: #ffffff; font-size: 13px; letter-spacing: 0.05em; }
+      .subtitle { font-weight: 500; fill: #52525b; font-size: 10px; letter-spacing: 0.05em; }
+      .lbl-flow { font-weight: 600; fill: #52525b; font-size: 9px; letter-spacing: 0.08em; }
+      .txt-main { font-weight: 400; fill: #cbd5e1; font-size: 11.5px; }
+      .txt-bold { font-weight: 600; fill: #ffffff; font-size: 11.5px; }
+      .txt-muted { font-weight: 400; fill: #52525b; font-size: 10.5px; }
+      
+      /* Glass capsule styles */
+      .glass-capsule { fill: #1e293b; fill-opacity: 0.15; stroke: #334155; stroke-opacity: 0.4; stroke-width: 0.75; }
+    </style>
+  </defs>
+
+  <!-- Clean dark backdrop matching architecture style -->
+  <rect width="800" height="500" rx="12" fill="url(#solid-bg)"/>
+  <rect x="0.5" y="0.5" width="799" height="499" rx="11.5" stroke="#1f2937" stroke-opacity="0.8"/>
+
+  <!-- ==================== HEADER ==================== -->
+  <g transform="translate(32, 28)">
+    <polygon points="5,0 13,0 17,7 13,14 5,14 0,7" fill="#f59e0b"/>
+    <text x="24" y="12" class="font-sans title">ZEN CAPSULE SPECIFICATION FOR FILE ICONS</text>
+    <text x="310" y="11" class="font-sans txt-muted">/</text>
+    <text x="324" y="12" class="font-mono subtitle">11_ZEN_FILE_ICONS</text>
+    <line x1="0" y1="26" x2="736" y2="26" stroke="#1f2937" stroke-width="0.75"/>
+  </g>
+
+  <!-- ==================== ICONS LIST GRID (ZEN MICRO GLASS CAPSULES WITH INDICATOR DOTS) ==================== -->
+  <g transform="translate(32, 80)">
+    <text x="0" y="12" class="font-sans lbl-flow">DEVELOPER-NATIVE STANDARDIZED ICONS (ZEN GLASS CAPSULES)</text>
+    
+    <!-- Row 1: Code scripts -->
+    <g transform="translate(0, 32)">
+      <!-- 1. TypeScript (.ts) -->
+      <g transform="translate(0, 0)">
+        <!-- Fully rounded micro glass capsule -->
+        <rect width="42" height="16" rx="8" class="glass-capsule"/>
+        <!-- Colored identifier dot -->
+        <circle cx="8" cy="8" r="2" fill="#3178c6"/>
+        <text x="16" y="11" class="font-mono txt-bold" font-size="7.5" fill="#cbd5e1">ts</text>
+        
+        <text x="52" y="12" class="font-sans txt-bold">TypeScript</text>
+        <text x="130" y="12" class="font-mono txt-muted" font-size="9.5">.ts</text>
+      </g>
+
+      <!-- 2. TSX React (.tsx) -->
+      <g transform="translate(180, 0)">
+        <rect width="46" height="16" rx="8" class="glass-capsule"/>
+        <circle cx="8" cy="8" r="2" fill="#0ea5e9"/>
+        <text x="16" y="11" class="font-mono txt-bold" font-size="7.5" fill="#cbd5e1">tsx</text>
+        
+        <text x="56" y="12" class="font-sans txt-bold">TS React</text>
+        <text x="130" y="12" class="font-mono txt-muted" font-size="9.5">.tsx</text>
+      </g>
+
+      <!-- 3. JavaScript (.js) -->
+      <g transform="translate(360, 0)">
+        <rect width="42" height="16" rx="8" class="glass-capsule"/>
+        <circle cx="8" cy="8" r="2" fill="#eab308"/>
+        <text x="16" y="11" class="font-mono txt-bold" font-size="7.5" fill="#cbd5e1">js</text>
+        
+        <text x="52" y="12" class="font-sans txt-bold">JavaScript</text>
+        <text x="130" y="12" class="font-mono txt-muted" font-size="9.5">.js</text>
+      </g>
+
+      <!-- 4. JSX React (.jsx) -->
+      <g transform="translate(540, 0)">
+        <rect width="46" height="16" rx="8" class="glass-capsule"/>
+        <circle cx="8" cy="8" r="2" fill="#00d8ff"/>
+        <text x="16" y="11" class="font-mono txt-bold" font-size="7.5" fill="#cbd5e1">jsx</text>
+        
+        <text x="56" y="12" class="font-sans txt-bold">JS React</text>
+        <text x="130" y="12" class="font-mono txt-muted" font-size="9.5">.jsx</text>
+      </g>
+    </g>
+
+    <!-- Row 2: Config and markup -->
+    <g transform="translate(0, 100)">
+      <!-- 5. JSON Config (.json) -->
+      <g transform="translate(0, 0)">
+        <rect width="52" height="16" rx="8" class="glass-capsule"/>
+        <circle cx="8" cy="8" r="2" fill="#cd7f32"/>
+        <text x="16" y="11" class="font-mono txt-bold" font-size="7.5" fill="#cbd5e1">json</text>
+        
+        <text x="62" y="12" class="font-sans txt-bold">JSON Config</text>
+        <text x="130" y="12" class="font-mono txt-muted" font-size="9.5">.json</text>
+      </g>
+
+      <!-- 6. HTML document (.html) -->
+      <g transform="translate(180, 0)">
+        <rect width="52" height="16" rx="8" class="glass-capsule"/>
+        <circle cx="8" cy="8" r="2" fill="#e34f26"/>
+        <text x="16" y="11" class="font-mono txt-bold" font-size="7.5" fill="#cbd5e1">html</text>
+        
+        <text x="62" y="12" class="font-sans txt-bold">HTML Web</text>
+        <text x="130" y="12" class="font-mono txt-muted" font-size="9.5">.html</text>
+      </g>
+
+      <!-- 7. CSS Styles (.css) -->
+      <g transform="translate(360, 0)">
+        <rect width="46" height="16" rx="8" class="glass-capsule"/>
+        <circle cx="8" cy="8" r="2" fill="#1572b6"/>
+        <text x="16" y="11" class="font-mono txt-bold" font-size="7.5" fill="#cbd5e1">css</text>
+        
+        <text x="56" y="12" class="font-sans txt-bold">CSS Styles</text>
+        <text x="130" y="12" class="font-mono txt-muted" font-size="9.5">.css</text>
+      </g>
+
+      <!-- 8. Markdown document (.md) -->
+      <g transform="translate(540, 0)">
+        <rect width="42" height="16" rx="8" class="glass-capsule"/>
+        <circle cx="8" cy="8" r="2" fill="#9ca3af"/>
+        <text x="16" y="11" class="font-mono txt-bold" font-size="7.5" fill="#cbd5e1">md</text>
+        
+        <text x="52" y="12" class="font-sans txt-bold">Markdown</text>
+        <text x="130" y="12" class="font-mono txt-muted" font-size="9.5">.md</text>
+      </g>
+    </g>
+
+    <!-- Row 3: Assets & Directories -->
+    <g transform="translate(0, 168)">
+      <!-- 9. Vector Graphic (.svg) -->
+      <g transform="translate(0, 0)">
+        <rect width="46" height="16" rx="8" class="glass-capsule"/>
+        <circle cx="8" cy="8" r="2" fill="#ec4899"/>
+        <text x="16" y="11" class="font-mono txt-bold" font-size="7.5" fill="#cbd5e1">svg</text>
+        
+        <text x="56" y="12" class="font-sans txt-bold">SVG Vector</text>
+        <text x="130" y="12" class="font-mono txt-muted" font-size="9.5">.svg</text>
+      </g>
+
+      <!-- 10. Folder / Directory (folder) -->
+      <g transform="translate(180, 0)">
+        <rect width="52" height="16" rx="8" class="glass-capsule"/>
+        <circle cx="8" cy="8" r="2" fill="#d97706"/>
+        <text x="16" y="11" class="font-mono txt-bold" font-size="7.5" fill="#cbd5e1">dir</text>
+        
+        <text x="62" y="12" class="font-sans txt-bold">Directory</text>
+        <text x="130" y="12" class="font-mono txt-muted" font-size="9.5">folder</text>
+      </g>
+
+      <!-- 11. Plain Text (.txt) -->
+      <g transform="translate(360, 0)">
+        <rect width="46" height="16" rx="8" class="glass-capsule"/>
+        <circle cx="8" cy="8" r="2" fill="#475569"/>
+        <text x="16" y="11" class="font-mono txt-bold" font-size="7.5" fill="#cbd5e1">txt</text>
+        
+        <text x="56" y="12" class="font-sans txt-bold">Plain Text</text>
+        <text x="130" y="12" class="font-mono txt-muted" font-size="9.5">.txt</text>
+      </g>
+    </g>
+
+    <line x1="0" y1="236" x2="736" y2="236" stroke="#1f2937" stroke-opacity="0.5" stroke-width="0.75"/>
+
+    <!-- UI Implementation Details -->
+    <g transform="translate(0, 252)">
+      <text x="0" y="12" class="font-sans lbl-flow">DESIGN RULES FOR DYNAMIC RENDERING</text>
+      <text x="0" y="28" class="font-sans txt-main">1. File icons render inside a minimalist translucent rounded pill capsule (height: 16px, border-radius: 8px).</text>
+      <text x="0" y="44" class="font-sans txt-main">2. The capsule contains a tiny 4px colored status indicator dot on the left representing the file type.</text>
+      <text x="0" y="60" class="font-sans txt-main">3. Monospaced lowercase file initials (ts, tsx, js, md) are styled cleanly inside in high-contrast slate-white.</text>
+
+      <!-- Close / Back button matching suite style -->
+      <g transform="translate(620, 78)">
+        <rect width="116" height="24" rx="12" fill="#06b6d4" fill-opacity="0.15" stroke="#06b6d4" stroke-width="0.75"/>
+        <text x="58" y="15" class="font-sans txt-bold" fill="#22d3ee" font-size="10.5" text-anchor="middle">Close Spec</text>
+      </g>
+    </g>
+  </g>
+</svg>

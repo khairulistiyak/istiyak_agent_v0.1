@@ -123,8 +123,10 @@ export class CustomProvider {
       }
 
       return accumulatedText;
-    } catch (error: any) {
-      if (retryCount < 3 && (error.message?.includes("ECONNREFUSED") || error.message?.includes("fetch failed"))) {
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      const httpErr = error as { status?: number; message?: string };
+      if (retryCount < 3 && (errMsg.includes("ECONNREFUSED") || errMsg.includes("fetch failed"))) {
         const delay = Math.pow(2, retryCount) * 1000;
         console.warn(`[CustomProvider] Connection error. Retrying in ${delay / 1000}s...`);
         await new Promise(resolve => setTimeout(resolve, delay));

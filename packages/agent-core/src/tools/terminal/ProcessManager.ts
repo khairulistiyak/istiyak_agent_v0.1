@@ -17,8 +17,8 @@ export class ProcessManager extends BaseTool {
       try {
         process.kill(params.pid);
         return `Successfully killed process PID ${params.pid}`;
-      } catch (e: any) {
-        return `Failed to kill process PID ${params.pid}: ${e.message}`;
+      } catch (e: unknown) {
+        return `Failed to kill process PID ${params.pid}: ${e instanceof Error ? e.message : String(e)}`;
       }
     }
     return `Active process tracking is currently managed by host OS. No sub-processes spawned.`;

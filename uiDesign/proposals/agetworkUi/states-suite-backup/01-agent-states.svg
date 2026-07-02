@@ -1,0 +1,97 @@
+<svg width="800" height="520" viewBox="0 0 800 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Ultra-Minimal Premium Zen Palette -->
+    <style>
+      .font-sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      .font-mono { font-family: "SF Mono", "Fira Code", Monaco, Consolas, monospace; }
+      
+      .title { font-weight: 600; fill: #ffffff; font-size: 13px; letter-spacing: -0.01em; }
+      .subtitle { font-weight: 500; fill: #52525b; font-size: 10px; letter-spacing: 0.05em; }
+      .lbl-state { font-weight: 600; fill: #52525b; font-size: 9px; letter-spacing: 0.08em; }
+      .txt-main { font-weight: 400; fill: #d4d4d8; font-size: 11.5px; }
+      .txt-bold { font-weight: 600; fill: #ffffff; font-size: 11.5px; }
+      .txt-muted { font-weight: 400; fill: #52525b; font-size: 10.5px; }
+
+      .pulse { animation: zenglow 2.5s infinite ease-in-out; }
+      @keyframes zenglow {
+        0% { opacity: 0.3; }
+        50% { opacity: 0.9; }
+        100% { opacity: 0.3; }
+      }
+    </style>
+  </defs>
+
+  <!-- Clean dark backdrop (Zero heavy grids, zero heavy borders) -->
+  <rect width="800" height="520" rx="8" fill="#050508"/>
+  <rect x="0.5" y="0.5" width="799" height="519" rx="7.5" stroke="#121215" stroke-opacity="0.8"/>
+
+  <!-- ==================== HEADER ==================== -->
+  <g transform="translate(32, 28)">
+    <text x="0" y="14" class="font-sans title">Agent State Timeline Spec</text>
+    <text x="145" y="12" class="font-sans txt-muted">/</text>
+    <text x="156" y="14" class="font-mono subtitle">INLINE_CHATUI_STATES</text>
+    <line x1="0" y1="26" x2="736" y2="26" stroke="#121215" stroke-width="1"/>
+  </g>
+
+  <!-- ==================== STATE 1: IDLE / READY ==================== -->
+  <g transform="translate(32, 80)">
+    <text x="0" y="12" class="font-sans lbl-state">01 • READY</text>
+    <circle cx="6" cy="28" r="2.5" fill="#10b981"/>
+    <text x="20" y="32" class="font-sans txt-main">Ready to assist. Ask companion to code, build, or inspect files.</text>
+    <text x="736" y="32" class="font-mono txt-muted" text-anchor="end">⌘ K</text>
+  </g>
+
+  <!-- ==================== STATE 2: THINKING / PLANNING ==================== -->
+  <g transform="translate(32, 145)">
+    <text x="0" y="12" class="font-sans lbl-state">02 • PLANNING</text>
+    <circle cx="6" cy="28" r="2.5" fill="#3b82f6" class="pulse"/>
+    <text x="20" y="32" class="font-sans txt-bold" fill="#3b82f6">Formulating task pipeline...</text>
+    <text x="180" y="32" class="font-sans txt-main">Scanning workspace files and target dependencies</text>
+  </g>
+
+  <!-- ==================== STATE 3: EXECUTING / CALLING TOOL ==================== -->
+  <g transform="translate(32, 210)">
+    <text x="0" y="12" class="font-sans lbl-state">03 • EXECUTING</text>
+    <circle cx="6" cy="28" r="2.5" fill="#a855f7" class="pulse"/>
+    <text x="20" y="32" class="font-sans txt-bold" fill="#c084fc">Calling tool:</text>
+    <text x="100" y="32" class="font-mono txt-main">precise_edit</text>
+    
+    <!-- Flat micro progress line -->
+    <text x="240" y="32" class="font-sans txt-muted">Writing src/store/index.ts</text>
+    <line x1="410" y1="28" x2="560" y2="28" stroke="#18181b" stroke-width="2"/>
+    <line x1="410" y1="28" x2="530" y2="28" stroke="#a855f7" stroke-width="2"/>
+    <text x="575" y="32" class="font-mono txt-bold" font-size="10" fill="#a855f7">80%</text>
+  </g>
+
+  <!-- ==================== STATE 4: PENDING USER APPROVAL ==================== -->
+  <g transform="translate(32, 275)">
+    <text x="0" y="12" class="font-sans lbl-state">04 • PENDING APPROVAL</text>
+    <polygon points="6,24 9,31 3,31" fill="#f59e0b" class="pulse"/>
+    <text x="20" y="32" class="font-sans txt-bold" fill="#f59e0b">Permission Pending:</text>
+    <text x="146" y="32" class="font-mono txt-main" font-size="11">npm run build --workspace=desktop</text>
+
+    <!-- Flat text links for choices, no bulky buttons -->
+    <g transform="translate(420, 20)">
+      <text x="0" y="12" class="font-sans txt-bold" fill="#ef4444" font-size="11" cursor="pointer">Discard changes</text>
+      <text x="102" y="12" class="font-sans txt-muted" font-size="11">or</text>
+      <text x="122" y="12" class="font-sans txt-bold" fill="#10b981" font-size="11" cursor="pointer">Approve and build</text>
+    </g>
+  </g>
+
+  <!-- ==================== STATE 5: SUCCESS / COMPLETED ==================== -->
+  <g transform="translate(32, 355)">
+    <text x="0" y="12" class="font-sans lbl-state">05 • COMPLETED</text>
+    <circle cx="6" cy="28" r="2.5" fill="#10b981"/>
+    <text x="20" y="32" class="font-sans txt-bold" fill="#10b981">Task completed successfully</text>
+    <text x="190" y="32" class="font-sans txt-muted">Switched store persistence layer to IndexedDB storage (4.8s • $0.0042)</text>
+  </g>
+
+  <!-- ==================== STATE 6: ERROR / EXCEPTION ==================== -->
+  <g transform="translate(32, 420)">
+    <text x="0" y="12" class="font-sans lbl-state">06 • ERROR</text>
+    <circle cx="6" cy="28" r="2.5" fill="#ef4444"/>
+    <text x="20" y="32" class="font-sans txt-bold" fill="#ef4444">Exception:</text>
+    <text x="92" y="32" class="font-sans txt-main">WebKit localStorage quota limit exceeded.</text>
+    <text x="350" y="32" class="font-sans txt-muted">(Auto-migrated session writes to IndexedDB)</text>
+  </g>
+</svg>

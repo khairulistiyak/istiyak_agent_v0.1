@@ -10,6 +10,15 @@ let activeWorkspacePath = null;
 let isInitialized = false;
 let todoCallback = null;
 
+// Debounce map: filePath -> timeoutId
+const todoCallbackDebounce = new Map();
+const DEBOUNCE_MS = 300;
+
+// Scanning caps to prevent hang on large repos
+const MAX_SCAN_FILES = 5000;
+const MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024; // 1MB
+let scanFileCount = 0;
+
 export function setTodoCallback(callback) {
   todoCallback = callback;
 }
@@ -31,7 +40,7 @@ const WATCHED_EXTENSIONS = new Set([
   ".cpp",
   ".h",
   ".cs",
-  ".net"
+  ".net",
 ]);
 
 // Regex to capture TODO comments: // TODO: text, # TODO: text, /* TODO: text */
@@ -55,6 +64,11 @@ function scanFileForTodos(filePath) {
 
   try {
     const previousTodos = todosMap.get(filePath) || [];
+    const stat = fs.statSync(filePath);
+    // Skip files > 1MB — too large for TODO scanning
+    if (stat.size > MAX_FILE_SIZE_BYTES) {
+      return;
+    }
     const content = fs.readFileSync(filePath, "utf-8");
     const lines = content.split(/\r?\n/);
     const fileTodos = [];
@@ -69,7 +83,7 @@ function scanFileForTodos(filePath) {
         }
         fileTodos.push({
           line: i + 1,
-          text: todoText
+          text: todoText,
         });
       }
     }
@@ -82,10 +96,16 @@ function scanFileForTodos(filePath) {
           console.log(`[Watcher] New TODO detected in ${filePath}: "${current.text}"`);
           // Lock the file for agent editing immediately
           if (lockFile(filePath, "agent")) {
-            // Defer execution slightly to allow lock state to propagate
-            setTimeout(() => {
+            // Debounce callback to prevent duplicate triggers on rapid edits
+            const existingTimeout = todoCallbackDebounce.get(filePath);
+            if (existingTimeout) globalThis.clearTimeout(existingTimeout);
+
+            const timeoutId = setTimeout(() => {
+              todoCallbackDebounce.delete(filePath);
               todoCallback(filePath, current.text);
-            }, 50);
+            }, DEBOUNCE_MS);
+
+            todoCallbackDebounce.set(filePath, timeoutId);
           }
         }
       }
@@ -117,6 +137,10 @@ function scanDirectoryRecursively(dirPath) {
     const entries = fs.readdirSync(dirPath, { withFileTypes: true });
 
     for (const entry of entries) {
+      if (scanFileCount > MAX_SCAN_FILES) {
+        console.warn(`[Watcher] Hit scan cap of ${MAX_SCAN_FILES} files. Stopping.`);
+        break;
+      }
       const fullPath = path.join(dirPath, entry.name);
       if (entry.isDirectory()) {
         if (shouldIgnoreDir(entry.name)) {
@@ -124,11 +148,16 @@ function scanDirectoryRecursively(dirPath) {
         }
         scanDirectoryRecursively(fullPath);
       } else if (entry.isFile()) {
+        scanFileCount++;
+        if (scanFileCount > MAX_SCAN_FILES) break;
         scanFileForTodos(fullPath);
       }
     }
   } catch (err) {
-    console.error(`[Watcher] Failed scanning directory ${dirPath}:`, err.message);
+    console.error(
+      `[Watcher] Failed scanning directory ${dirPath}:`,
+      err instanceof Error ? err.message : String(err)
+    );
   }
 }
 
@@ -150,11 +179,11 @@ function ensureGitignoreSecurity(workspacePath) {
       ".istiyak_agent_config.json",
       ".istiyak_rag_cache.json",
       ".istiyak_sqlite_memory.json",
-      ".env"
+      ".env",
     ];
     let updated = false;
 
-    const lines = content.split(/\r?\n/).map(l => l.trim());
+    const lines = content.split(/\r?\n/).map((l) => l.trim());
 
     for (const rule of requiredIgnores) {
       if (!lines.includes(rule)) {
@@ -180,9 +209,9 @@ function ensureGitignoreSecurity(workspacePath) {
  */
 export function startWatcher(workspacePath) {
   if (!workspacePath) return false;
-  
+
   const absPath = normalizePath(workspacePath);
-  
+
   // Enforce security rules by updating workspace .gitignore
   ensureGitignoreSecurity(absPath);
 
@@ -196,7 +225,8 @@ export function startWatcher(workspacePath) {
   activeWorkspacePath = absPath;
   console.log(`[Watcher] Starting watcher on workspace: ${absPath}`);
 
-  // 1. Initial workspace scan
+  // 1. Initial workspace scan (with file count cap)
+  scanFileCount = 0;
   scanDirectoryRecursively(absPath);
   isInitialized = true;
 
@@ -209,7 +239,7 @@ export function startWatcher(workspacePath) {
 
       // Check if file is inside ignored directories
       const pathParts = filename.split(path.sep);
-      const isIgnored = pathParts.some(part => shouldIgnoreDir(part));
+      const isIgnored = pathParts.some((part) => shouldIgnoreDir(part));
       if (isIgnored) return;
 
       const ext = path.extname(fullPath).toLowerCase();
@@ -258,8 +288,8 @@ export function stopWatcher() {
 export function getTodos() {
   const allTodos = [];
   for (const [filePath, fileTodos] of todosMap.entries()) {
-    const relativePath = activeWorkspacePath 
-      ? path.relative(activeWorkspacePath, filePath) 
+    const relativePath = activeWorkspacePath
+      ? path.relative(activeWorkspacePath, filePath)
       : filePath;
 
     for (const todo of fileTodos) {
@@ -267,7 +297,7 @@ export function getTodos() {
         filePath,
         relativePath,
         line: todo.line,
-        text: todo.text
+        text: todo.text,
       });
     }
   }
@@ -281,12 +311,12 @@ export function getTodos() {
 export function lockFile(filePath, owner) {
   if (!filePath || !owner) return false;
   const absPath = normalizePath(filePath);
-  
+
   const currentOwner = locksMap.get(absPath);
   if (currentOwner && currentOwner !== owner) {
     return false; // Already locked by someone else
   }
-  
+
   locksMap.set(absPath, owner);
   console.log(`[Lock Manager] Locked file: ${absPath} by ${owner}`);
   return true;
@@ -307,23 +337,23 @@ export function isLocked(filePath, requestingOwner) {
   if (!filePath) return false;
   const absPath = normalizePath(filePath);
   const activeOwner = locksMap.get(absPath);
-  
+
   if (!activeOwner) {
     return false; // Not locked
   }
-  
+
   if (requestingOwner && activeOwner === requestingOwner) {
     return false; // Requesting owner is the lock holder
   }
-  
+
   return true;
 }
 
 export function getLocks() {
   const locks = [];
   for (const [filePath, owner] of locksMap.entries()) {
-    const relativePath = activeWorkspacePath 
-      ? path.relative(activeWorkspacePath, filePath) 
+    const relativePath = activeWorkspacePath
+      ? path.relative(activeWorkspacePath, filePath)
       : filePath;
     locks.push({ filePath, relativePath, owner });
   }

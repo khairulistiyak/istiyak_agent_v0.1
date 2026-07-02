@@ -1,0 +1,360 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Cyber Dark Theme Palette & Glowing Gradients -->
+    <linearGradient id="window-bg" x1="0" y1="0" x2="1200" y2="800" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#07080d"/>
+      <stop offset="1" stop-color="#0b0c14"/>
+    </linearGradient>
+    <linearGradient id="accent-gradient" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="50%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#ff007f"/>
+    </linearGradient>
+    <linearGradient id="active-tab-glow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="purple-write-glow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- UI Shadows for separation -->
+    <filter id="panel-shadow" x="-5%" y="-5%" width="110%" height="110%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+    <filter id="neon-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+
+    <style>
+      .font-sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
+      .font-mono { font-family: "Fira Code", "SF Mono", Consolas, monospace; }
+      
+      /* HUD styles matching project colors */
+      .bg-dark { fill: #07080d; }
+      .bg-card { fill: #12141c; }
+      .border-color { stroke: #1f222f; }
+      
+      /* Typography Hierarchy */
+      .lbl-title { font-weight: 700; fill: #ffffff; font-size: 13px; letter-spacing: 0.05em; }
+      .lbl-section { font-weight: 600; fill: #52525b; font-size: 9px; letter-spacing: 0.1em; }
+      .text-bright { font-weight: 500; fill: #f3f4f6; font-size: 12px; }
+      .text-body { font-weight: 400; fill: #a1a1aa; font-size: 12px; }
+      .text-muted { font-weight: 400; fill: #52525b; font-size: 11px; }
+      .text-code { font-weight: 400; fill: #e2e8f0; font-size: 10.5px; }
+
+      .pulse { animation: blink 2.5s infinite ease-in-out; }
+      @keyframes blink {
+        0% { opacity: 0.4; }
+        50% { opacity: 1; }
+        100% { opacity: 0.4; }
+      }
+    </style>
+  </defs>
+
+  <!-- Outer Window Canvas Background -->
+  <rect width="1200" height="800" rx="12" fill="url(#window-bg)"/>
+  <rect x="0.5" y="0.5" width="1199" height="799" rx="11.5" stroke="#1f222f" stroke-opacity="0.8"/>
+
+  <!-- ==================== WINDOW HEADER TITLEBAR ==================== -->
+  <g transform="translate(0, 0)">
+    <!-- Header visual panel -->
+    <rect width="1200" height="52" fill="#07080d" stroke="#1f222f" stroke-width="0.75"/>
+    
+    <!-- Window action dots (macOS) -->
+    <circle cx="20" cy="26" r="5" fill="#ef4444"/>
+    <circle cx="36" cy="26" r="5" fill="#f59e0b"/>
+    <circle cx="52" cy="26" r="5" fill="#10b981"/>
+
+    <!-- Brand Breadcrumbs -->
+    <g transform="translate(84, 15)">
+      <!-- Glowing Hexagon Brand Icon -->
+      <polygon points="5,0 13,0 17,7 13,14 5,14 0,7" fill="url(#accent-gradient)"/>
+      <text x="26" y="13" class="font-sans lbl-title">Istiyak AI Companion</text>
+      <text x="175" y="12" class="font-sans text-muted">/</text>
+      <text x="187" y="13" class="font-mono text-bright">workspace: istiyak_agent_v0.1</text>
+    </g>
+
+    <!-- Top Telemetry Monitor -->
+    <g transform="translate(680, 15)">
+      <text x="0" y="10" class="font-sans lbl-section">ACTIVE MODEL</text>
+      <text x="0" y="23" class="font-sans" fill="#06b6d4" font-size="11" font-weight="bold">Gemini 3.5 Flash</text>
+
+      <text x="150" y="10" class="font-sans lbl-section">SPEED</text>
+      <text x="150" y="23" class="font-sans text-bright" font-size="11" font-weight="bold">85 tok/s</text>
+
+      <text x="250" y="10" class="font-sans lbl-section">LATENCY</text>
+      <text x="250" y="23" class="font-sans" fill="#10b981" font-size="11" font-weight="bold">180ms</text>
+      
+      <circle cx="310" cy="17" r="4.5" fill="#10b981" class="pulse"/>
+    </g>
+  </g>
+
+  <!-- ==================== MAIN 3-PANEL IDE LAYOUT ==================== -->
+
+  <!-- 1. LEFT SIDEBAR: FILE TREE (Width: 240) -->
+  <g transform="translate(0, 52)">
+    <rect width="240" height="748" fill="#07080d" stroke="#1f222f" stroke-width="0.75"/>
+
+    <!-- Section Title -->
+    <g transform="translate(16, 20)">
+      <text x="0" y="12" class="font-sans lbl-section">WORKSPACE FILES</text>
+      <line x1="0" y1="20" x2="208" y2="20" stroke="#1f222f" stroke-width="0.75"/>
+    </g>
+
+    <!-- File Nodes List -->
+    <g transform="translate(16, 56)">
+      <!-- Folder: apps/desktop -->
+      <g transform="translate(0, 0)">
+        <path d="M2 4H6L8 7H14V14H2V4Z" fill="none" stroke="#a1a1aa" stroke-width="1.25" stroke-linejoin="round"/>
+        <text x="22" y="12" class="font-sans text-bright" font-size="12">apps/desktop</text>
+      </g>
+
+      <!-- Subfolder: src/store -->
+      <g transform="translate(12, 24)">
+        <path d="M2 4H6L8 7H14V14H2V4Z" fill="none" stroke="#a1a1aa" stroke-width="1.25" stroke-linejoin="round"/>
+        <text x="22" y="12" class="font-sans text-bright" font-size="12">src/store</text>
+      </g>
+
+      <!-- Active File: store/index.ts (READING) -->
+      <g transform="translate(24, 48)">
+        <rect x="-4" y="-3" width="180" height="26" rx="4" fill="#12141c" stroke="#06b6d4" stroke-width="0.5" stroke-opacity="0.5"/>
+        <rect x="2" y="2" width="12" height="12" rx="2" fill="#3178c6"/>
+        <text x="4" y="11" class="font-mono" fill="#ffffff" font-size="7" font-weight="bold">TS</text>
+        <text x="20" y="12" class="font-sans text-bright" font-size="11" fill="#06b6d4" font-weight="600">index.ts</text>
+        <circle cx="164" cy="10" r="3" fill="#06b6d4" class="pulse" filter="url(#neon-glow)"/>
+      </g>
+
+      <!-- File: chatSlice.ts (DONE) -->
+      <g transform="translate(24, 78)">
+        <rect x="2" y="2" width="12" height="12" rx="2" fill="#3178c6"/>
+        <text x="4" y="11" class="font-mono" fill="#ffffff" font-size="7" font-weight="bold">TS</text>
+        <text x="20" y="12" class="font-sans text-body" font-size="11">chatSlice.ts</text>
+        <text x="142" y="11" class="font-mono" fill="#10b981" font-size="9" font-weight="600">+42</text>
+      </g>
+
+      <!-- File: settingsStore.ts -->
+      <g transform="translate(24, 108)">
+        <rect x="2" y="2" width="12" height="12" rx="2" fill="#3178c6"/>
+        <text x="4" y="11" class="font-mono" fill="#ffffff" font-size="7" font-weight="bold">TS</text>
+        <text x="20" y="12" class="font-sans text-body" font-size="11">settingsStore.ts</text>
+      </g>
+
+      <!-- Folder: components -->
+      <g transform="translate(12, 138)">
+        <path d="M2 4H6L8 7H14V14H2V4Z" fill="none" stroke="#a1a1aa" stroke-width="1.25" stroke-linejoin="round"/>
+        <text x="22" y="12" class="font-sans text-bright" font-size="12">components</text>
+      </g>
+
+      <!-- File: App.tsx -->
+      <g transform="translate(24, 162)">
+        <rect x="2" y="2" width="12" height="12" rx="2" fill="#0ea5e9"/>
+        <text x="3" y="11" class="font-mono" fill="#ffffff" font-size="6" font-weight="bold">TSX</text>
+        <text x="20" y="12" class="font-sans text-body" font-size="11">App.tsx</text>
+      </g>
+    </g>
+
+    <!-- Workspace Index status card -->
+    <g transform="translate(16, 680)">
+      <rect width="208" height="52" rx="6" fill="#12141c" stroke="#1f222f" stroke-width="0.75"/>
+      <circle cx="16" cy="18" r="4.5" fill="#10b981"/>
+      <text x="28" y="21" class="font-sans text-bright" font-size="11" font-weight="600">Workspace Indexed</text>
+      <text x="28" y="36" class="font-sans text-muted" font-size="10">Semantic mapping active</text>
+    </g>
+  </g>
+
+  <!-- 2. CENTER PANEL: MONACO EDITOR and INTEGRATED TERMINAL (Width: 580) -->
+  <g transform="translate(240, 52)">
+    <rect width="580" height="748" fill="#07080d" stroke="#1f222f" stroke-width="0.75"/>
+    <line x1="0" y1="0" x2="0" y2="748" stroke="#1f222f" stroke-width="0.75"/>
+
+    <!-- Editor Tab bar -->
+    <g transform="translate(0, 0)">
+      <rect width="580" height="38" fill="#07080d" stroke="#1f222f" stroke-width="0.75"/>
+      
+      <!-- Selected Tab: index.ts -->
+      <g transform="translate(0, 0)">
+        <rect width="130" height="38" fill="#12141c" stroke="#1f222f" stroke-width="0.5"/>
+        <line x1="0" y1="37" x2="130" y2="37" stroke="#06b6d4" stroke-width="2"/>
+        <rect x="12" y="13" width="12" height="12" rx="2" fill="#3178c6"/>
+        <text x="14" y="22" class="font-mono" fill="#ffffff" font-size="7" font-weight="bold">TS</text>
+        <text x="30" y="23" class="font-sans text-bright" font-size="11" fill="#06b6d4" font-weight="600">index.ts</text>
+        <path d="M112 14L118 20M118 14L112 20" stroke="#52525b" stroke-width="1.25"/>
+      </g>
+
+      <g transform="translate(130, 0)">
+        <text x="36" y="23" class="font-sans text-body" font-size="11">App.tsx</text>
+        <line x1="90" y1="0" x2="90" y2="38" stroke="#1f222f" stroke-width="0.75"/>
+      </g>
+    </g>
+
+    <!-- Editor Code Workspace -->
+    <g transform="translate(16, 54)">
+      <g class="font-mono" font-size="11.5">
+        <!-- Lines numbers -->
+        <g fill="#52525b" text-anchor="end">
+          <text x="16" y="15">10</text>
+          <text x="16" y="33">11</text>
+          <text x="16" y="51">12</text>
+          <text x="16" y="69">13</text>
+          <text x="16" y="87">14</text>
+          <text x="16" y="105">15</text>
+          <text x="16" y="123">16</text>
+          <text x="16" y="141">17</text>
+          <text x="16" y="159">18</text>
+        </g>
+
+        <!-- Code Highlight Diff -->
+        <g transform="translate(28, 0)">
+          <text y="15" fill="#8b5cf6">import <text fill="#f3f4f6">{ create } from</text> <text fill="#10b981">"zustand"</text>;</text>
+          
+          <rect x="-6" y="22" width="510" height="18" fill="#3c1e29" fill-opacity="0.4"/>
+          <text y="33" fill="#ef4444">- import { persist } from "zustand/middleware";</text>
+
+          <rect x="-6" y="40" width="510" height="74" rx="4" fill="#064e3b" fill-opacity="0.2" stroke="#10b981" stroke-width="0.5" stroke-opacity="0.3"/>
+          <text y="51" fill="#10b981" font-weight="600">+ import { persist, createJSONStorage, StateStorage } from "zustand/middleware";</text>
+          <text y="69" fill="#10b981" font-weight="600">+ const indexedDBStorage: StateStorage = {</text>
+          <text y="87" fill="#10b981" font-weight="600">+   getItem: async (name) =&gt; {</text>
+          <text y="105" fill="#10b981" font-weight="600">+     const val = await new Promise((resolve) =&gt; { ... });</text>
+          
+          <text y="123" fill="#f3f4f6">      return val || localStorage.getItem(name);</text>
+          <text y="141" fill="#f3f4f6">    },</text>
+          <text y="159" fill="#a1a1aa">    setItem: async (name, value) =&gt; { ... }</text>
+        </g>
+      </g>
+    </g>
+
+    <!-- Editor Split line -->
+    <line x1="0" y1="500" x2="580" y2="500" stroke="#1f222f" stroke-width="0.75"/>
+
+    <!-- Terminal Panel -->
+    <g transform="translate(0, 500)">
+      <!-- Terminal Header bar -->
+      <rect width="580" height="34" fill="#07080d" stroke="#1f222f" stroke-width="0.75"/>
+      <text x="16" y="21" class="font-sans text-bright" font-size="11" font-weight="600">Terminal</text>
+      
+      <g transform="translate(420, 5)">
+        <rect width="64" height="22" rx="4" fill="#12141c" stroke="#1f222f" stroke-width="0.5"/>
+        <text x="32" y="15" class="font-sans text-body" font-size="10" font-weight="600" text-anchor="middle">Clear</text>
+
+        <rect x="72" y="0" width="76" height="22" rx="4" fill="#12141c" stroke="#1f222f" stroke-width="0.5"/>
+        <text x="110" y="15" class="font-sans text-bright" font-size="10" font-weight="600" fill="#06b6d4" text-anchor="middle">Auto Fix</text>
+      </g>
+
+      <!-- Terminal content -->
+      <g transform="translate(16, 50)" class="font-mono" font-size="11">
+        <text y="15" fill="#a1a1aa">❯ tsc &amp;&amp; vite build</text>
+        <text y="33" fill="#52525b">vite v7.0.4 building client environment...</text>
+        <text y="51" fill="#10b981">✓ built desktop client in 2.18s</text>
+        <text y="69" fill="#f3f4f6">❯ _</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- 3. RIGHT PANEL: CHAT progress and COPILOT execution (Width: 380) -->
+  <g transform="translate(820, 52)">
+    <rect width="380" height="748" fill="#12141c" stroke="#1f222f" stroke-width="0.75"/>
+    <line x1="0" y1="0" x2="0" y2="748" stroke="#1f222f" stroke-width="0.75"/>
+
+    <!-- Panel Header -->
+    <g transform="translate(0, 0)">
+      <rect width="380" height="52" fill="#0d0f16" stroke="#1f222f" stroke-width="0.75"/>
+      <text x="16" y="30" class="font-sans text-bright" font-size="13" font-weight="600">Copilot Execution</text>
+      
+      <rect x="254" y="14" width="110" height="24" rx="12" fill="#064e3b" stroke="#10b981" stroke-width="0.5"/>
+      <circle cx="266" cy="26" r="3.5" fill="#10b981" class="pulse"/>
+      <text x="276" y="30" class="font-sans" fill="#10b981" font-size="9" font-weight="bold">AGENT ACTIVE</text>
+    </g>
+
+    <!-- Chat Logs Flow -->
+    <g transform="translate(16, 72)">
+      <!-- User speech bubble -->
+      <g transform="translate(0, 0)">
+        <text x="0" y="10" class="font-mono text-muted" font-size="9" letter-spacing="0.04em">USER</text>
+        <rect y="18" width="348" height="54" rx="8" fill="#1c1e28" stroke="#1f222f" stroke-width="0.75"/>
+        <text x="12" y="38" class="font-sans text-bright" font-size="11">Switch store storage from localStorage to</text>
+        <text x="12" y="53" class="font-sans text-bright" font-size="11">IndexedDB. Save config settings backup.</text>
+      </g>
+
+      <!-- Copilot timeline logs inside ChatPanel -->
+      <g transform="translate(0, 96)">
+        <text x="0" y="10" class="font-mono" fill="#06b6d4" font-size="9" letter-spacing="0.04em">AGENT PROGRESS</text>
+        
+        <!-- Timeline board (Obsidian minimal card) -->
+        <rect y="18" width="348" height="340" rx="10" fill="#07080d" stroke="#1f222f" stroke-width="0.75"/>
+        
+        <!-- Timeline elements -->
+        <g transform="translate(16, 40)">
+          <!-- Connect line -->
+          <line x1="8" y1="12" x2="8" y2="240" stroke="#1f222f" stroke-width="1.5" stroke-dasharray="3,3"/>
+
+          <!-- Step 1 -->
+          <g transform="translate(0, 0)">
+            <circle cx="8" cy="8" r="4.5" fill="#10b981" stroke="#059669" stroke-width="1"/>
+            <text x="24" y="11" class="font-sans text-bright" font-size="12" font-weight="600">Analyzed workspace configuration</text>
+            <text x="24" y="26" class="font-sans text-body" font-size="10">Read 5 store dependencies (240ms)</text>
+          </g>
+
+          <!-- Step 2 -->
+          <g transform="translate(0, 48)">
+            <circle cx="8" cy="8" r="4.5" fill="#10b981" stroke="#059669" stroke-width="1"/>
+            <text x="24" y="11" class="font-sans text-bright" font-size="12" font-weight="600">Solution design compiled</text>
+            <text x="24" y="26" class="font-sans text-body" font-size="10">IndexedDB migration layout configured</text>
+          </g>
+
+          <!-- Step 3 (Active) -->
+          <g transform="translate(0, 96)">
+            <circle cx="8" cy="8" r="6.5" fill="#2e1065" stroke="#8b5cf6" stroke-width="1"/>
+            <circle cx="8" cy="8" r="2.5" fill="#8b5cf6" class="pulse"/>
+            
+            <text x="24" y="11" class="font-sans" fill="#8b5cf6" font-size="12" font-weight="600">Writing store modifications</text>
+            
+            <!-- Code modification sub list -->
+            <g transform="translate(24, 20)">
+              <rect width="284" height="68" rx="6" fill="#12141c" stroke="#1f222f" stroke-width="0.75"/>
+              <text x="10" y="18" class="font-sans text-bright" font-size="10" font-weight="600">File: store/index.ts (Writing 84%)</text>
+              <text x="10" y="36" class="font-mono text-muted" font-size="9">- import { persist } from ...</text>
+              <text x="10" y="48" class="font-mono" fill="#10b981" font-size="9">+ import { persist, createJSONStorage ...</text>
+              <text x="10" y="60" class="font-mono" fill="#10b981" font-size="9">+ const indexedDBStorage = { ... }</text>
+            </g>
+          </g>
+
+          <!-- Step 4 -->
+          <g transform="translate(0, 204)">
+            <circle cx="8" cy="8" r="4.5" fill="#1f222f" stroke="#52525b" stroke-width="1"/>
+            <text x="24" y="11" class="font-sans text-muted" font-size="12" font-weight="600">Run compilation verification</text>
+            <text x="24" y="26" class="font-sans text-muted" font-size="10">Planned: tsc &amp;&amp; vite build in apps/desktop</text>
+          </g>
+        </g>
+      </g>
+    </g>
+
+    <!-- Floating Actions (Accept / Discard) -->
+    <g transform="translate(16, 620)">
+      <rect width="348" height="48" rx="24" fill="#0d0f16" stroke="#1f222f" stroke-width="1" filter="url(#panel-shadow)"/>
+      <circle cx="20" cy="24" r="3.5" fill="#8b5cf6" class="pulse"/>
+      <text x="32" y="28" class="font-sans text-bright" font-size="11" font-weight="600">Writing store/index.ts</text>
+
+      <g transform="translate(160, 10)">
+        <rect x="0" y="0" width="76" height="28" rx="14" fill="#12141c" stroke="#1f222f" stroke-width="0.5"/>
+        <text x="38" y="17" class="font-sans text-body" font-size="10" font-weight="600" text-anchor="middle">Discard</text>
+
+        <rect x="84" y="0" width="88" height="28" rx="14" fill="#059669" stroke="#10b981" stroke-width="0.5"/>
+        <text x="128" y="17" class="font-sans" fill="#ffffff" font-size="10" font-weight="600" text-anchor="middle">Accept Edit</text>
+      </g>
+    </g>
+
+    <!-- Chat Prompt input -->
+    <g transform="translate(16, 685)">
+      <rect width="348" height="42" rx="8" fill="#07080d" stroke="#1f222f" stroke-width="0.75"/>
+      <text x="12" y="24" class="font-sans text-muted" font-size="11">Ask Copilot to make further changes...</text>
+      
+      <!-- Send button icon -->
+      <rect x="314" y="8" width="26" height="26" rx="4" fill="#12141c" stroke="#1f222f" stroke-width="0.5"/>
+      <path d="M322 21L327 16L332 21" stroke="#a1a1aa" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="327" y1="16" x2="327" y2="24" stroke="#a1a1aa" stroke-width="1.5"/>
+    </g>
+  </g>
+</svg>

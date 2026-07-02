@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { X } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
+import { SettingsSlice } from "../../store/slices/settingsSlice.js";
 
 interface WorkspaceTodo {
   filePath: string;
@@ -16,7 +17,7 @@ interface SettingsDrawerProps {
   provider: string;
   selectedModel: string;
   customModel: string;
-  authMethod: 'apiKey' | 'serviceAccount';
+  authMethod: "apiKey" | "serviceAccount";
   apiKey: string;
   serviceAccountPath: string;
   projectId: string;
@@ -32,7 +33,7 @@ interface SettingsDrawerProps {
   isIndexing: boolean;
   userEmail: string;
   todos: WorkspaceTodo[];
-  updateSettings: (settings: any) => void;
+  updateSettings: (settings: Partial<SettingsSlice>) => void;
   toggleIdeMode: () => void;
   setTelemetryOpen: (open: boolean) => void;
   setMarketplaceOpen: (open: boolean) => void;
@@ -92,7 +93,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
         >
           {/* Drawer Header */}
           <div className="flex items-center justify-between border-b border-[#16181d]/40 pb-3">
-            <span className="font-extrabold text-[11px] tracking-wider uppercase text-[#88888c]">SETTINGS</span>
+            <span className="font-extrabold text-[11px] tracking-wider uppercase text-[#88888c]">
+              SETTINGS
+            </span>
             <button
               onClick={() => setSettingsOpen(false)}
               className="p-1 rounded text-[#44444a] hover:text-white transition-colors cursor-pointer"
@@ -103,10 +106,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
           {/* Drawer content */}
           <div className="flex-1 overflow-y-auto space-y-4 pr-1 text-xs select-none scrollbar-none">
-            
             {/* ==================== FOLDER 1: MODEL ENGINE CONFIG ==================== */}
             <div className="space-y-3">
-              <div 
+              <div
                 onClick={() => setModelFolderOpen(!modelFolderOpen)}
                 className="flex items-center cursor-pointer select-none text-[10.5px] font-extrabold text-white tracking-wider space-x-1.5"
               >
@@ -122,17 +124,22 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <select
                       value={provider}
                       onChange={(e) => {
-                        const newProvider = e.target.value as any;
+                        const newProvider = e.target.value as
+                          | "gemini"
+                          | "openai"
+                          | "claude"
+                          | "ollama"
+                          | "custom";
                         let newModel = "gemini-2.5-flash";
                         if (newProvider === "openai") newModel = "gpt-4o";
                         else if (newProvider === "claude") newModel = "claude-3-5-sonnet-20241022";
                         else if (newProvider === "ollama") newModel = "llama3";
                         else if (newProvider === "custom") newModel = "custom";
-                        
+
                         updateSettings({
                           provider: newProvider,
                           selectedModel: newModel,
-                          authMethod: newProvider === "gemini" ? authMethod : "apiKey"
+                          authMethod: newProvider === "gemini" ? authMethod : "apiKey",
                         });
                       }}
                       className="w-full bg-[#121318] border border-[#1f232b] rounded px-2.5 py-1.5 text-[#d1d5db] text-[10px] outline-none cursor-pointer"
@@ -182,16 +189,16 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           <option value="custom">Custom Model</option>
                         </>
                       )}
-                      {provider === "custom" && (
-                        <option value="custom">Custom Model</option>
-                      )}
+                      {provider === "custom" && <option value="custom">Custom Model</option>}
                     </select>
                   </div>
 
                   {/* Custom Model input if Custom selected */}
                   {selectedModel === "custom" && (
                     <div className="space-y-1">
-                      <label className="font-bold text-[#44444a] text-[10px]">Custom Model Name</label>
+                      <label className="font-bold text-[#44444a] text-[10px]">
+                        Custom Model Name
+                      </label>
                       <input
                         type="text"
                         value={customModel}
@@ -209,7 +216,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       <select
                         value={authMethod}
                         onChange={(e) => {
-                          updateSettings({ authMethod: e.target.value as any });
+                          updateSettings({
+                            authMethod: e.target.value as "apiKey" | "serviceAccount",
+                          });
                         }}
                         className="w-full bg-[#121318] border border-[#1f232b] rounded px-2.5 py-1.5 text-[#d1d5db] text-[10px] outline-none cursor-pointer"
                       >
@@ -237,7 +246,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   {authMethod === "serviceAccount" && provider === "gemini" && (
                     <>
                       <div className="space-y-1">
-                        <label className="font-bold text-[#44444a] text-[10px]">Service Account JSON Path</label>
+                        <label className="font-bold text-[#44444a] text-[10px]">
+                          Service Account JSON Path
+                        </label>
                         <div className="flex space-x-1.5">
                           <input
                             type="text"
@@ -266,7 +277,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       </div>
 
                       <div className="space-y-1">
-                        <label className="font-bold text-[#44444a] text-[10px]">GCP Project ID</label>
+                        <label className="font-bold text-[#44444a] text-[10px]">
+                          GCP Project ID
+                        </label>
                         <input
                           type="text"
                           value={projectId}
@@ -277,7 +290,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       </div>
 
                       <div className="space-y-1">
-                        <label className="font-bold text-[#44444a] text-[10px]">Vertex Region</label>
+                        <label className="font-bold text-[#44444a] text-[10px]">
+                          Vertex Region
+                        </label>
                         <select
                           value={location}
                           onChange={(e) => updateSettings({ location: e.target.value })}
@@ -298,7 +313,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
             {/* ==================== FOLDER 2: SYSTEM PREFERENCES & UTILITIES ==================== */}
             <div className="space-y-3">
-              <div 
+              <div
                 onClick={() => setSystemFolderOpen(!systemFolderOpen)}
                 className="flex items-center cursor-pointer select-none text-[10.5px] font-extrabold text-white tracking-wider space-x-1.5 mt-3 border-t border-[#16181d]/40 pt-4"
               >
@@ -310,20 +325,30 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 <div className="pl-4 space-y-4">
                   {/* Google Search Integration */}
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-[#d1d5db] text-[10px]">Enable Google Search</span>
-                    {renderToggle(googleSearchEnabled, () => updateSettings({ googleSearchEnabled: !googleSearchEnabled }))}
+                    <span className="font-bold text-[#d1d5db] text-[10px]">
+                      Enable Google Search
+                    </span>
+                    {renderToggle(googleSearchEnabled, () =>
+                      updateSettings({ googleSearchEnabled: !googleSearchEnabled })
+                    )}
                   </div>
 
                   {/* CLI Docker Sandbox */}
                   <div className="flex flex-col space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-[#d1d5db] text-[10px]">CLI Docker Sandbox</span>
-                      {renderToggle(dockerSandboxEnabled, () => updateSettings({ 
-                        dockerSandboxEnabled: !dockerSandboxEnabled,
-                        ...(!dockerSandboxEnabled ? { cloudSandboxEnabled: false } : {})
-                      }))}
+                      <span className="font-bold text-[#d1d5db] text-[10px]">
+                        CLI Docker Sandbox
+                      </span>
+                      {renderToggle(dockerSandboxEnabled, () =>
+                        updateSettings({
+                          dockerSandboxEnabled: !dockerSandboxEnabled,
+                          ...(!dockerSandboxEnabled ? { cloudSandboxEnabled: false } : {}),
+                        })
+                      )}
                     </div>
-                    <span className="text-[#44444a] text-[8px]">Executes terminal tasks in local isolated container</span>
+                    <span className="text-[#44444a] text-[8px]">
+                      Executes terminal tasks in local isolated container
+                    </span>
                   </div>
 
                   {/* Sandbox Container Image Input */}
@@ -343,11 +368,20 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   {/* Cloud Sandbox (Pro) */}
                   <div className="flex flex-col space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className={`font-bold text-[10px] ${isActiveLicense ? "text-[#d1d5db]" : "text-[#44444a]"}`}>SaaS Cloud Sandbox (Pro)</span>
-                      {renderToggle(cloudSandboxEnabled, () => updateSettings({ 
-                        cloudSandboxEnabled: !cloudSandboxEnabled,
-                        ...(!cloudSandboxEnabled ? { dockerSandboxEnabled: false } : {})
-                      }), !isActiveLicense)}
+                      <span
+                        className={`font-bold text-[10px] ${isActiveLicense ? "text-[#d1d5db]" : "text-[#44444a]"}`}
+                      >
+                        SaaS Cloud Sandbox (Pro)
+                      </span>
+                      {renderToggle(
+                        cloudSandboxEnabled,
+                        () =>
+                          updateSettings({
+                            cloudSandboxEnabled: !cloudSandboxEnabled,
+                            ...(!cloudSandboxEnabled ? { dockerSandboxEnabled: false } : {}),
+                          }),
+                        !isActiveLicense
+                      )}
                     </div>
                   </div>
 
@@ -357,14 +391,20 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       <span className="font-bold text-[#d1d5db] text-[10px]">Full IDE Mode</span>
                       {renderToggle(isIdeMode, toggleIdeMode)}
                     </div>
-                    <span className="text-[#44444a] text-[8px]">Enable split pane file explorer and editor layout</span>
+                    <span className="text-[#44444a] text-[8px]">
+                      Enable split pane file explorer and editor layout
+                    </span>
                   </div>
 
                   {/* Telemetry & Cost Dashboard */}
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col space-y-0.5">
-                      <span className="font-bold text-[#d1d5db] text-[10px]">Telemetry &amp; Cost</span>
-                      <span className="text-[#44444a] text-[8px]">View metrics and real-time usage cost dashboard</span>
+                      <span className="font-bold text-[#d1d5db] text-[10px]">
+                        Telemetry &amp; Cost
+                      </span>
+                      <span className="text-[#44444a] text-[8px]">
+                        View metrics and real-time usage cost dashboard
+                      </span>
                     </div>
                     <button
                       type="button"
@@ -378,8 +418,12 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   {/* Marketplace & Plugins */}
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col space-y-0.5">
-                      <span className="font-bold text-[#d1d5db] text-[10px]">Marketplace &amp; Plugins</span>
-                      <span className="text-[#44444a] text-[8px]">Browse and install helper extensions and customizations</span>
+                      <span className="font-bold text-[#d1d5db] text-[10px]">
+                        Marketplace &amp; Plugins
+                      </span>
+                      <span className="text-[#44444a] text-[8px]">
+                        Browse and install helper extensions and customizations
+                      </span>
                     </div>
                     <button
                       type="button"
@@ -395,7 +439,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <div className="space-y-2 pt-2 border-t border-[#16181d]/40">
                       <div className="flex justify-between items-center text-[10px]">
                         <span className="font-bold text-[#44444a]">Git Repository Branch</span>
-                        <span className="font-mono font-bold text-[#d1d5db]">{gitInitialized ? gitBranch : "No Repo"}</span>
+                        <span className="font-mono font-bold text-[#d1d5db]">
+                          {gitInitialized ? gitBranch : "No Repo"}
+                        </span>
                       </div>
                       <button
                         disabled={isIndexing}
@@ -415,7 +461,12 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <div className="flex items-center justify-between pt-2 border-t border-[#16181d]/40">
                       <div className="flex flex-col space-y-0.5">
                         <span className="font-bold text-[#44444a] text-[10px]">Active Account</span>
-                        <span className="text-[#d1d5db] text-[9.5px] truncate max-w-[140px]" title={userEmail}>{userEmail}</span>
+                        <span
+                          className="text-[#d1d5db] text-[9.5px] truncate max-w-[140px]"
+                          title={userEmail}
+                        >
+                          {userEmail}
+                        </span>
                       </div>
                       <button
                         onClick={async () => {
@@ -431,27 +482,34 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   {/* Workspace TODOs list */}
                   {workspacePath && (
                     <div className="space-y-2 pt-2 border-t border-[#16181d]/40">
-                      <span className="font-bold text-white text-[10px]">Workspace TODO comments ({todos.length})</span>
+                      <span className="font-bold text-white text-[10px]">
+                        Workspace TODO comments ({todos.length})
+                      </span>
                       <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin">
                         {todos.length === 0 ? (
-                          <p className="text-[9px] text-[#44444a] italic">No pending TODO comments found.</p>
+                          <p className="text-[9px] text-[#44444a] italic">
+                            No pending TODO comments found.
+                          </p>
                         ) : (
                           todos.map((todo, idx) => (
-                            <div 
+                            <div
                               key={idx}
                               onClick={() => {
-                                setInput(`Please resolve this TODO comment: "${todo.text}" on line ${todo.line} of ${todo.relativePath}`);
+                                setInput(
+                                  `Please resolve this TODO comment: "${todo.text}" on line ${todo.line} of ${todo.relativePath}`
+                                );
                                 setSettingsOpen(false);
                               }}
                               className="hover:bg-white/5 rounded p-1.5 text-[9px] cursor-pointer transition-all duration-200 flex flex-col space-y-0.5"
                               title="Click to copy task prompt to chat input"
                             >
-                              <span className="text-[#5f8aa8] truncate font-semibold" title={todo.relativePath}>
+                              <span
+                                className="text-[#5f8aa8] truncate font-semibold"
+                                title={todo.relativePath}
+                              >
                                 {todo.relativePath}
                               </span>
-                              <span className="text-zinc-300 line-clamp-2">
-                                {todo.text}
-                              </span>
+                              <span className="text-zinc-300 line-clamp-2">{todo.text}</span>
                               <span className="text-[8px] text-[#44444a] font-bold uppercase tracking-wider">
                                 Line {todo.line}
                               </span>

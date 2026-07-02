@@ -1,5 +1,7 @@
 import { useGlobalStore } from "../../store/index.js";
 
+type ProviderValue = "gemini" | "openai" | "claude" | "ollama" | "custom";
+
 export function ProviderForm() {
   const provider = useGlobalStore((state) => state.provider);
   const apiKey = useGlobalStore((state) => state.apiKey);
@@ -12,7 +14,7 @@ export function ProviderForm() {
         <label className="block text-white/50 mb-1">AI Provider</label>
         <select
           value={provider}
-          onChange={(e) => updateSettings({ provider: e.target.value as any })}
+          onChange={(e) => updateSettings({ provider: e.target.value as ProviderValue })}
           className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-white"
         >
           <option value="gemini">Gemini (Google Studio)</option>

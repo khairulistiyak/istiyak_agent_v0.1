@@ -14,6 +14,8 @@ export class PermissionManager {
     "shutdown", "reboot", "halt", "init 0",
     ":(){ :|:& };:",   // Fork bomb
     "curl | sh", "curl | bash", "wget -O - | sh",
+    "eval ", " eval ",
+    "`", // backtick execution
   ];
 
   /** Commands that are always safe — workspace-scoped */
@@ -36,6 +38,10 @@ export class PermissionManager {
     "git push --force", "git push -f",
     "docker", "kubectl",
     "env", "printenv",
+    "source ", ".env",
+    ">", ">>", "tee",
+    "mv ", "cp ", "ln ",
+    "apt", "brew", "yum", "dnf", "pacman",
   ];
 
   /**

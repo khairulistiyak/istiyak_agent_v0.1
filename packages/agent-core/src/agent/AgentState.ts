@@ -4,7 +4,7 @@ export type AgentStatus = "idle" | "planning" | "running" | "reflecting" | "comp
 
 export class AgentState {
   stepsCount = 0;
-  maxSteps = 40;
+  maxSteps = 15;
   messages: Message[] = [];
   status: AgentStatus = "idle";
   cost = 0;

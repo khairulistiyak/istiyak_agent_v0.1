@@ -28,17 +28,6 @@ interface ChatPanelProps {
   className?: string;
 }
 
-const MODES: Array<{
-  id: AgentMode;
-  label: string;
-  hint: string;
-}> = [
-  { id: "chat", label: "Chat", hint: "No tools" },
-  { id: "plan", label: "Plan", hint: "No edits" },
-  { id: "assist", label: "Assist", hint: "Read only" },
-  { id: "agent", label: "Agent", hint: "Approve" },
-];
-
 const MODE_POLICY: Record<AgentMode, { title: string; detail: string; badge: string }> = {
   chat: {
     title: "CHAT MODE",
@@ -61,6 +50,19 @@ const MODE_POLICY: Record<AgentMode, { title: string; detail: string; badge: str
     badge: "Approve risky tools",
   },
 };
+
+const MODES: Array<{
+  id: AgentMode;
+  label: string;
+  hint: string;
+}> = [
+  { id: "chat", label: "Chat", hint: "No tools" },
+  { id: "plan", label: "Plan", hint: "No edits" },
+  { id: "assist", label: "Assist", hint: "Read only" },
+  { id: "agent", label: "Agent", hint: "Approve" },
+];
+
+export { MODE_POLICY, MODES };
 
 const getModeClasses = (mode: AgentMode, active: boolean) => {
   const styles: Record<AgentMode, string> = {

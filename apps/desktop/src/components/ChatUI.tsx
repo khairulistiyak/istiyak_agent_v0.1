@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/core";
 import { useChat } from "@ai-sdk/react";
@@ -14,7 +14,7 @@ import { HistoryDrawer } from "./layout/HistoryDrawer.js";
 import { IdeModeLayout } from "./layout/IdeModeLayout.js";
 
 // Chat components
-import { ChatPanel, type AgentMode } from "./chat/ChatPanel.js";
+import { ChatPanel, MODES as AGENT_MODES, type AgentMode } from "./chat/ChatPanel.js";
 
 // Settings/Modal components
 import { SettingsDrawer } from "./settings/SettingsDrawer.js";
@@ -29,21 +29,14 @@ import { usePermissions } from "../hooks/usePermissions.js";
 import { useIdeMode } from "../hooks/useIdeMode.js";
 
 const getMessageText = (msg: UIMessage): string => {
-  const rawMsg = msg as any;
-  if (rawMsg.content) return rawMsg.content;
+  const raw = msg as UIMessage & { content?: string };
+  if (raw.content) return raw.content;
   if (!msg.parts) return "";
   return msg.parts
     .filter((part) => part.type === "text")
-    .map((part: any) => part.text)
+    .map((part) => (part as { type: "text"; text: string }).text)
     .join("");
 };
-
-const AGENT_MODES: Array<{ id: AgentMode; label: string; hint: string }> = [
-  { id: "chat", label: "Chat", hint: "No tools" },
-  { id: "plan", label: "Plan", hint: "No edits" },
-  { id: "assist", label: "Assist", hint: "Read only" },
-  { id: "agent", label: "Agent", hint: "Approve" },
-];
 
 const MODE_POLICY: Record<AgentMode, { title: string; detail: string; card: string; dot: string }> =
   {
@@ -96,7 +89,7 @@ export default function ChatUI() {
     installedExtensions,
     loadSettings,
     updateSettings,
-  } = useSettingsStore();
+  } = useSettingsStore() as any;
 
   // Chat store
   const {
@@ -106,10 +99,11 @@ export default function ChatUI() {
     deleteConversation,
     setActiveConversation,
     addMessage,
-  } = useChatStore();
+    updateConversationMode,
+  } = useChatStore() as any;
 
   // Custom hooks
-  const polling = usePolling({ workspacePath, token, loadSettings });
+  const polling = usePolling({ workspacePath });
   const permissions = usePermissions();
   const ide = useIdeMode({ workspacePath });
 
@@ -120,7 +114,6 @@ export default function ChatUI() {
   const [authOpen, setAuthOpen] = useState(false);
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
   const [telemetryOpen, setTelemetryOpen] = useState(false);
-  const [agentMode, setAgentMode] = useState<AgentMode>("chat");
 
   // Auto-initialize conversation if list is empty
   useEffect(() => {
@@ -132,161 +125,184 @@ export default function ChatUI() {
   }, [conversations, activeId, createConversation, setActiveConversation]);
 
   // Vercel AI SDK useChat Hook
-  const activeConvo = conversations.find((c) => c.id === activeId);
-  const { messages, setMessages, sendMessage, status, stop } = useChat({
-    id: activeId || undefined,
-    messages:
-      activeConvo?.messages.map((m) => ({
+  const activeConvo = (conversations as any[]).find((c: any) => c.id === activeId);
+  const agentMode: AgentMode = activeConvo?.agentMode ?? "chat";
+
+  // Stable reference: only recompute when conversation switches (M1: prevent re-init loop)
+  const initialMessages = useMemo(
+    () =>
+      activeConvo?.messages.map((m: any) => ({
         id: m.id,
         role: m.role as "user" | "assistant" | "system",
         parts: [{ type: "text" as const, text: m.content }],
       })) || [],
+    [activeId]
+  );
 
-    // Intercept default REST fetch and stream locally from local Express server
-    transport: new TextStreamChatTransport({
-      fetch: async (_url, options) => {
-        if (!options || !options.body) {
-          return new Response("Error: Invalid request body", { status: 400 });
-        }
+  // Stable transport: capture `activeId` once per conversation (M1: prevent re-init loop)
+  const transport = useMemo(
+    () =>
+      new TextStreamChatTransport({
+        fetch: async (_url, options) => {
+          if (!options || !options.body) {
+            return new Response("Error: Invalid request body", { status: 400 });
+          }
 
-        const reqBody = JSON.parse(options.body as string);
-        const userMessages = reqBody.messages;
-        const lastUserMsg = userMessages[userMessages.length - 1];
-        const lastUserMsgText = getMessageText(lastUserMsg);
+          const reqBody = JSON.parse(options.body as string);
+          const userMessages: UIMessage[] = reqBody.messages;
+          const lastUserMsg = userMessages[userMessages.length - 1];
+          const lastUserMsgText = getMessageText(lastUserMsg);
 
-        // Save user message to Zustand history store
-        if (activeId) {
-          const currentConvo = useChatStore.getState().conversations.find((c) => c.id === activeId);
-          const alreadyHasUserMsg = currentConvo?.messages.some((m) => m.id === lastUserMsg.id);
-          if (!alreadyHasUserMsg) {
-            addMessage(activeId, {
-              id: lastUserMsg.id,
-              role: "user",
-              content: lastUserMsgText,
+          // Save user message to Zustand history store
+          if (activeId) {
+            const currentConvo = useChatStore
+              .getState()
+              .conversations.find((c) => c.id === activeId);
+            const alreadyHasUserMsg = currentConvo?.messages.some((m) => m.id === lastUserMsg.id);
+            if (!alreadyHasUserMsg) {
+              addMessage(activeId, {
+                id: lastUserMsg.id,
+                role: "user",
+                content: lastUserMsgText,
+              });
+            }
+          }
+
+          // Get config from useSettingsStore
+          const settings = useSettingsStore.getState();
+          const activeProvider = settings.provider;
+          const activeModel =
+            settings.selectedModel === "custom" ? settings.customModel : settings.selectedModel;
+          const activeApiKey = settings.apiKey;
+
+          if (settings.authMethod === "apiKey" && !activeApiKey && activeProvider !== "ollama") {
+            const errorMsg = `Error: API Key for "${activeProvider}" is not configured. Please open Settings and set it.`;
+            const errorStream = new ReadableStream({
+              start(controller) {
+                const encoder = new TextEncoder();
+                controller.enqueue(encoder.encode(errorMsg));
+                controller.close();
+              },
+            });
+            return new Response(errorStream, {
+              headers: { "Content-Type": "text/plain; charset=utf-8" },
             });
           }
-        }
 
-        // Get config from useSettingsStore
-        const settings = useSettingsStore.getState();
-        const activeProvider = settings.provider;
-        const activeModel =
-          settings.selectedModel === "custom" ? settings.customModel : settings.selectedModel;
-        const activeApiKey = settings.apiKey;
+          if (
+            settings.authMethod === "serviceAccount" &&
+            activeProvider === "gemini" &&
+            !settings.serviceAccountPath
+          ) {
+            const errorMsg = `Error: Service Account JSON path is not configured. Please open Settings and set it.`;
+            const errorStream = new ReadableStream({
+              start(controller) {
+                const encoder = new TextEncoder();
+                controller.enqueue(encoder.encode(errorMsg));
+                controller.close();
+              },
+            });
+            return new Response(errorStream, {
+              headers: { "Content-Type": "text/plain; charset=utf-8" },
+            });
+          }
 
-        if (settings.authMethod === "apiKey" && !activeApiKey && activeProvider !== "ollama") {
-          const errorMsg = `Error: API Key for "${activeProvider}" is not configured. Please open Settings and set it.`;
-          const errorStream = new ReadableStream({
-            start(controller) {
-              const encoder = new TextEncoder();
-              controller.enqueue(encoder.encode(errorMsg));
-              controller.close();
+          const mappedMessages = userMessages.map((m) => ({
+            id: m.id,
+            role: m.role,
+            content: getMessageText(m),
+          }));
+
+          // Truncate to last 60 messages to prevent oversized payloads
+          const MAX_MESSAGES_TO_SEND = 60;
+          const truncatedMessages =
+            mappedMessages.length > MAX_MESSAGES_TO_SEND
+              ? [mappedMessages[0], ...mappedMessages.slice(-MAX_MESSAGES_TO_SEND + 1)]
+              : mappedMessages;
+
+          // Call local Express engine
+          const response = await fetch(`${API_BASE}/api/chat`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
             },
+            body: JSON.stringify({
+              messages: truncatedMessages,
+              provider: activeProvider,
+              model: activeModel,
+              authMethod: settings.authMethod,
+              apiKey: activeApiKey,
+              serviceAccountPath: settings.serviceAccountPath,
+              projectId: settings.projectId,
+              location: settings.location,
+              workspacePath: settings.workspacePath,
+              googleSearchEnabled: settings.googleSearchEnabled,
+              cloudSandboxEnabled: settings.cloudSandboxEnabled,
+              dockerSandboxEnabled: settings.dockerSandboxEnabled,
+              sandboxImage: settings.sandboxImage,
+              token: settings.token,
+              agentMode: activeId
+                ? (useChatStore.getState().conversations.find((c) => c.id === activeId)
+                    ?.agentMode ?? "chat")
+                : "chat",
+            }),
           });
-          return new Response(errorStream, {
-            headers: { "Content-Type": "text/plain; charset=utf-8" },
-          });
-        }
 
-        if (
-          settings.authMethod === "serviceAccount" &&
-          activeProvider === "gemini" &&
-          !settings.serviceAccountPath
-        ) {
-          const errorMsg = `Error: Service Account JSON path is not configured. Please open Settings and set it.`;
-          const errorStream = new ReadableStream({
-            start(controller) {
-              const encoder = new TextEncoder();
-              controller.enqueue(encoder.encode(errorMsg));
-              controller.close();
-            },
-          });
-          return new Response(errorStream, {
-            headers: { "Content-Type": "text/plain; charset=utf-8" },
-          });
-        }
+          if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Engine request failed: ${response.status} ${errText}`);
+          }
 
-        const mappedMessages = userMessages.map((m: any) => ({
-          id: m.id,
-          role: m.role,
-          content: getMessageText(m),
-        }));
+          const reader = response.body?.getReader();
 
-        // Truncate to last 60 messages to prevent oversized payloads
-        const MAX_MESSAGES_TO_SEND = 60;
-        const truncatedMessages =
-          mappedMessages.length > MAX_MESSAGES_TO_SEND
-            ? [mappedMessages[0], ...mappedMessages.slice(-MAX_MESSAGES_TO_SEND + 1)]
-            : mappedMessages;
-
-        // Call local Express engine
-        const response = await fetch(`${API_BASE}/api/chat`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            messages: truncatedMessages,
-            provider: activeProvider,
-            model: activeModel,
-            authMethod: settings.authMethod,
-            apiKey: activeApiKey,
-            serviceAccountPath: settings.serviceAccountPath,
-            projectId: settings.projectId,
-            location: settings.location,
-            workspacePath: settings.workspacePath,
-            googleSearchEnabled: settings.googleSearchEnabled,
-            cloudSandboxEnabled: settings.cloudSandboxEnabled,
-            dockerSandboxEnabled: settings.dockerSandboxEnabled,
-            sandboxImage: settings.sandboxImage,
-            token: settings.token,
-            agentMode,
-          }),
-        });
-
-        if (!response.ok) {
-          const errText = await response.text();
-          throw new Error(`Engine request failed: ${response.status} ${errText}`);
-        }
-
-        const reader = response.body?.getReader();
-
-        const stream = new ReadableStream({
-          async start(controller) {
-            try {
-              if (reader) {
-                while (true) {
-                  const { done, value } = await reader.read();
-                  if (done) break;
-                  controller.enqueue(value);
+          const stream = new ReadableStream({
+            async start(controller) {
+              try {
+                if (reader) {
+                  while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    controller.enqueue(value);
+                  }
                 }
+              } catch (streamErr) {
+                console.error("Stream reading error:", streamErr);
+                const errMsg = streamErr instanceof Error ? streamErr.message : String(streamErr);
+                const errChunk = `\n\n[Generation Error: ${errMsg}]`;
+                const encoder = new TextEncoder();
+                controller.enqueue(encoder.encode(errChunk));
+              } finally {
+                controller.close();
               }
-            } catch (streamErr: any) {
-              console.error("Stream reading error:", streamErr);
-              const errChunk = `\n\n[Generation Error: ${streamErr.message || streamErr}]`;
-              const encoder = new TextEncoder();
-              controller.enqueue(encoder.encode(errChunk));
-            } finally {
-              controller.close();
-            }
-          },
-        });
+            },
+          });
 
-        return new Response(stream, {
-          headers: {
-            "Content-Type": "text/plain; charset=utf-8",
-          },
-        });
-      },
-    }),
+          return new Response(stream, {
+            headers: {
+              "Content-Type": "text/plain; charset=utf-8",
+            },
+          });
+        },
+      }),
+    [activeId, addMessage]
+  );
+
+  const { messages, sendMessage, status, stop } = useChat({
+    id: activeId || undefined,
+    messages: initialMessages,
+    transport,
   });
 
   const isLoading = status === "streaming" || status === "submitted";
 
-  // Trigger timeout on new pending permission requests
+  // Init refs for the current conversation
+  const lastSyncedRef = useRef(0);
+  const processedPermRef = useRef(new Set<string>());
+
+  // Trigger permission timeouts for new assistant messages
   useEffect(() => {
     messages.forEach((msg) => {
-      if (msg.role === "assistant") {
+      if (msg.role === "assistant" && !processedPermRef.current.has(msg.id)) {
         const text = getMessageText(msg);
         if (text.includes("permission_request")) {
           const parsed = parseAgentMessage(text);
@@ -294,53 +310,39 @@ export default function ChatUI() {
             permissions.addPermissionTimeout(req.id);
           });
         }
+        processedPermRef.current.add(msg.id);
       }
     });
   }, [messages, permissions.addPermissionTimeout]);
 
-  // Sync messages between Vercel AI SDK (useChat) and Zustand store
+  // Sync messages to Zustand store
   useEffect(() => {
     if (isLoading) return;
 
-    if (activeId && messages.length > 0) {
+    if (activeId && messages.length > lastSyncedRef.current) {
       const currentConvo = useChatStore.getState().conversations.find((c) => c.id === activeId);
       if (currentConvo) {
-        const currentMsgCount = currentConvo.messages.length;
-        const hookMsgCount = messages.length;
-        if (hookMsgCount > currentMsgCount) {
-          for (let i = currentMsgCount; i < hookMsgCount; i++) {
-            const msg = messages[i];
-            const msgText = getMessageText(msg);
-            if (msgText) {
-              useChatStore.getState().addMessage(activeId, {
-                id: msg.id,
-                role: msg.role as "user" | "assistant" | "system",
-                content: msgText,
-              });
-            }
+        for (let i = lastSyncedRef.current; i < messages.length; i++) {
+          const msg = messages[i];
+          const msgText = getMessageText(msg);
+          if (msgText) {
+            useChatStore.getState().addMessage(activeId, {
+              id: msg.id,
+              role: msg.role as "user" | "assistant" | "system",
+              content: msgText,
+            });
           }
         }
+        lastSyncedRef.current = messages.length;
       }
     }
   }, [activeId, isLoading, messages.length]);
 
-  // Load messages from Zustand when switching to a different conversation
+  // Reset per-conversation refs when switching conversations
   useEffect(() => {
-    if (isLoading) return;
-
-    const convo = useChatStore.getState().conversations.find((c) => c.id === activeId);
-    if (convo) {
-      setMessages(
-        convo.messages.map((m) => ({
-          id: m.id,
-          role: m.role as "user" | "assistant" | "system",
-          parts: [{ type: "text" as const, text: m.content }],
-        }))
-      );
-    } else {
-      setMessages([]);
-    }
-  }, [activeId, setMessages, isLoading]);
+    processedPermRef.current.clear();
+    lastSyncedRef.current = 0;
+  }, [activeId]);
 
   // Settings loaded at mount
   useEffect(() => {
@@ -350,7 +352,7 @@ export default function ChatUI() {
   // Abort running agent
   const handleAbortAgent = useCallback(async () => {
     try {
-      stop();
+      // First ask server to gracefully stop — this lets it write final error/status
       const res = await fetch(`${API_BASE}/api/agent/abort`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -360,6 +362,9 @@ export default function ChatUI() {
     } catch (err) {
       console.error("Failed to abort agent:", err);
     }
+    // Then force-stop the local stream (any remaining server chunks won't be read,
+    // but the critical error message was already sent before the server closed)
+    stop();
   }, [stop]);
 
   // Send message
@@ -367,7 +372,7 @@ export default function ChatUI() {
     if (!input.trim() || isLoading) return;
     sendMessage({
       role: "user" as const,
-      parts: [{ type: "text" as const, text: input }],
+      parts: [{ type: "text" as const, text: input.trim() }],
     });
     setInput("");
   }, [input, isLoading, sendMessage]);
@@ -430,6 +435,13 @@ export default function ChatUI() {
         onHistoryOpen={() => setSidebarOpen(true)}
       />
 
+      {/* Polling error bar — auto-dismisses after 10s */}
+      {polling.pollingError && (
+        <div className="px-4 py-1.5 text-[10px] text-red-300 bg-red-900/20 border-b border-red-800/30 text-center font-medium">
+          ⚠ {polling.pollingError}
+        </div>
+      )}
+
       {ide.isIdeMode ? (
         <IdeModeLayout
           workspacePath={workspacePath}
@@ -452,7 +464,7 @@ export default function ChatUI() {
           terminalInput={ide.terminalInput}
           isTerminalRunning={ide.isTerminalRunning}
           lastCompileError={ide.lastCompileError}
-          installedExtensions={installedExtensions as any}
+          installedExtensions={installedExtensions}
           onTerminalInputChange={ide.setTerminalInput}
           onExecuteCommand={ide.handleExecuteTerminalCommand}
           onClearTerminalLogs={() =>
@@ -515,7 +527,9 @@ export default function ChatUI() {
                     <button
                       key={mode.id}
                       type="button"
-                      onClick={() => setAgentMode(mode.id)}
+                      onClick={() => {
+                        if (activeId) updateConversationMode(activeId, mode.id);
+                      }}
                       className={`w-full rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${active ? policy.card : "border-[#1e2533] bg-[#0b0e14] text-cyber-textSecondary hover:border-cyber-primary/40 hover:text-white"}`}
                     >
                       <div className="flex items-center justify-between gap-3">
@@ -659,7 +673,7 @@ export default function ChatUI() {
         onClose={() => setMarketplaceOpen(false)}
         activeTheme={activeTheme}
         installedPrompts={installedPrompts}
-        installedExtensions={installedExtensions as any}
+        installedExtensions={installedExtensions}
         updateSettings={updateSettings}
       />
 

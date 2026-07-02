@@ -2,96 +2,69 @@ import { runAgent, RunnerOptions } from "./AgentRunner.js";
 import { AgentState } from "./AgentState.js";
 import { MemoryManager } from "./MemoryManager.js";
 import { TaskClassifier } from "./TaskClassifier.js";
+import { calculateCost } from "../llm/CostTracker.js";
+import { LIMITS } from "../config/Limits.js";
 
 /**
  * High-level Agent class that wraps AgentRunner with state management,
  * memory integration, and lifecycle control (run, abort).
  */
 export class Agent {
-  private options: RunnerOptions;
   private state: AgentState;
-  private memoryManager: MemoryManager;
-  private abortController: AbortController;
+  private abortController = new AbortController();
   private onStateChange?: (state: ReturnType<AgentState["toJSON"]>) => void;
 
-  constructor(options: RunnerOptions & {
-    onStateChange?: (state: ReturnType<AgentState["toJSON"]>) => void;
-  }) {
-    this.options = options;
+  constructor(onStateChange?: (state: ReturnType<AgentState["toJSON"]>) => void) {
     this.state = new AgentState();
-    this.memoryManager = new MemoryManager(options.workspacePath || process.cwd());
-    this.abortController = new AbortController();
-    this.onStateChange = options.onStateChange;
+    this.state.maxSteps = LIMITS.MAX_STEPS;
+    this.onStateChange = onStateChange;
   }
 
-  /**
-   * Returns the current agent state snapshot.
-   */
-  getState(): ReturnType<AgentState["toJSON"]> {
-    return this.state.toJSON();
-  }
-
-  /**
-   * Runs the agent with full lifecycle management.
-   * 1. Classifies the task
-   * 2. Sets up state tracking
-   * 3. Executes via AgentRunner
-   * 4. Reports final state
-   */
-  async run() {
-    // Classify the task
-    const lastUserMessage = this.options.messages
-      .filter(m => m.role === "user")
-      .pop();
-    const taskDescription = lastUserMessage?.content || "";
-    this.state.taskDescription = taskDescription;
-    this.state.taskClassification = TaskClassifier.classify(taskDescription);
-    this.state.setStatus("running");
-    this.emitStateChange();
-
+  async execute(options: RunnerOptions) {
     try {
-      // Wrap onChunk to track streaming
-      const originalOnChunk = this.options.onChunk;
+      this.state.setStatus("running");
+      this.state.taskDescription = options.messages[options.messages.length - 1]?.content || "";
+      this.state.taskClassification = TaskClassifier.classify(this.state.taskDescription);
+      this.emitStateChange();
+
       const wrappedOptions: RunnerOptions = {
-        ...this.options,
-        onChunk: (chunk: string) => {
-          originalOnChunk?.(chunk);
-          this.emitStateChange();
-        }
+        ...options,
+        abortSignal: this.abortController.signal,
       };
 
-      const result = await runAgent({
-        ...wrappedOptions,
-        abortSignal: this.abortController.signal
-      });
+      const result = await runAgent(wrappedOptions);
 
       // Update state with results
+      if (!result) {
+        this.state.setStatus("error");
+        this.emitStateChange();
+        return;
+      }
       this.state.addTokenUsage(result.inputTokens, result.outputTokens);
-      this.state.cost = (result as any).cost || 0;
+      this.state.cost = calculateCost(
+        options.provider,
+        result.inputTokens,
+        result.outputTokens,
+        options.model
+      );
       this.state.setStatus("completed");
       this.emitStateChange();
 
       return result;
-    } catch (error: any) {
-      this.state.addError(error.message || String(error));
+    } catch (error: unknown) {
+      this.state.addError(error instanceof Error ? error.message : String(error));
       this.state.setStatus("error");
       this.emitStateChange();
       throw error;
     }
   }
 
-  /**
-   * Aborts the currently running agent execution.
-   */
   abort() {
     this.abortController.abort();
     this.state.setStatus("aborted");
     this.emitStateChange();
   }
 
-  /**
-   * Emits the current state to the onStateChange callback.
-   */
   private emitStateChange() {
     if (this.onStateChange) {
       this.onStateChange(this.state.toJSON());

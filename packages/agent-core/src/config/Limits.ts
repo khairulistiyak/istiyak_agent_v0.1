@@ -6,8 +6,12 @@ export const LIMITS = {
   /** Maximum tokens in compressed conversation history */
   MAX_HISTORY_TOKENS: 30000,
 
-  /** Maximum agent execution steps before forced stop */
-  MAX_STEPS: 60,
+  /** Maximum agent execution steps before forced stop.
+   *  Each step ≈ one LLM call + tool execution.
+   *  60 steps can cost $0.50-2+ depending on model.
+   *  Reduced to 15 as a sensible default — most tasks complete within 5-10 steps.
+   *  Power users can raise this via LIMITS override if needed. */
+  MAX_STEPS: 15,
 
   /** Docker sandbox memory limit */
   MAX_SANDBOX_MEMORY: "512m",
