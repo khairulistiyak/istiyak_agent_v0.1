@@ -1,10 +1,22 @@
 import express from "express";
 import passport from "passport";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import bcrypt from "bcryptjs";
+import { User, PasswordReset } from "@istiyak/database";
 import { handleRegister, handleLogin } from "../controllers/authController.js";
+import { getProfile, updateProfile } from "../controllers/userController.js";
+import { authenticateToken } from "../middleware/auth.js";
+
+
 
 
 const router = express.Router();
+
+// Profile routes
+router.get("/profile", authenticateToken, getProfile);
+router.put("/profile", authenticateToken, updateProfile);
+
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   throw new Error("FATAL: JWT_SECRET environment variable is required. Set it in apps/saas-backend/.env");
@@ -21,6 +33,124 @@ const GITHUB_CONFIGURED = !!(GITHUB_CLIENT_ID && GITHUB_CLIENT_SECRET);
 // Standard register & login routes
 router.post("/register", handleRegister);
 router.post("/login", handleLogin);
+
+// Email Verification Mock Endpoints
+router.post("/verify-email", async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email is required." });
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    const token = crypto.randomBytes(20).toString("hex");
+    console.log(`[MOCK EMAIL VERIFICATION] Verification link for ${email}: http://localhost:3000/verify-email?token=${token}&email=${encodeURIComponent(email)}`);
+
+    return res.status(200).json({
+      status: "success",
+      message: "Verification email sent (logged to server console).",
+      token, // Return token for easy testing/client implementation
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/verify", async (req, res, next) => {
+  try {
+    const { token, email } = req.query;
+    if (!token || !email) return res.status(400).json({ error: "Token and email are required." });
+
+    const user = await User.findOne({ email: (email as string).toLowerCase() });
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    user.isActive = true;
+    await user.save();
+
+    return res.status(200).json({
+      status: "success",
+      message: "Email verified successfully! You can now sign in.",
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Password Reset Mock Endpoints
+router.post("/forgot-password", async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email is required." });
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    const token = crypto.randomBytes(20).toString("hex");
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1); // 1 hour expiration
+
+    const resetRecord = new PasswordReset({
+      userId: user._id,
+      token,
+      expiresAt,
+    });
+    await resetRecord.save();
+
+    console.log(`[MOCK PASSWORD RESET] Reset link for ${email}: http://localhost:3000/reset-password?token=${token}&email=${encodeURIComponent(email)}`);
+
+    return res.status(200).json({
+      status: "success",
+      message: "Password reset link sent (logged to server console).",
+      token,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/reset-password", async (req, res, next) => {
+  try {
+    const { token, email, newPassword } = req.body;
+    if (!token || !email || !newPassword) {
+      return res.status(400).json({ error: "Token, email, and newPassword are required." });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    const resetRecord = await PasswordReset.findOne({
+      userId: user._id,
+      token,
+      isUsed: false,
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (!resetRecord) {
+      return res.status(400).json({ error: "Invalid, used, or expired password reset token." });
+    }
+
+    if (newPassword.length < 6 || !/[a-zA-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      return res.status(400).json({
+        error: "Password must be at least 6 characters with at least one letter and one digit.",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    resetRecord.isUsed = true;
+    await resetRecord.save();
+
+    return res.status(200).json({
+      status: "success",
+      message: "Password reset successful! You can now log in with your new password.",
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 
 // OAuth configuration status endpoint
 router.get("/status", (req, res) => {

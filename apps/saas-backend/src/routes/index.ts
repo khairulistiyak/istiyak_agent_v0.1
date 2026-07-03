@@ -4,6 +4,8 @@ import adminRoutes from "./admin.js";
 import billingRoutes from "./billing.js";
 import sandboxRoutes from "./sandbox.js";
 import updateRoutes from "./update.js";
+import keysRoutes from "./keys.js";
+import usageRoutes from "./usage.js";
 
 const router = express.Router();
 
@@ -12,5 +14,8 @@ router.use("/admin", adminRoutes);
 router.use("/billing", billingRoutes);
 router.use("/sandbox", sandboxRoutes);
 router.use("/update", updateRoutes);
+router.use("/keys", keysRoutes);
+router.use("/usage", usageRoutes);
 
 export default router;
+

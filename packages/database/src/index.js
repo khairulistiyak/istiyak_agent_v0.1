@@ -1,8 +1,13 @@
 import mongoose from "mongoose";
 import { User } from "./models/User.js";
 import { IpLog } from "./models/IpLog.js";
+import { Subscription } from "./models/Subscription.js";
+import { ApiKey } from "./models/ApiKey.js";
+import { UsageLog } from "./models/UsageLog.js";
+import { Session } from "./models/Session.js";
+import { PasswordReset } from "./models/PasswordReset.js";
 
-export { User, IpLog };
+export { User, IpLog, Subscription, ApiKey, UsageLog, Session, PasswordReset };
 
 export async function connectDatabase(uri) {
   try {
@@ -13,3 +18,4 @@ export async function connectDatabase(uri) {
     throw err;
   }
 }
+

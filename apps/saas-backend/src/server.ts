@@ -1,6 +1,6 @@
+import "./config/env.js";
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import passport from "passport";
 import * as Sentry from "@sentry/node";
 import authRoutes from "./routes/auth.js";
@@ -11,9 +11,6 @@ import sandboxRoutes from "./routes/sandbox.js";
 import { connectDatabase } from "@istiyak/database";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { initPassport } from "./config/passport.js";
-
-// Load environment variables
-dotenv.config();
 
 // Initialize passport strategies
 initPassport();
