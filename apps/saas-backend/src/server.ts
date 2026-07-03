@@ -8,9 +8,13 @@ import adminRoutes from "./routes/admin.js";
 import billingRoutes from "./routes/billing.js";
 import updateRoutes from "./routes/update.js";
 import sandboxRoutes from "./routes/sandbox.js";
+import keysRoutes from "./routes/keys.js";
+import usageRoutes from "./routes/usage.js";
+import licenseRoutes from "./routes/license.js";
 import { connectDatabase } from "@istiyak/database";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { initPassport } from "./config/passport.js";
+import { handleStripeWebhook } from "./controllers/webhookController.js";
 
 // Initialize passport strategies
 initPassport();
@@ -52,6 +56,7 @@ app.use(cors({
     }
   }
 }));
+app.post("/api/billing/webhook", express.raw({ type: "application/json" }), handleStripeWebhook);
 app.use(express.json());
 
 // Register API Routes
@@ -60,6 +65,9 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/update", updateRoutes);
 app.use("/api/sandbox", sandboxRoutes);
+app.use("/api/keys", keysRoutes);
+app.use("/api/usage", usageRoutes);
+app.use("/api/license", licenseRoutes);
 
 // Health Check
 app.get("/health", (req, res) => {

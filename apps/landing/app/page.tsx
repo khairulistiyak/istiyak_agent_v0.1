@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Bot, Download, Check } from "lucide-react";
+import { Bot, Download, Check, Menu, X } from "lucide-react";
 import Hero from "../components/Hero";
 import Features from "../components/Features";
 import CheckoutButton from "../components/CheckoutButton";
+import CookieConsent from "../components/CookieConsent";
 
 export default function Home() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div style={{ position: "relative", minHeight: "100vh", overflowX: "hidden", backgroundColor: "#07080d", color: "#f3f4f6" }}>
@@ -44,15 +46,59 @@ export default function Home() {
             ISTIYAK COMPANION
           </span>
         </div>
-        <div style={{ display: "flex", gap: "2rem", fontSize: "0.85rem", fontWeight: 500 }}>
+        <div className="desktop-nav" style={{ display: "flex", gap: "2rem", fontSize: "0.85rem", fontWeight: 500 }}>
           <a href="#features" style={{ color: "#9ca3af", textDecoration: "none", transition: "color 0.2s" }}>Features</a>
           <a href="#pricing" style={{ color: "#9ca3af", textDecoration: "none", transition: "color 0.2s" }}>Pricing</a>
           <a href="#download" style={{ color: "#9ca3af", textDecoration: "none", transition: "color 0.2s" }}>Download</a>
         </div>
-        <button onClick={() => setModalOpen(true)} className="glow-btn" style={{ padding: "0.45rem 1rem", borderRadius: "8px", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", backgroundColor: "#06b6d4", color: "#07080d", fontWeight: "bold" }}>
-          Launch App
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <button onClick={() => setModalOpen(true)} className="glow-btn desktop-nav" style={{ padding: "0.45rem 1rem", borderRadius: "8px", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", backgroundColor: "#06b6d4", color: "#07080d", fontWeight: "bold" }}>
+            Launch App
+          </button>
+          
+          {/* Mobile Menu Toggle Button */}
+          <button 
+            className="mobile-menu-btn" 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{
+              display: "none",
+              background: "none",
+              border: "none",
+              color: "#fff",
+              cursor: "pointer"
+            }}
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </nav>
+
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && (
+        <div style={{
+          position: "absolute",
+          top: "5rem",
+          left: "1rem",
+          right: "1rem",
+          background: "rgba(18, 20, 28, 0.95)",
+          backdropFilter: "blur(20px)",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
+          borderRadius: "12px",
+          padding: "1.5rem",
+          display: "flex",
+          flexDirection: "column",
+          gap: "1.25rem",
+          zIndex: 100,
+          boxShadow: "0 10px 25px rgba(0,0,0,0.5)"
+        }}>
+          <a href="#features" onClick={() => setMobileMenuOpen(false)} style={{ color: "#fff", textDecoration: "none", fontSize: "0.95rem", fontWeight: 600 }}>Features</a>
+          <a href="#pricing" onClick={() => setMobileMenuOpen(false)} style={{ color: "#fff", textDecoration: "none", fontSize: "0.95rem", fontWeight: 600 }}>Pricing</a>
+          <a href="#download" onClick={() => setMobileMenuOpen(false)} style={{ color: "#fff", textDecoration: "none", fontSize: "0.95rem", fontWeight: 600 }}>Download</a>
+          <button onClick={() => { setModalOpen(true); setMobileMenuOpen(false); }} className="glow-btn" style={{ padding: "0.6rem", width: "100%", borderRadius: "8px", fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", backgroundColor: "#06b6d4", color: "#07080d", fontWeight: "bold" }}>
+            Launch App
+          </button>
+        </div>
+      )}
 
       {/* Hero Section */}
       <Hero />
@@ -131,6 +177,49 @@ export default function Home() {
             </div>
           </div>
 
+        </div>
+
+        {/* Detailed Comparison Table */}
+        <div style={{ marginTop: "5rem", overflowX: "auto" }}>
+          <h3 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#fff", textAlign: "center", marginBottom: "2rem", fontFamily: "'Outfit', sans-serif" }}>
+            Detailed Feature Comparison
+          </h3>
+          <table style={{ width: "100%", borderCollapse: "collapse", color: "#d1d5db", fontSize: "0.85rem", textAlign: "left" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", color: "#9ca3af" }}>
+                <th style={{ padding: "1rem" }}>Feature</th>
+                <th style={{ padding: "1rem" }}>Free Tier</th>
+                <th style={{ padding: "1rem", color: "#06b6d4" }}>Pro Developer</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                <td style={{ padding: "1rem", fontWeight: 600, color: "#fff" }}>Autonomous Coding Loops</td>
+                <td style={{ padding: "1rem" }}>Up to 10 steps</td>
+                <td style={{ padding: "1rem", color: "#34d399" }}>Up to 40 steps</td>
+              </tr>
+              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                <td style={{ padding: "1rem", fontWeight: 600, color: "#fff" }}>Premium AI Models</td>
+                <td style={{ padding: "1rem" }}>❌ (BYOK only)</td>
+                <td style={{ padding: "1rem", color: "#34d399" }}>Gemini 2.5 Pro / Sonnet</td>
+              </tr>
+              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                <td style={{ padding: "1rem", fontWeight: 600, color: "#fff" }}>Multi-file operations</td>
+                <td style={{ padding: "1rem" }}>Single-file scope</td>
+                <td style={{ padding: "1rem", color: "#34d399" }}>Project-wide scope</td>
+              </tr>
+              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                <td style={{ padding: "1rem", fontWeight: 600, color: "#fff" }}>Secure Sandbox runs</td>
+                <td style={{ padding: "1rem" }}>Local execution</td>
+                <td style={{ padding: "1rem", color: "#34d399" }}>Dockerized container runs</td>
+              </tr>
+              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                <td style={{ padding: "1rem", fontWeight: 600, color: "#fff" }}>Developer Support</td>
+                <td style={{ padding: "1rem" }}>Community Discord</td>
+                <td style={{ padding: "1rem", color: "#34d399" }}>Priority support (24h SLA)</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
@@ -294,6 +383,7 @@ export default function Home() {
         </div>
       )}
 
+      <CookieConsent />
     </div>
   );
 }

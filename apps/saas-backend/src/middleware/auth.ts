@@ -33,3 +33,11 @@ export async function authenticateToken(req: any, res: Response, next: NextFunct
     return res.status(403).json({ error: "Invalid or expired access token" });
   }
 }
+
+export function requireAdmin(req: any, res: Response, next: NextFunction) {
+  if (!req.user || !req.user.isAdmin) {
+    return res.status(403).json({ error: "Access denied. Admin role required." });
+  }
+  next();
+}
+

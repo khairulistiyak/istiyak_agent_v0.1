@@ -29,8 +29,30 @@ export default function AdminPage() {
   const fetchUsers = async () => {
     setLoading(true);
     setError(null);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("Access denied. Redirecting to login...");
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 2000);
+      return;
+    }
+
     try {
-      const res = await fetch("http://localhost:3002/api/admin/users");
+      const res = await fetch("http://localhost:3002/api/admin/users", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      if (res.status === 401 || res.status === 403) {
+        setError("Access denied. Central Admin role required.");
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 3000);
+        return;
+      }
+
       if (!res.ok) {
         throw new Error(`Failed to fetch users: ${res.statusText}`);
       }
@@ -53,11 +75,14 @@ export default function AdminPage() {
   const handleToggleBlock = async (userId: string, currentlyBlocked: boolean) => {
     setActionLoadingId(userId);
     const endpoint = currentlyBlocked ? "unblock" : "block";
+    const token = localStorage.getItem("token");
+
     try {
       const res = await fetch(`http://localhost:3002/api/admin/user/${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ userId }),
       });
