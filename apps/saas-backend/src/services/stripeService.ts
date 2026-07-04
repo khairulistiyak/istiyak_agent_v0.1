@@ -68,4 +68,23 @@ export async function createStripeCheckoutSession(
     url: session.url,
   };
 }
+
+export async function createStripePortalSession(userId: string, returnUrl?: string) {
+  if (!STRIPE_SECRET_KEY) {
+    throw new Error("Stripe integration is not configured on the server.");
+  }
+
+  const user = await User.findById(userId);
+  if (!user || !user.stripeCustomerId) {
+    throw new Error("No Stripe customer found for this user. Subscribe first.");
+  }
+
+  const session = await stripe.billingPortal.sessions.create({
+    customer: user.stripeCustomerId,
+    return_url: returnUrl || "http://localhost:3000/billing",
+  });
+
+  return { url: session.url };
+}
+
 export { stripe };

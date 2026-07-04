@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/DashboardLayout";
 import { BarChart2, DollarSign, Activity, Cpu, ArrowUpRight } from "lucide-react";
+import { API_BASE_URL } from "../../lib/config";
 
 export default function DashboardPage() {
   const [summary, setSummary] = useState<any>(null);
@@ -15,11 +16,11 @@ export default function DashboardPage() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    const fetchSummary = fetch("http://localhost:3002/api/usage/summary", {
+    const fetchSummary = fetch(`${API_BASE_URL}/api/usage/summary`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then((res) => res.json());
 
-    const fetchDaily = fetch("http://localhost:3002/api/usage/daily", {
+    const fetchDaily = fetch(`${API_BASE_URL}/api/usage/daily`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then((res) => res.json());
 

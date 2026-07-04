@@ -73,4 +73,53 @@ export class Client {
   async getStats(): Promise<any> {
     return await this.connection.send("telemetry/stats", {});
   }
+
+  /**
+   * Aborts the currently running agent execution loop.
+   */
+  async abort(): Promise<{ success: boolean; message: string }> {
+    return await this.connection.send("agent/abort", {});
+  }
+
+  /**
+   * Gets the current status of the agent (whether running or idle).
+   */
+  async getStatus(): Promise<{ running: boolean; message: string }> {
+    return await this.connection.send("agent/status", {}, "GET");
+  }
+
+  /**
+   * Runs a shell command on the local daemon inside the workspace path.
+   */
+  async runCommand(workspacePath: string, command: string): Promise<{ output: string }> {
+    return await this.connection.send("run-command", { workspacePath, command });
+  }
+
+  /**
+   * Reindexes the workspace codebase for memory/RAG lookup.
+   */
+  async reindex(workspacePath: string): Promise<{ success: boolean; message: string }> {
+    return await this.connection.send("reindex", { workspacePath });
+  }
+
+  /**
+   * Gets the Git status of the workspace repo.
+   */
+  async getGitStatus(workspacePath: string): Promise<{ initialized: boolean; branch: string; raw: string }> {
+    return await this.connection.send("git/status", { workspacePath }, "GET");
+  }
+
+  /**
+   * Gets the recent Git log of the workspace repo.
+   */
+  async getGitLog(workspacePath: string, count: number = 10): Promise<{ log: string }> {
+    return await this.connection.send("git/log", { workspacePath, count }, "GET");
+  }
+
+  /**
+   * Gets the Git diff of uncommitted changes in the workspace repo.
+   */
+  async getGitDiff(workspacePath: string): Promise<{ diff: string }> {
+    return await this.connection.send("git/diff", { workspacePath }, "GET");
+  }
 }

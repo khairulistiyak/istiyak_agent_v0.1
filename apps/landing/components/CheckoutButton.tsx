@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Zap, Loader2 } from "lucide-react";
+import { API_BASE_URL } from "../lib/config";
 
 export const CheckoutButton = () => {
   const router = useRouter();
@@ -19,7 +20,7 @@ export const CheckoutButton = () => {
     }
 
     try {
-      const res = await fetch("http://localhost:3002/api/billing/checkout", {
+      const res = await fetch(`${API_BASE_URL}/api/billing/checkout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

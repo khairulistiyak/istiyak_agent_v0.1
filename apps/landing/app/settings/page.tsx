@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/DashboardLayout";
 import { User, Shield, Key, AlertTriangle, CheckCircle } from "lucide-react";
+import { API_BASE_URL } from "../../lib/config";
 
 export default function SettingsPage() {
   const [name, setName] = useState("");
@@ -19,7 +20,7 @@ export default function SettingsPage() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch("http://localhost:3002/api/auth/profile", {
+    fetch(`${API_BASE_URL}/api/auth/profile`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -40,7 +41,7 @@ export default function SettingsPage() {
     if (!token) return;
 
     try {
-      const res = await fetch("http://localhost:3002/api/auth/profile", {
+      const res = await fetch(`${API_BASE_URL}/api/auth/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -74,7 +75,7 @@ export default function SettingsPage() {
     if (!token) return;
 
     try {
-      const res = await fetch("http://localhost:3002/api/auth/profile", {
+      const res = await fetch(`${API_BASE_URL}/api/auth/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

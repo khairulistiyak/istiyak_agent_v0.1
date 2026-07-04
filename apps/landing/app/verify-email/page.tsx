@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ShieldCheck, AlertTriangle, Bot, Loader2 } from "lucide-react";
+import { API_BASE_URL } from "../../lib/config";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -21,7 +22,7 @@ function VerifyEmailContent() {
       return;
     }
 
-    fetch(`http://localhost:3002/api/auth/verify?token=${token}&email=${encodeURIComponent(email)}`)
+    fetch(`${API_BASE_URL}/api/auth/verify?token=${token}&email=${encodeURIComponent(email)}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.status === "success") {

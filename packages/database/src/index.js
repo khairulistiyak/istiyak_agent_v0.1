@@ -6,8 +6,9 @@ import { ApiKey } from "./models/ApiKey.js";
 import { UsageLog } from "./models/UsageLog.js";
 import { Session } from "./models/Session.js";
 import { PasswordReset } from "./models/PasswordReset.js";
+import { Team } from "./models/Team.js";
 
-export { User, IpLog, Subscription, ApiKey, UsageLog, Session, PasswordReset };
+export { User, IpLog, Subscription, ApiKey, UsageLog, Session, PasswordReset, Team };
 
 export async function connectDatabase(uri) {
   try {

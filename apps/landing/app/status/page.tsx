@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bot, CheckCircle, AlertTriangle, RefreshCw, ArrowLeft } from "lucide-react";
+import { API_BASE_URL } from "../../lib/config";
 
 export default function StatusPage() {
   const router = useRouter();
@@ -13,7 +14,7 @@ export default function StatusPage() {
   const checkHealth = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3002/health");
+      const res = await fetch(`${API_BASE_URL}/health`);
       const data = await res.json();
       if (data.status === "ok") {
         setBackendStatus("operational");

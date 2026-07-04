@@ -125,8 +125,8 @@ export class SessionMemory {
 
     console.log(`[SessionMemory] Auto-compressing: ${this.messages.length} messages, ${tokenCount} tokens`);
 
-    // Separate system messages
-    const systemMessages = this.messages.filter(m => m.role === "system");
+    // Separate system messages (excluding previous session compression summaries)
+    const systemMessages = this.messages.filter(m => m.role === "system" && !m.content.startsWith("[Session History"));
     const conversationMessages = this.messages.filter(m => m.role !== "system");
 
     // Keep last 8 conversation messages in full

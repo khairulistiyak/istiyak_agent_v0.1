@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Sitemap: https://istiyak.ai/sitemap.xml
+
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /api-keys
+Disallow: /billing

@@ -3,6 +3,7 @@
 import { useEffect, useState, ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Bot, User, Settings, Key, CreditCard, BarChart2, LogOut, Home } from "lucide-react";
+import { API_BASE_URL } from "../lib/config";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -21,7 +22,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       return;
     }
 
-    fetch("http://localhost:3002/api/auth/profile", {
+    fetch(`${API_BASE_URL}/api/auth/profile`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

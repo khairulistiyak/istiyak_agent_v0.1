@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/DashboardLayout";
 import { CreditCard, Check, ShieldCheck, Zap, AlertTriangle } from "lucide-react";
+import { API_BASE_URL } from "../../lib/config";
 
 export default function BillingPage() {
   const [subscription, setSubscription] = useState<any>(null);
@@ -15,7 +16,7 @@ export default function BillingPage() {
     if (!token) return;
 
     try {
-      const res = await fetch("http://localhost:3002/api/billing/status", {
+      const res = await fetch(`${API_BASE_URL}/api/billing/status`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -43,7 +44,7 @@ export default function BillingPage() {
     if (!token) return;
 
     try {
-      const res = await fetch("http://localhost:3002/api/billing/upgrade-mock", {
+      const res = await fetch(`${API_BASE_URL}/api/billing/upgrade-mock`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

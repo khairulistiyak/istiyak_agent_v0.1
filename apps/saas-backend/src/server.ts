@@ -2,8 +2,12 @@ import "./config/env.js";
 import express from "express";
 import cors from "cors";
 import passport from "passport";
+import cookieParser from "cookie-parser";
 import * as Sentry from "@sentry/node";
 import authRoutes from "./routes/auth.js";
+import profileRoutes from "./routes/profile.js";
+import passwordRoutes from "./routes/password.js";
+import verificationRoutes from "./routes/verification.js";
 import adminRoutes from "./routes/admin.js";
 import billingRoutes from "./routes/billing.js";
 import updateRoutes from "./routes/update.js";
@@ -15,6 +19,7 @@ import { connectDatabase } from "@istiyak/database";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { initPassport } from "./config/passport.js";
 import { handleStripeWebhook } from "./controllers/webhookController.js";
+import { csrfProtection, getCsrfToken } from "./middleware/csrf.js";
 
 // Initialize passport strategies
 initPassport();
@@ -57,10 +62,18 @@ app.use(cors({
   }
 }));
 app.post("/api/billing/webhook", express.raw({ type: "application/json" }), handleStripeWebhook);
+app.use(cookieParser());
 app.use(express.json());
+
+// CSRF protection (applied to state-changing requests)
+app.get("/api/csrf-token", getCsrfToken);
+app.use(csrfProtection);
 
 // Register API Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/auth", profileRoutes);
+app.use("/api/auth", passwordRoutes);
+app.use("/api/auth", verificationRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/update", updateRoutes);

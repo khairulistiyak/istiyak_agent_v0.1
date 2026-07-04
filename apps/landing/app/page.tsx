@@ -1,382 +1,363 @@
 "use client";
 
 import { useState } from "react";
-import { Bot, Download, Check, Menu, X } from "lucide-react";
+import { Bot, Download, Check, Menu, X, Star, User } from "lucide-react";
 import Hero from "../components/Hero";
 import Features from "../components/Features";
 import CheckoutButton from "../components/CheckoutButton";
 import CookieConsent from "../components/CookieConsent";
+import ComparisonTable from "../components/ComparisonTable";
+import AnimatedSection, { AnimatedSectionStagger } from "../components/AnimatedSection";
+import InteractiveDemo from "../components/InteractiveDemo";
 
 export default function Home() {
   const [modalOpen, setModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div style={{ position: "relative", minHeight: "100vh", overflowX: "hidden", backgroundColor: "#07080d", color: "#f3f4f6" }}>
+    <div className="relative min-h-screen bg-[#030303] text-gray-400 font-sans antialiased selection:bg-[#06b6d4]/20 selection:text-white pb-20">
       
-      {/* Background Decorative Glows */}
-      <div style={{
-        position: "absolute",
-        top: "10%",
-        left: "50%",
-        transform: "translateX(-50%)",
-        width: "500px",
-        height: "500px",
-        borderRadius: "50%",
-        backgroundColor: "rgba(6, 182, 212, 0.08)",
-        filter: "blur(120px)",
-        pointerEvents: "none",
-        zIndex: 0
-      }} />
+      {/* Premium Ambient Background Accents */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] pointer-events-none -z-10 overflow-hidden">
+        <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-[#06b6d4]/10 blur-[120px]" />
+      </div>
 
-      {/* Navigation Header */}
-      <nav style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "1.5rem 2rem",
-        maxWidth: "1200px",
-        margin: "0 auto",
-        position: "relative",
-        zIndex: 10
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <Bot size={24} style={{ color: "#06b6d4" }} />
-          <span style={{ fontSize: "1.1rem", fontWeight: 800, letterSpacing: "0.05em", color: "#fff", fontFamily: "'Outfit', sans-serif" }}>
-            ISTIYAK COMPANION
-          </span>
-        </div>
-        <div className="desktop-nav" style={{ display: "flex", gap: "2rem", fontSize: "0.85rem", fontWeight: 500 }}>
-          <a href="#features" style={{ color: "#9ca3af", textDecoration: "none", transition: "color 0.2s" }}>Features</a>
-          <a href="#pricing" style={{ color: "#9ca3af", textDecoration: "none", transition: "color 0.2s" }}>Pricing</a>
-          <a href="#download" style={{ color: "#9ca3af", textDecoration: "none", transition: "color 0.2s" }}>Download</a>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-          <button onClick={() => setModalOpen(true)} className="glow-btn desktop-nav" style={{ padding: "0.45rem 1rem", borderRadius: "8px", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", backgroundColor: "#06b6d4", color: "#07080d", fontWeight: "bold" }}>
-            Launch App
-          </button>
-          
-          {/* Mobile Menu Toggle Button */}
-          <button 
-            className="mobile-menu-btn" 
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            style={{
-              display: "none",
-              background: "none",
-              border: "none",
-              color: "#fff",
-              cursor: "pointer"
-            }}
-          >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
-      </nav>
+      {/* Floating Glass-Pill Navigation Header */}
+      <div className="fixed top-6 left-0 right-0 z-50 px-4">
+        <header className="max-w-4xl mx-auto bg-white/[0.01] backdrop-blur-xl border border-white/5 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+          <nav className="flex justify-between items-center px-6 py-2.5">
+            {/* Logo */}
+            <div className="flex items-center gap-2 cursor-pointer group">
+              <Bot size={20} className="text-[#06b6d4] group-hover:rotate-12 transition-transform duration-300" />
+              <span className="text-xs font-bold tracking-wider text-white font-mono">
+                ISTIYAK COMPANION
+              </span>
+            </div>
+
+            {/* Desktop Nav Links */}
+            <div className="hidden md:flex items-center gap-6 text-[11px] font-medium tracking-wide uppercase text-gray-500">
+              <a href="#features" className="hover:text-white transition-colors">Features</a>
+              <a href="#demo" className="hover:text-white transition-colors">Demo</a>
+              <a href="#testimonials" className="hover:text-white transition-colors">Testimonials</a>
+              <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+              <a href="#download" className="hover:text-white transition-colors">Download</a>
+            </div>
+
+            {/* Desktop CTA (Translucent glass-pill style) */}
+            <div className="hidden md:flex items-center">
+              <button 
+                onClick={() => setModalOpen(true)} 
+                className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-[#06b6d4] bg-[#06b6d4]/10 border border-[#06b6d4]/20 hover:bg-[#06b6d4]/20 hover:border-[#06b6d4]/30 active:scale-[0.98] transition-all duration-300"
+              >
+                Launch App
+              </button>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button 
+              className="md:hidden flex items-center text-white" 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </nav>
+        </header>
+      </div>
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div style={{
-          position: "absolute",
-          top: "5rem",
-          left: "1rem",
-          right: "1rem",
-          background: "rgba(18, 20, 28, 0.95)",
-          backdropFilter: "blur(20px)",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
-          borderRadius: "12px",
-          padding: "1.5rem",
-          display: "flex",
-          flexDirection: "column",
-          gap: "1.25rem",
-          zIndex: 100,
-          boxShadow: "0 10px 25px rgba(0,0,0,0.5)"
-        }}>
-          <a href="#features" onClick={() => setMobileMenuOpen(false)} style={{ color: "#fff", textDecoration: "none", fontSize: "0.95rem", fontWeight: 600 }}>Features</a>
-          <a href="#pricing" onClick={() => setMobileMenuOpen(false)} style={{ color: "#fff", textDecoration: "none", fontSize: "0.95rem", fontWeight: 600 }}>Pricing</a>
-          <a href="#download" onClick={() => setMobileMenuOpen(false)} style={{ color: "#fff", textDecoration: "none", fontSize: "0.95rem", fontWeight: 600 }}>Download</a>
-          <button onClick={() => { setModalOpen(true); setMobileMenuOpen(false); }} className="glow-btn" style={{ padding: "0.6rem", width: "100%", borderRadius: "8px", fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", backgroundColor: "#06b6d4", color: "#07080d", fontWeight: "bold" }}>
+        <div className="fixed inset-0 z-40 bg-[#030303]/95 backdrop-blur-xl border-b border-white/5 flex flex-col justify-center items-center p-6 gap-8 md:hidden">
+          <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-md font-medium text-gray-300 hover:text-white">Features</a>
+          <a href="#demo" onClick={() => setMobileMenuOpen(false)} className="text-md font-medium text-gray-300 hover:text-white">Demo</a>
+          <a href="#testimonials" onClick={() => setMobileMenuOpen(false)} className="text-md font-medium text-gray-300 hover:text-white">Testimonials</a>
+          <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="text-md font-medium text-gray-300 hover:text-white">Pricing</a>
+          <a href="#download" onClick={() => setMobileMenuOpen(false)} className="text-md font-medium text-gray-300 hover:text-white">Download</a>
+          <button 
+            onClick={() => { setModalOpen(true); setMobileMenuOpen(false); }} 
+            className="px-6 py-2 rounded-full text-xs font-bold uppercase tracking-wider text-[#06b6d4] bg-[#06b6d4]/10 border border-[#06b6d4]/20 hover:bg-[#06b6d4]/20 transition-all mt-4"
+          >
             Launch App
           </button>
         </div>
       )}
 
       {/* Hero Section */}
-      <Hero />
+      <div className="pt-32">
+        <Hero />
+      </div>
 
       {/* Features Section */}
-      <div id="features">
+      <div id="features" className="relative">
         <Features />
       </div>
 
-      {/* Pricing Cards */}
-      <section id="pricing" style={{ maxWidth: "800px", margin: "0 auto 6rem auto", padding: "0 1.5rem", position: "relative", zIndex: 10 }}>
-        <h2 style={{ fontSize: "1.8rem", fontWeight: 800, letterSpacing: "-0.01em", textAlign: "center", marginBottom: "0.5rem", color: "#fff" }}>
-          Simple, Value-Driven Plans
-        </h2>
-        <p style={{ fontSize: "0.9rem", color: "#9ca3af", textAlign: "center", marginBottom: "3rem" }}>
-          Choose the plan that fits your engineering needs. Start for free.
-        </p>
+      {/* Product Demo Section */}
+      <section id="demo" className="py-28 px-6 max-w-4xl mx-auto relative z-10">
+        <AnimatedSection className="text-center mb-12">
+          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white mb-3 font-mono">
+            Seamless Execution Loop
+          </h2>
+          <p className="text-gray-500 max-w-lg mx-auto text-xs md:text-sm">
+            Watch the autonomous agent loop plan, test, and write code alongside you.
+          </p>
+        </AnimatedSection>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "2rem", alignItems: "stretch" }}>
-          
-          {/* Free Tier */}
-          <div style={{ padding: "2.5rem 2rem", borderRadius: "16px", display: "flex", flexDirection: "column", justifyContent: "space-between", border: "1px solid rgba(255,255,255,0.05)", backgroundColor: "#12141c" }}>
-            <div>
-              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>Free Tier</span>
-              <div style={{ display: "flex", alignItems: "baseline", gap: "0.2rem", margin: "1rem 0" }}>
-                <span style={{ fontSize: "2.5rem", fontWeight: 800, color: "#fff" }}>$0</span>
-                <span style={{ fontSize: "0.85rem", color: "#9ca3af" }}>/ forever</span>
+        <AnimatedSection className="w-full">
+          <InteractiveDemo />
+        </AnimatedSection>
+      </section>
+
+      {/* Testimonials Section */}
+      <section id="testimonials" className="py-20 px-6 max-w-5xl mx-auto relative z-10">
+        <AnimatedSection className="text-center mb-12">
+          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white mb-3 font-mono">
+            Loved by Developers
+          </h2>
+          <p className="text-gray-500 max-w-lg mx-auto text-xs md:text-sm">
+            Hear what builders are saying about their new autonomous coding co-pilot.
+          </p>
+        </AnimatedSection>
+
+        <AnimatedSectionStagger className="grid md:grid-cols-2 gap-6">
+          {/* Card 1 */}
+          <div className="flex flex-col justify-between p-6 rounded-2xl bg-white/[0.01] border border-white/[0.03] hover:border-white/10 hover:bg-white/[0.02] transition-all duration-300 group">
+            <div className="space-y-3">
+              <div className="flex gap-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} size={12} className="fill-[#06b6d4] text-[#06b6d4] opacity-80" />
+                ))}
               </div>
-              <p style={{ fontSize: "0.8rem", color: "#9ca3af", lineHeight: 1.5, marginBottom: "1.5rem" }}>
+              <p className="text-gray-300 text-xs md:text-sm leading-relaxed italic">
+                "The speed and autonomy of the agent loop are mind-blowing. It diagnosed an ESM import error that had been blocking my Next.js compile for hours and fixed it in 15 seconds."
+              </p>
+            </div>
+            <div className="flex items-center gap-3 mt-6 pt-4 border-t border-white/5">
+              <div className="w-8 h-8 rounded-full bg-[#06b6d4]/5 flex items-center justify-center border border-[#06b6d4]/10">
+                <User size={14} className="text-[#06b6d4] opacity-80" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-white">Rakibul Islam</h4>
+                <p className="text-[10px] text-gray-500 font-mono">Full Stack Developer</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2 */}
+          <div className="flex flex-col justify-between p-6 rounded-2xl bg-white/[0.01] border border-white/[0.03] hover:border-white/10 hover:bg-white/[0.02] transition-all duration-300 group">
+            <div className="space-y-3">
+              <div className="flex gap-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} size={12} className="fill-[#06b6d4] text-[#06b6d4] opacity-80" />
+                ))}
+              </div>
+              <p className="text-gray-300 text-xs md:text-sm leading-relaxed italic">
+                "Since having Istiyak Companion float alongside my editor, I delegate all unit testing and boilerplate writing to it. The $19/mo Pro license pays for itself on day one."
+              </p>
+            </div>
+            <div className="flex items-center gap-3 mt-6 pt-4 border-t border-white/5">
+              <div className="w-8 h-8 rounded-full bg-[#06b6d4]/5 flex items-center justify-center border border-[#06b6d4]/10">
+                <User size={14} className="text-[#06b6d4] opacity-80" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-white">Tanvir Ahmed</h4>
+                <p className="text-[10px] text-gray-500 font-mono">Lead Software Engineer</p>
+              </div>
+            </div>
+          </div>
+        </AnimatedSectionStagger>
+      </section>
+
+      {/* Pricing Cards */}
+      <section id="pricing" className="py-20 px-6 max-w-4xl mx-auto relative z-10">
+        <AnimatedSection className="text-center mb-12">
+          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white mb-3 font-mono">
+            Value-Driven Pricing
+          </h2>
+          <p className="text-gray-500 max-w-lg mx-auto text-xs md:text-sm">
+            Choose the plan that fits your engineering speed. Start free.
+          </p>
+        </AnimatedSection>
+
+        <div className="grid md:grid-cols-2 gap-6 items-stretch max-w-3xl mx-auto">
+          {/* Free Tier */}
+          <AnimatedSection className="p-8 rounded-2xl border border-white/[0.03] bg-white/[0.01] backdrop-blur-xl flex flex-col justify-between hover:border-white/10 transition-all duration-300">
+            <div>
+              <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest font-mono">Free Tier</span>
+              <div className="flex items-baseline gap-1 my-3">
+                <span className="text-3xl md:text-4xl font-extrabold text-white">$0</span>
+                <span className="text-xs text-gray-500">/ forever</span>
+              </div>
+              <p className="text-gray-400 text-xs mb-6 leading-relaxed">
                 Perfect for hobbyists and developers wanting to test autonomous coding locally.
               </p>
-              <ul style={{ padding: 0, margin: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "0.75rem", fontSize: "0.8rem" }}>
-                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Check size={14} style={{ color: "#34d399" }} /> Basic Chat Interface</li>
-                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Check size={14} style={{ color: "#34d399" }} /> standard open-source models</li>
-                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Check size={14} style={{ color: "#34d399" }} /> Local API Keys support (BYOK)</li>
-                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Check size={14} style={{ color: "#34d399" }} /> Strict daily request limits</li>
+              <ul className="space-y-3 text-xs text-gray-300">
+                <li className="flex items-center gap-2.5"><Check size={14} className="text-[#34d399] shrink-0" /> Basic Chat Interface</li>
+                <li className="flex items-center gap-2.5"><Check size={14} className="text-[#34d399] shrink-0" /> Standard open-source models</li>
+                <li className="flex items-center gap-2.5"><Check size={14} className="text-[#34d399] shrink-0" /> Local API Keys support (BYOK)</li>
+                <li className="flex items-center gap-2.5"><Check size={14} className="text-[#34d399] shrink-0" /> Strict daily request limits</li>
               </ul>
             </div>
-            <button onClick={() => setModalOpen(true)} style={{
-              width: "100%",
-              padding: "0.75rem",
-              borderRadius: "8px",
-              border: "1px solid rgba(255,255,255,0.1)",
-              backgroundColor: "transparent",
-              color: "#fff",
-              fontWeight: 600,
-              fontSize: "0.85rem",
-              marginTop: "2rem",
-              cursor: "pointer"
-            }}>
+            <button 
+              onClick={() => setModalOpen(true)} 
+              className="w-full mt-8 py-2.5 rounded-full border border-white/5 hover:border-white/15 text-[10px] tracking-wider uppercase font-bold text-white bg-white/[0.02] hover:bg-white/[0.05] transition-all active:scale-[0.98]"
+            >
               GET STARTED
             </button>
-          </div>
+          </AnimatedSection>
 
           {/* Pro Tier */}
-          <div style={{ padding: "2.5rem 2rem", borderRadius: "16px", display: "flex", flexDirection: "column", justifyContent: "space-between", border: "1px solid #06b6d4/30", backgroundColor: "#12141c" }}>
+          <AnimatedSection className="p-8 rounded-2xl border border-[#06b6d4]/20 bg-white/[0.01] backdrop-blur-xl flex flex-col justify-between hover:border-[#06b6d4]/40 transition-all duration-300 relative">
+            <div className="absolute top-4 right-4 bg-[#06b6d4]/5 border border-[#06b6d4]/20 rounded-full px-2.5 py-0.5 text-[8px] font-bold tracking-widest text-[#06b6d4] uppercase font-mono">
+              POPULAR
+            </div>
             <div>
-              <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#06b6d4", textTransform: "uppercase", letterSpacing: "0.05em" }}>PRO DEVELOPER</span>
-              <div style={{ display: "flex", alignItems: "baseline", gap: "0.2rem", margin: "1rem 0" }}>
-                <span style={{ fontSize: "2.5rem", fontWeight: 800, color: "#fff" }}>$19</span>
-                <span style={{ fontSize: "0.85rem", color: "#9ca3af" }}>/ month</span>
+              <span className="text-[9px] font-bold text-[#06b6d4] uppercase tracking-widest font-mono">PRO DEVELOPER</span>
+              <div className="flex items-baseline gap-1 my-3">
+                <span className="text-3xl md:text-4xl font-extrabold text-white">$19</span>
+                <span className="text-xs text-gray-400 font-mono">/ month</span>
               </div>
-              <p style={{ fontSize: "0.8rem", color: "#9ca3af", lineHeight: 1.5, marginBottom: "1.5rem" }}>
+              <p className="text-gray-400 text-xs mb-6 leading-relaxed">
                 For professional engineers needing speed, sandbox execution, and raw agent intelligence.
               </p>
-              <ul style={{ padding: 0, margin: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "0.75rem", fontSize: "0.8rem" }}>
-                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Check size={14} style={{ color: "#06b6d4" }} /> Premium Models (Gemini 2.5 Pro / Sonnet)</li>
-                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Check size={14} style={{ color: "#06b6d4" }} /> 40-Step Autonomous Loops</li>
-                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Check size={14} style={{ color: "#06b6d4" }} /> Multi-file codebase refactoring</li>
-                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Check size={14} style={{ color: "#06b6d4" }} /> Unlimited local model support</li>
-                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Check size={14} style={{ color: "#06b6d4" }} /> Custom Docker sandbox executions</li>
+              <ul className="space-y-3 text-xs text-gray-200">
+                <li className="flex items-center gap-2.5"><Check size={14} className="text-[#06b6d4] shrink-0" /> Premium Models (Gemini 2.5 Pro / Sonnet)</li>
+                <li className="flex items-center gap-2.5"><Check size={14} className="text-[#06b6d4] shrink-0" /> 40-Step Autonomous Loops</li>
+                <li className="flex items-center gap-2.5"><Check size={14} className="text-[#06b6d4] shrink-0" /> Multi-file codebase refactoring</li>
+                <li className="flex items-center gap-2.5"><Check size={14} className="text-[#06b6d4] shrink-0" /> Unlimited local model support</li>
+                <li className="flex items-center gap-2.5"><Check size={14} className="text-[#06b6d4] shrink-0" /> Custom Docker sandbox executions</li>
               </ul>
             </div>
-            <div style={{ marginTop: "2rem" }}>
+            <div className="mt-8">
               <CheckoutButton />
             </div>
-          </div>
-
+          </AnimatedSection>
         </div>
 
         {/* Detailed Comparison Table */}
-        <div style={{ marginTop: "5rem", overflowX: "auto" }}>
-          <h3 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#fff", textAlign: "center", marginBottom: "2rem", fontFamily: "'Outfit', sans-serif" }}>
-            Detailed Feature Comparison
-          </h3>
-          <table style={{ width: "100%", borderCollapse: "collapse", color: "#d1d5db", fontSize: "0.85rem", textAlign: "left" }}>
-            <thead>
-              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", color: "#9ca3af" }}>
-                <th style={{ padding: "1rem" }}>Feature</th>
-                <th style={{ padding: "1rem" }}>Free Tier</th>
-                <th style={{ padding: "1rem", color: "#06b6d4" }}>Pro Developer</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                <td style={{ padding: "1rem", fontWeight: 600, color: "#fff" }}>Autonomous Coding Loops</td>
-                <td style={{ padding: "1rem" }}>Up to 10 steps</td>
-                <td style={{ padding: "1rem", color: "#34d399" }}>Up to 40 steps</td>
-              </tr>
-              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                <td style={{ padding: "1rem", fontWeight: 600, color: "#fff" }}>Premium AI Models</td>
-                <td style={{ padding: "1rem" }}>❌ (BYOK only)</td>
-                <td style={{ padding: "1rem", color: "#34d399" }}>Gemini 2.5 Pro / Sonnet</td>
-              </tr>
-              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                <td style={{ padding: "1rem", fontWeight: 600, color: "#fff" }}>Multi-file operations</td>
-                <td style={{ padding: "1rem" }}>Single-file scope</td>
-                <td style={{ padding: "1rem", color: "#34d399" }}>Project-wide scope</td>
-              </tr>
-              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                <td style={{ padding: "1rem", fontWeight: 600, color: "#fff" }}>Secure Sandbox runs</td>
-                <td style={{ padding: "1rem" }}>Local execution</td>
-                <td style={{ padding: "1rem", color: "#34d399" }}>Dockerized container runs</td>
-              </tr>
-              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                <td style={{ padding: "1rem", fontWeight: 600, color: "#fff" }}>Developer Support</td>
-                <td style={{ padding: "1rem" }}>Community Discord</td>
-                <td style={{ padding: "1rem", color: "#34d399" }}>Priority support (24h SLA)</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <AnimatedSection className="mt-16 overflow-x-auto rounded-xl border border-white/[0.03]">
+          <div className="bg-white/[0.01] backdrop-blur-xl rounded-xl p-6 min-w-[500px]">
+            <h3 className="text-sm font-bold text-white mb-4 font-mono">
+              Feature Matrix
+            </h3>
+            <table className="w-full text-left border-collapse text-xs text-gray-300">
+              <thead>
+                <tr className="border-b border-white/5 text-gray-500 font-medium">
+                  <th className="py-3 px-2">Feature</th>
+                  <th className="py-3 px-2">Free</th>
+                  <th className="py-3 px-2 text-[#06b6d4]">Pro</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.03]">
+                <tr>
+                  <td className="py-3 px-2 font-medium text-white">Autonomous Coding Loops</td>
+                  <td className="py-3 px-2 text-gray-400">Up to 10 steps</td>
+                  <td className="py-3 px-2 text-[#34d399] font-medium">Up to 40 steps</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-2 font-medium text-white">Premium AI Models</td>
+                  <td className="py-3 px-2 text-gray-400">❌ (BYOK only)</td>
+                  <td className="py-3 px-2 text-[#34d399] font-medium">Gemini 2.5 Pro / Sonnet</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-2 font-medium text-white">Multi-file operations</td>
+                  <td className="py-3 px-2 text-gray-400">Single-file scope</td>
+                  <td className="py-3 px-2 text-[#34d399] font-medium">Project-wide scope</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-2 font-medium text-white">Secure Sandbox runs</td>
+                  <td className="py-3 px-2 text-gray-400">Local execution</td>
+                  <td className="py-3 px-2 text-[#34d399] font-medium">Dockerized container runs</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-2 font-medium text-white">Developer Support</td>
+                  <td className="py-3 px-2 text-gray-400">Community Discord</td>
+                  <td className="py-3 px-2 text-[#34d399] font-medium">Priority support (24h SLA)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </AnimatedSection>
+      </section>
+
+      {/* Competitor Comparison Component */}
+      <section className="py-8 relative z-10">
+        <ComparisonTable />
       </section>
 
       {/* Download Section */}
-      <section id="download" style={{
-        maxWidth: "600px",
-        margin: "0 auto 6rem auto",
-        padding: "3rem 2rem",
-        borderRadius: "20px",
-        backgroundColor: "rgba(17, 24, 39, 0.4)",
-        border: "1px solid rgba(255,255,255,0.05)",
-        textAlign: "center",
-        position: "relative",
-        zIndex: 10
-      }}>
-        <h2 style={{ fontSize: "1.8rem", fontWeight: 800, color: "#fff", margin: "0 0 1rem 0" }}>
-          Get Istiyak Companion Now
-        </h2>
-        <p style={{ fontSize: "0.9rem", color: "#9ca3af", marginBottom: "2rem", lineHeight: 1.5 }}>
-          Available for macOS (Apple Silicon & Intel), Windows 10/11, and Linux. Builds are securely compiled on GitHub release pipelines.
-        </p>
+      <section id="download" className="py-20 px-6 max-w-3xl mx-auto relative z-10">
+        <AnimatedSection className="p-8 md:p-10 rounded-2xl border border-white/[0.03] bg-white/[0.01] backdrop-blur-xl text-center space-y-6 relative overflow-hidden group">
+          <div className="absolute -top-24 -left-24 w-48 h-48 rounded-full bg-[#06b6d4]/5 blur-[60px] pointer-events-none" />
+          
+          <h2 className="text-2xl font-extrabold tracking-tight text-white font-mono">
+            Get Istiyak Companion
+          </h2>
+          <p className="text-gray-400 max-w-lg mx-auto text-xs leading-relaxed">
+            Available for macOS (Apple Silicon & Intel), Windows 10/11, and Linux. Builds are securely compiled on GitHub release pipelines.
+          </p>
 
-        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "1rem" }}>
-          <button className="glow-btn" style={{ padding: "0.65rem 1.25rem", borderRadius: "8px", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "0.4rem", backgroundColor: "#06b6d4", color: "#07080d", fontWeight: "bold", border: "none" }}>
-            <Download size={14} /> macOS (.DMG)
-          </button>
-          <button style={{
-            padding: "0.65rem 1.25rem",
-            borderRadius: "8px",
-            fontSize: "0.8rem",
-            backgroundColor: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            color: "#fff",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.4rem",
-            cursor: "pointer",
-            transition: "all 0.2s"
-          }}>
-            <Download size={14} /> Windows (.EXE)
-          </button>
-          <button style={{
-            padding: "0.65rem 1.25rem",
-            borderRadius: "8px",
-            fontSize: "0.8rem",
-            backgroundColor: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            color: "#fff",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.4rem",
-            cursor: "pointer",
-            transition: "all 0.2s"
-          }}>
-            <Download size={14} /> Linux (.AppImage)
-          </button>
-        </div>
+          <div className="flex flex-wrap justify-center gap-3 pt-2">
+            <button className="px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-black bg-[#06b6d4] hover:bg-[#08d1f2] hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] active:scale-[0.98] transition-all duration-300">
+              <Download size={12} className="inline mr-1" /> macOS (.DMG)
+            </button>
+            <button className="px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 active:scale-[0.98] transition-all">
+              <Download size={12} className="inline mr-1" /> Windows (.EXE)
+            </button>
+            <button className="px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 active:scale-[0.98] transition-all">
+              <Download size={12} className="inline mr-1" /> Linux (.AppImage)
+            </button>
+          </div>
+        </AnimatedSection>
       </section>
 
       {/* Footer */}
-      <footer style={{
-        borderTop: "1px solid rgba(255,255,255,0.05)",
-        padding: "2rem",
-        textAlign: "center",
-        fontSize: "0.75rem",
-        color: "#9ca3af",
-        position: "relative",
-        zIndex: 10
-      }}>
-        © 2026 ISTIYAK AI Companion. All rights reserved. Built with Tauri, React & Node.js.
+      <footer className="border-t border-white/5 py-8 text-center text-[10px] text-gray-500 relative z-10 max-w-5xl mx-auto px-6">
+        <p className="font-mono">
+          © {new Date().getFullYear()} ISTIYAK AI Companion. All rights reserved. Built with Tauri, React & Node.js.
+        </p>
       </footer>
 
-      {/* Modal */}
+      {/* Modal (Translucent Zen Upgrade Box) */}
       {modalOpen && (
-        <div style={{
-          position: "fixed",
-          inset: 0,
-          backgroundColor: "rgba(3, 7, 18, 0.85)",
-          backdropFilter: "blur(12px)",
-          zIndex: 9999,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "1.5rem"
-        }} onClick={() => setModalOpen(false)}>
-          <div style={{
-            position: "relative",
-            width: "100%",
-            maxWidth: "420px",
-            background: "rgba(17, 24, 39, 0.85)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            padding: "2.5rem 2rem",
-            borderRadius: "20px",
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.6)",
-            textAlign: "center",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "1.5rem"
-          }} onClick={(e) => e.stopPropagation()}>
-            <button style={{
-              position: "absolute",
-              top: "1rem",
-              right: "1rem",
-              background: "transparent",
-              border: "none",
-              color: "#9ca3af",
-              cursor: "pointer",
-              fontSize: "1.25rem",
-              outline: "none"
-            }} onClick={() => setModalOpen(false)}>×</button>
+        <div 
+          className="fixed inset-0 z-[9999] bg-[#030712]/80 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setModalOpen(false)}
+        >
+          <div 
+            className="relative w-full max-w-sm bg-[#12141c] border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col items-center gap-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button 
+              className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
+              onClick={() => setModalOpen(false)}
+            >
+              <X size={16} />
+            </button>
 
-            <Bot size={48} style={{ color: "#06b6d4" }} />
+            <div className="w-10 h-10 rounded-full bg-[#06b6d4]/10 border border-[#06b6d4]/20 flex items-center justify-center">
+              <Bot size={20} className="text-[#06b6d4]" />
+            </div>
             
-            <div>
-              <h3 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff", marginBottom: "0.5rem", fontFamily: "'Outfit', sans-serif" }}>
+            <div className="text-center">
+              <h3 className="text-sm font-bold text-white mb-1 font-mono">
                 How to Upgrade to Pro
               </h3>
-              <p style={{ fontSize: "0.85rem", color: "#9ca3af", lineHeight: 1.6 }}>
+              <p className="text-[10px] text-gray-400 leading-relaxed">
                 To purchase or manage your Pro license subscription securely, please complete these steps:
               </p>
             </div>
 
-            <ol style={{
-              textAlign: "left",
-              fontSize: "0.8rem",
-              color: "#d1d5db",
-              paddingLeft: "1.25rem",
-              margin: 0,
-              display: "flex",
-              flexDirection: "column",
-              gap: "0.75rem",
-              lineHeight: 1.5
-            }}>
-              <li>Download the <strong>Istiyak Companion</strong> desktop application.</li>
-              <li>Install and launch the app on your developer machine.</li>
-              <li>Log in or register your account via the client.</li>
-              <li>Open your Profile Card (user icon in top right) and click <strong>Upgrade to Pro</strong> to complete checkout securely.</li>
+            <ol className="w-full text-[10px] text-gray-300 space-y-2.5 decimal list-inside bg-white/[0.01] border border-white/5 p-4 rounded-xl">
+              <li className="leading-relaxed">Download the <strong className="text-white">Istiyak Companion</strong> desktop application.</li>
+              <li className="leading-relaxed">Install and launch the app on your developer machine.</li>
+              <li className="leading-relaxed">Log in or register your account via the client.</li>
+              <li className="leading-relaxed">Open your Profile Card and click <strong className="text-[#06b6d4]">Upgrade to Pro</strong>.</li>
             </ol>
 
-            <a href="#download" onClick={() => setModalOpen(false)} style={{ width: "100%", textDecoration: "none" }}>
-              <button className="glow-btn" style={{
-                width: "100%",
-                padding: "0.75rem",
-                borderRadius: "10px",
-                fontWeight: 700,
-                fontSize: "0.85rem",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "0.5rem",
-                cursor: "pointer",
-                backgroundColor: "#06b6d4",
-                color: "#07080d",
-                border: "none"
-              }}>
-                <Download size={14} /> Download Companion App
+            <a href="#download" onClick={() => setModalOpen(false)} className="w-full">
+              <button className="w-full py-2.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-black bg-[#06b6d4] hover:bg-[#08d1f2] flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all">
+                <Download size={12} /> Download Companion App
               </button>
             </a>
           </div>

@@ -84,25 +84,26 @@ loadSettings: async () => {
        }
       const provider = (config.PROVIDER || "gemini") as SettingsSlice["provider"];
       const authMethod = (config.AUTH_METHOD || "apiKey") as SettingsSlice["authMethod"];
-      const apiKey =
+      const apiKey = (
         config.API_KEY ||
         config.GEMINI_API_KEY ||
         config.OPENAI_API_KEY ||
         config.CLAUDE_API_KEY ||
-        "";
-      const serviceAccountPath = config.SERVICE_ACCOUNT_PATH || "";
-      const projectId = config.PROJECT_ID || "";
-      const location = config.LOCATION || "global";
-      const selectedModel = config.SELECTED_MODEL || config.MODEL || "gemini-2.5-flash";
-      const customModel = config.CUSTOM_MODEL || "";
-      const workspacePath = config.WORKSPACE_PATH || "";
+        ""
+      ) as string;
+      const serviceAccountPath = (config.SERVICE_ACCOUNT_PATH || "") as string;
+      const projectId = (config.PROJECT_ID || "") as string;
+      const location = (config.LOCATION || "global") as string;
+      const selectedModel = (config.SELECTED_MODEL || config.MODEL || "gemini-2.5-flash") as string;
+      const customModel = (config.CUSTOM_MODEL || "") as string;
+      const workspacePath = (config.WORKSPACE_PATH || "") as string;
       const googleSearchEnabled = !!config.GOOGLE_SEARCH_ENABLED;
       const dockerSandboxEnabled = !!config.DOCKER_SANDBOX_ENABLED;
       const cloudSandboxEnabled = !!config.CLOUD_SANDBOX_ENABLED;
-      const sandboxImage = config.SANDBOX_IMAGE || "node:20-alpine";
-      const token = config.TOKEN || "";
-      const userEmail = config.USER_EMAIL || "";
-      const activeTheme = config.ACTIVE_THEME || "zen-dark";
+      const sandboxImage = (config.SANDBOX_IMAGE || "node:20-alpine") as string;
+      const token = (config.TOKEN || "") as string;
+      const userEmail = (config.USER_EMAIL || "") as string;
+      const activeTheme = (config.ACTIVE_THEME || "zen-dark") as string;
       const installedPrompts = Array.isArray(config.INSTALLED_PROMPTS)
         ? config.INSTALLED_PROMPTS
         : [];

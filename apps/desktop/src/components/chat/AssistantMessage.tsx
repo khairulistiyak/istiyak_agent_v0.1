@@ -1,6 +1,6 @@
 import { useState, memo } from "react";
 import type { UIMessage } from "ai";
-import type { ParsedAgentMessage } from "../../types/chat.js";
+import type { ParsedAgentMessage, CostMeta } from "../../types/chat.js";
 import { AgentWorkflowPanel } from "./AgentWorkflowPanel.js";
 import { PermissionCard } from "./PermissionCard.js";
 import { MarkdownRenderer } from "./MarkdownRenderer.js";
@@ -195,7 +195,6 @@ function MemoryCard({ content }: { content: string }) {
 }
 
 /* Session walkthrough — `10-session-walkthrough.svg` */
-type CostMeta = { cost: string; tokens: number };
 function SessionWalkthroughCard({ content, costMeta }: { content: string; costMeta?: CostMeta }) {
   const isComplete = content.toLowerCase().includes("task completed") || content.toLowerCase().includes("successfully");
   if (!isComplete) return null;
@@ -407,7 +406,7 @@ export const AssistantMessage = memo(
                 case "memory":
                   return <MemoryCard key={`tool-${i}`} content={s.content} />;
                 case "session":
-                  return <SessionWalkthroughCard key={`tool-${i}`} content={s.content} costMeta={costMeta} />;
+                  return <SessionWalkthroughCard key={`tool-${i}`} content={s.content} costMeta={costMeta || undefined} />;
                 default:
                   return null;
               }

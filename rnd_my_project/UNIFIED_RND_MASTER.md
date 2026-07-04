@@ -653,50 +653,666 @@ Current: User, IpLog (only 2)
 
 ---
 
-## 12. Implementation Roadmap
+## 12. Implementation Roadmap — REMAINING WORK (Updated 2026-07-03)
 
-### Phase 1: Foundation (Week 1-2) — ~37 hours
+> **⚠️ এই সেকশনটি আপডেটেড। নিচে শুধু বাকি কাজগুলো আছে — প্রতিটি টাস্কে exact file path, code pattern, এবং verification command দেওয়া আছে।**
+> **যেকোনো AI Agent Model (Gemini Flash, GPT-4o-mini, DeepSeek, Claude, Ollama) এই সেকশন পড়ে কাজ করতে পারবে।**
 
-| Task | Est. | Files |
-|------|------|-------|
-| Real Stripe integration | 8h | `stripeService.ts`, new `webhook.ts` |
-| Auth guards (admin + billing) | 4h | `admin.ts`, `billing.ts`, `auth.ts` middleware |
-| License verification API | 4h | new `license.ts` route |
-| Login/Register pages | 6h | new `/login`, `/register` |
-| User profile API | 4h | new profile controller |
-| Mobile responsive landing | 8h | `page.tsx`, `globals.css`, components |
-| Privacy + Terms pages | 3h | new `/privacy`, `/terms` |
+### ✅ ALREADY COMPLETED (Reference Only — DO NOT REDO)
 
-### Phase 2: Web Application (Week 3-4) — ~58 hours
+```
+Phase 1 (100% Done):
+  ✅ Real Stripe SDK integration (stripeService.ts)
+  ✅ Stripe webhook handler (webhookController.ts)
+  ✅ Admin auth guard (requireAdmin middleware)
+  ✅ Billing API auth (JWT protected)
+  ✅ License verification API (/api/license/check)
+  ✅ Login/Register pages (/login, /register)
+  ✅ User profile API (userController.ts)
+  ✅ Mobile responsive landing (globals.css breakpoints + burger menu)
+  ✅ Privacy + Terms pages (/privacy, /terms)
 
-| Task | Est. |
-|------|------|
-| Dashboard layout + sidebar | 6h |
-| Usage stats page | 8h |
-| Billing portal page | 6h |
-| Settings page | 6h |
-| API key management | 6h |
-| Password reset flow | 6h |
-| Email verification | 4h |
-| Database schema expansion | 4h |
-| New landing sections | 12h |
+Phase 2 (78% Done):
+  ✅ Dashboard page (/dashboard) with stats + charts
+  ✅ Billing portal page (/billing)
+  ✅ Settings page (/settings)
+  ✅ API key management (apiKeyController.ts + /api-keys page)
+  ✅ Password reset flow (/reset-password + auth routes)
+  ✅ Email verification (/verify-email + auth routes)
+  ✅ Database schema expansion (7 models: User, IpLog, Subscription, ApiKey, UsageLog, Session, PasswordReset)
 
-### Phase 3: Polish & Scale (Week 5-6) — ~58 hours
+Phase 3 (70% Done):
+  ✅ Comparison table (in page.tsx)
+  ✅ Documentation site (/docs)
+  ✅ Blog/changelog (/blog, /changelog)
+  ✅ Animated hero (globals.css keyframes)
+  ✅ Cookie consent (CookieConsent.tsx)
+  ✅ Admin panel JWT auth fix
+  ✅ Contact/support page (/support)
+  ✅ Status page (/status)
+```
 
-| Task | Est. |
-|------|------|
-| Comparison table | 4h |
-| Documentation site | 12h |
-| Blog/changelog | 8h |
-| SEO optimization | 4h |
-| Animated hero | 6h |
-| Cookie consent | 2h |
-| Admin panel enhancement | 8h |
-| Contact/support page | 3h |
-| Status page | 3h |
-| E2E testing (Playwright) | 8h |
+---
 
-**Total: ~153 hours (4-6 weeks)**
+### 🔴 TASK 1: Sandbox API Auth Guard (Priority: CRITICAL | Est: 15 min)
+
+**Problem:** `POST /api/sandbox/create` and `POST /api/sandbox/delete` have NO authentication. Anyone can create/delete sandboxes.
+
+**File:** `apps/saas-backend/src/routes/sandbox.ts` (13 lines)
+
+**Current Code (BROKEN):**
+```typescript
+router.post("/create", createSandbox);           // ❌ NO AUTH
+router.post("/delete", deleteSandbox);            // ❌ NO AUTH
+router.post("/execute", authenticateToken, executeSandboxCommand); // ✅ Has auth
+```
+
+**Fix — Replace file content with:**
+```typescript
+import express from "express";
+import { createSandbox, deleteSandbox, executeSandboxCommand } from "../controllers/sandboxController.js";
+import { authenticateToken } from "../middleware/auth.js";
+
+const router = express.Router();
+
+// Apply JWT authentication to ALL sandbox routes
+router.use(authenticateToken);
+
+router.post("/create", createSandbox);
+router.post("/delete", deleteSandbox);
+router.post("/execute", executeSandboxCommand);
+
+export default router;
+```
+
+**Verify:**
+```bash
+cd apps/saas-backend && npx tsc --noEmit
+```
+
+---
+
+### 🔴 TASK 2: Stripe Customer Portal API (Priority: HIGH | Est: 30 min)
+
+**Problem:** Users cannot manage their subscription (cancel, update payment method) via Stripe Customer Portal. The `/api/billing/portal` endpoint is missing.
+
+**File to MODIFY:** `apps/saas-backend/src/routes/billing.ts`
+
+**Pattern to follow — look at existing `createCheckout` function in `billingController.ts`.**
+
+**Step 1:** Add to `apps/saas-backend/src/services/stripeService.ts` (APPEND after the `createStripeCheckoutSession` function, BEFORE `export { stripe }`):
+
+```typescript
+export async function createStripePortalSession(userId: string, returnUrl?: string) {
+  if (!STRIPE_SECRET_KEY) {
+    throw new Error("Stripe integration is not configured on the server.");
+  }
+
+  const user = await User.findById(userId);
+  if (!user || !user.stripeCustomerId) {
+    throw new Error("No Stripe customer found for this user. Subscribe first.");
+  }
+
+  const session = await stripe.billingPortal.sessions.create({
+    customer: user.stripeCustomerId,
+    return_url: returnUrl || "http://localhost:3000/billing",
+  });
+
+  return { url: session.url };
+}
+```
+
+**Step 2:** Add route to `apps/saas-backend/src/routes/billing.ts` (APPEND after `router.post("/checkout", createCheckout);`):
+
+```typescript
+import { createStripePortalSession } from "../services/stripeService.js";
+
+router.post("/portal", async (req: any, res, next) => {
+  try {
+    const userId = req.user._id.toString();
+    const { returnUrl } = req.body;
+    const session = await createStripePortalSession(userId, returnUrl);
+    return res.status(200).json({ url: session.url });
+  } catch (err) {
+    next(err);
+  }
+});
+```
+
+**Verify:**
+```bash
+cd apps/saas-backend && npx tsc --noEmit
+```
+
+---
+
+### 🔴 TASK 3: Subscription Cancel API (Priority: HIGH | Est: 20 min)
+
+**Problem:** Users cannot cancel their subscription from the dashboard. Need a `/api/billing/cancel` endpoint.
+
+**File to MODIFY:** `apps/saas-backend/src/routes/billing.ts`
+
+**APPEND this route:**
+
+```typescript
+router.post("/cancel", async (req: any, res, next) => {
+  try {
+    const userId = req.user._id;
+    const subscription = await Subscription.findOne({ userId, status: "active", plan: "pro" });
+
+    if (!subscription || !subscription.stripeSubscriptionId) {
+      return res.status(400).json({ error: "No active Pro subscription found." });
+    }
+
+    // Cancel at period end (user keeps access until current period ends)
+    const { stripe } = await import("../services/stripeService.js");
+    await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+      cancel_at_period_end: true,
+    });
+
+    subscription.status = "canceling";
+    await subscription.save();
+
+    return res.status(200).json({
+      status: "success",
+      message: "Subscription will be cancelled at the end of the current billing period.",
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+```
+
+**Verify:**
+```bash
+cd apps/saas-backend && npx tsc --noEmit
+```
+
+---
+
+### 🟡 TASK 4: Admin Metrics Endpoint (Priority: MEDIUM | Est: 30 min)
+
+**Problem:** `GET /api/admin/metrics` is missing. The admin page needs server-side aggregated metrics.
+
+**File to MODIFY:** `apps/saas-backend/src/controllers/adminController.ts`
+
+**Replace entire file with (keeping existing pattern):**
+
+```typescript
+import { Request, Response, NextFunction } from "express";
+import { User, Subscription, UsageLog, ApiKey } from "@istiyak/database";
+
+export async function getStats(req: Request, res: Response, next: NextFunction) {
+  try {
+    const totalUsers = await User.countDocuments();
+    const proUsers = await Subscription.countDocuments({ plan: "pro", status: "active" });
+    const totalApiKeys = await ApiKey.countDocuments();
+
+    return res.status(200).json({
+      status: "success",
+      totalUsers,
+      proUsers,
+      freeUsers: totalUsers - proUsers,
+      totalApiKeys,
+      uptimeSec: Math.floor(process.uptime()),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+```
+
+**IMPORTANT:** Make sure `@istiyak/database` exports `Subscription`, `UsageLog`, `ApiKey`. Check `packages/database/src/index.js` — if these models are NOT exported, add them:
+
+```javascript
+// In packages/database/src/index.js — ADD these exports if missing:
+export { default as Subscription } from "./models/Subscription.js";
+export { default as UsageLog } from "./models/UsageLog.js";
+export { default as ApiKey } from "./models/ApiKey.js";
+```
+
+**Verify:**
+```bash
+cd packages/database && npm run build
+cd apps/saas-backend && npx tsc --noEmit
+```
+
+---
+
+### 🟡 TASK 5: SEO — sitemap.xml + robots.txt + OG Tags (Priority: MEDIUM | Est: 45 min)
+
+**Problem:** No SEO files exist. Google cannot crawl or index the site properly.
+
+**Step 1:** Create `apps/landing/public/robots.txt`:
+```
+User-agent: *
+Allow: /
+Sitemap: https://istiyak.ai/sitemap.xml
+
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /api-keys
+Disallow: /billing
+```
+
+**Step 2:** Create `apps/landing/app/sitemap.ts` (Next.js App Router auto-generates sitemap.xml):
+```typescript
+import { MetadataRoute } from "next";
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  const baseUrl = "https://istiyak.ai";
+  return [
+    { url: baseUrl, lastModified: new Date(), changeFrequency: "weekly", priority: 1.0 },
+    { url: `${baseUrl}/docs`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
+    { url: `${baseUrl}/blog`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.7 },
+    { url: `${baseUrl}/changelog`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
+    { url: `${baseUrl}/support`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
+    { url: `${baseUrl}/status`, lastModified: new Date(), changeFrequency: "always", priority: 0.5 },
+    { url: `${baseUrl}/privacy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
+    { url: `${baseUrl}/terms`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
+    { url: `${baseUrl}/login`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.4 },
+    { url: `${baseUrl}/register`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.4 },
+  ];
+}
+```
+
+**Step 3:** Update `apps/landing/app/layout.tsx` — add Open Graph meta tags in the `metadata` export:
+```typescript
+export const metadata = {
+  title: "ISTIYAK AI Companion — Floating Autonomous AI Software Engineer",
+  description: "A lightning-fast, floating desktop AI software engineer that lives alongside your editor and writes, debugs, and runs code autonomously.",
+  openGraph: {
+    title: "ISTIYAK AI Companion",
+    description: "Autonomous AI coding assistant for developers. Free tier + Pro plan.",
+    url: "https://istiyak.ai",
+    siteName: "ISTIYAK AI Companion",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ISTIYAK AI Companion",
+    description: "Autonomous AI coding assistant for developers.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+```
+
+**Verify:**
+```bash
+cd apps/landing && npx next build
+# Check output: sitemap route should appear in route list
+```
+
+---
+
+### 🟡 TASK 6: Hardcoded localhost:3002 → Environment Variable (Priority: MEDIUM | Est: 30 min)
+
+**Problem:** All frontend pages use hardcoded `http://localhost:3002` for API calls. This breaks in production.
+
+**Fix:** Create a shared config constant.
+
+**Step 1:** Create `apps/landing/lib/config.ts`:
+```typescript
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
+```
+
+**Step 2:** In EVERY page that uses `fetch("http://localhost:3002/...")`, replace with:
+```typescript
+import { API_BASE_URL } from "../../lib/config"; // adjust relative path
+
+// Before:
+fetch("http://localhost:3002/api/auth/login", ...)
+// After:
+fetch(`${API_BASE_URL}/api/auth/login`, ...)
+```
+
+**Files to update (grep for `localhost:3002`):**
+```bash
+grep -r "localhost:3002" apps/landing/app/ --include="*.tsx" -l
+```
+Likely files: `login/page.tsx`, `register/page.tsx`, `dashboard/page.tsx`, `admin/page.tsx`, `settings/page.tsx`, `billing/page.tsx`, `api-keys/page.tsx`, `status/page.tsx`
+
+**Step 3:** Add to `apps/landing/.env.local` (for development):
+```
+NEXT_PUBLIC_API_URL=http://localhost:3002
+```
+
+**Verify:**
+```bash
+cd apps/landing && npx next build
+```
+
+---
+
+### 🟡 TASK 7: Team Model (Priority: LOW | Est: 20 min)
+
+**Problem:** RnD specifies a `Team` model for future organization support. Not yet created.
+
+**File to CREATE:** `packages/database/src/models/Team.js`
+
+**Follow existing pattern (look at `User.js`):**
+```javascript
+import mongoose from "mongoose";
+
+const TeamSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  members: [{
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    role: { type: String, enum: ["owner", "admin", "member"], default: "member" },
+    joinedAt: { type: Date, default: Date.now },
+  }],
+  plan: { type: String, enum: ["free", "team_pro"], default: "free" },
+  createdAt: { type: Date, default: Date.now },
+});
+
+export default mongoose.model("Team", TeamSchema);
+```
+
+**Then export from `packages/database/src/index.js`:**
+```javascript
+export { default as Team } from "./models/Team.js";
+```
+
+**Verify:**
+```bash
+cd packages/database && npm run build
+```
+
+---
+
+### 🟡 TASK 8: Landing Page — Testimonials + Demo Sections (Priority: LOW | Est: 2h)
+
+**Problem:** RnD specifies testimonials and product demo sections. Not yet created.
+
+**File to MODIFY:** `apps/landing/app/page.tsx`
+
+**Pattern:** Follow the existing section structure in `page.tsx`. Each section is a `<section>` with:
+- Background: `rgba(18, 20, 28, 0.6)` with `backdropFilter: "blur(16px)"`
+- Border: `1px solid rgba(255, 255, 255, 0.05)`
+- Border radius: `20px`
+- Font: `Outfit` for headings, `Inter` for body
+- Accent color: `#06b6d4` (cyan)
+- Icons: MUST use `lucide-react`
+
+**Add AFTER the features section, BEFORE the pricing section.**
+
+**Verify:**
+```bash
+cd apps/landing && npx next build
+```
+
+---
+
+### 🟡 TASK 9: Auth Routes Split (Priority: LOW | Est: 30 min)
+
+**Problem:** `apps/saas-backend/src/routes/auth.ts` is 11.8KB / ~300+ lines. Should be split for maintainability.
+
+**Split into:**
+1. `routes/auth.ts` — login, register, logout (core auth)
+2. `routes/profile.ts` — GET/PUT profile, change password
+3. `routes/password.ts` — forgot-password, reset-password
+4. `routes/verification.ts` — verify-email, resend-verification
+
+**Then mount each in `server.ts`:**
+```typescript
+app.use("/api/auth", authRoutes);
+app.use("/api/auth", profileRoutes);
+app.use("/api/auth", passwordRoutes);
+app.use("/api/auth", verificationRoutes);
+```
+
+**Verify:**
+```bash
+cd apps/saas-backend && npx tsc --noEmit
+```
+
+---
+
+### 🔴 TASK 10: Unit Tests — Security Module (Priority: HIGH | Est: 3h)
+
+> **⚠️ সবচেয়ে বড় ব্যাকলগ। প্রোডাকশনে যাওয়ার আগে এই টেস্টগুলো MUST।**
+
+**Test Framework:** Vitest (already installed in agent-core)
+
+**Files to CREATE:**
+
+#### 10a: `packages/agent-core/src/security/SecretMasker.test.ts`
+```typescript
+import { describe, it, expect } from "vitest";
+import { SecretMasker } from "./SecretMasker.js";
+
+describe("SecretMasker", () => {
+  it("masks OpenAI key (sk-*)", () => {
+    const text = "key is sk-1234567890abcdefghij1234567890abcdefghij1234";
+    const masked = SecretMasker.mask(text);
+    expect(masked).not.toContain("sk-1234567890abcdefghij1234567890abcdefghij1234");
+    expect(masked).toContain("sk-1");  // first 4 kept
+  });
+
+  it("masks Google key (AIza*)", () => {
+    const text = "AIzaSyABCDEF1234567890abcdef_GHIJ";
+    const masked = SecretMasker.mask(text);
+    expect(masked).not.toContain("AIzaSyABCDEF1234567890abcdef_GHIJ");
+  });
+
+  it("handles text with no secrets", () => {
+    const text = "Hello world, no secrets here.";
+    const masked = SecretMasker.mask(text);
+    expect(masked).toBe(text);
+  });
+
+  it("handles empty string", () => {
+    expect(SecretMasker.mask("")).toBe("");
+  });
+});
+```
+
+**⚠️ BEFORE writing the test:** Read the actual `SecretMasker.ts` file first to check the exact method names and signatures:
+```bash
+cat packages/agent-core/src/security/SecretMasker.ts | head -30
+```
+
+#### 10b: `packages/agent-core/src/security/WorkspaceGuard.test.ts`
+```
+Pattern: Test that paths inside workspace are allowed, paths outside are blocked.
+Read WorkspaceGuard.ts first to check method signatures.
+```
+
+#### 10c: `packages/agent-core/src/security/PermissionManager.test.ts`
+```
+Pattern: Test that dangerous commands (rm -rf, sudo, fork bombs) are blocked.
+Read PermissionManager.ts first to check method signatures.
+```
+
+**Run command:**
+```bash
+cd packages/agent-core && npx vitest run src/security/
+```
+
+---
+
+### 🟡 TASK 11: Unit Tests — LLM Module (Priority: MEDIUM | Est: 2h)
+
+**Files to CREATE:**
+
+#### 11a: `packages/agent-core/src/llm/TokenCounter.test.ts`
+```
+Read TokenCounter.ts first. Test:
+- countTokens("hello world") returns positive number
+- countTokens("") returns 0
+- countTokens(code with special chars) returns reasonable count
+```
+
+#### 11b: `packages/agent-core/src/llm/ResponseParser.test.ts`
+```
+Read ResponseParser.ts first. Test:
+- Valid JSON parses correctly
+- JSON wrapped in ```json ``` fences parses correctly
+- Returns null for garbage input
+- Handles trailing commas
+```
+
+**Run command:**
+```bash
+cd packages/agent-core && npx vitest run src/llm/
+```
+
+---
+
+### 🟡 TASK 12: Unit Tests — Remaining Modules (Priority: MEDIUM | Est: 6h)
+
+**Modules that need test files (read each .ts file BEFORE writing tests):**
+
+| Test File to Create | Source File to Read First | Key Tests |
+|---------------------|--------------------------|-----------|
+| `src/agent/TaskClassifier.test.ts` | `src/agent/TaskClassifier.ts` | "hello" → chat, "refactor auth" → complex |
+| `src/agent/ContextBuilder.test.ts` | `src/agent/ContextBuilder.ts` | Token limits, truncation, message preservation |
+| `src/memory/SessionMemory.test.ts` | `src/memory/SessionMemory.ts` | Add/retrieve messages, auto-compress |
+| `src/memory/SummaryEngine.test.ts` | `src/memory/SummaryEngine.ts` | Summarize text, empty input |
+| `src/events/EventBus.test.ts` | `src/events/EventBus.ts` | Emit/receive, wildcard, history |
+| `src/telemetry/UsageTracker.test.ts` | `src/telemetry/UsageTracker.ts` | Record usage, daily aggregation |
+| `src/config/Models.test.ts` | `src/config/Models.ts` | All models have provider, getModelsForProvider |
+| `src/config/Providers.test.ts` | `src/config/Providers.ts` | All 7 providers, getProvider() |
+
+**Run command:**
+```bash
+cd packages/agent-core && npx vitest run
+```
+
+---
+
+### 🟢 TASK 13: Integration Tests — SaaS Backend (Priority: LOW | Est: 4h)
+
+**Setup needed first:**
+```bash
+cd apps/saas-backend
+# Add vitest to package.json devDependencies: "vitest": "^2.1.8"
+# Add "test": "vitest run" to scripts
+npm install
+```
+
+**Files to CREATE:**
+
+#### 13a: `apps/saas-backend/src/__tests__/auth.test.ts`
+```
+Use supertest to test:
+- POST /api/auth/register → 201
+- POST /api/auth/register duplicate → 409
+- POST /api/auth/login valid → 200 + JWT
+- POST /api/auth/login wrong password → 401
+```
+
+#### 13b: `apps/saas-backend/src/__tests__/admin.test.ts`
+```
+- GET /api/admin/users without token → 401
+- GET /api/admin/users with non-admin token → 403
+```
+
+**Run command:**
+```bash
+cd apps/saas-backend && npx vitest run
+```
+
+---
+
+### 🟢 TASK 14: E2E Tests — Playwright (Priority: LOW | Est: 8h)
+
+**Setup:**
+```bash
+cd /path/to/monorepo-root
+npm install -D @playwright/test
+npx playwright install
+```
+
+**Create `tests/e2e/landing.spec.ts`:**
+```typescript
+import { test, expect } from "@playwright/test";
+
+test("landing page loads", async ({ page }) => {
+  await page.goto("http://localhost:3000");
+  await expect(page.locator("h1")).toContainText("ISTIYAK");
+});
+
+test("pricing shows correct prices", async ({ page }) => {
+  await page.goto("http://localhost:3000");
+  await expect(page.getByText("$0")).toBeVisible();
+  await expect(page.getByText("$19")).toBeVisible();
+});
+```
+
+**Run:** `npx playwright test`
+
+---
+
+### 🟢 TASK 15: Agent-SDK Completion (Priority: LOW | Est: 8-12h)
+
+**Current state:** `packages/agent-sdk/` is a skeleton with only `Client.ts` and `Connection.ts`.
+
+**This is a LARGE task. Implement:**
+1. WebSocket client connection to daemon (port 3001)
+2. Chat message sending/receiving
+3. Permission request handling
+4. Session management
+5. TypeScript types for all SDK methods
+
+**Pattern:** Follow the daemon API routes (Section 4.2) for endpoint signatures.
+
+---
+
+### 📋 PRIORITY EXECUTION ORDER
+
+```
+🔴 IMMEDIATE (do first):
+  1. TASK 1  — Sandbox auth guard (15 min)
+  2. TASK 2  — Stripe Customer Portal (30 min)
+  3. TASK 3  — Subscription Cancel API (20 min)
+
+🟡 NEXT (do second):
+  4. TASK 5  — SEO sitemap + robots + OG (45 min)
+  5. TASK 6  — Hardcoded localhost fix (30 min)
+  6. TASK 4  — Admin metrics endpoint (30 min)
+  7. TASK 10 — Security unit tests (3h)
+
+🟢 LATER (do when time allows):
+  8. TASK 11 — LLM unit tests (2h)
+  9. TASK 12 — Remaining unit tests (6h)
+  10. TASK 7  — Team model (20 min)
+  11. TASK 8  — Testimonials + demo (2h)
+  12. TASK 9  — Auth routes split (30 min)
+  13. TASK 13 — Integration tests (4h)
+  14. TASK 14 — E2E Playwright (8h)
+  15. TASK 15 — Agent-SDK (8-12h)
+```
+
+### ⏱️ TOTAL REMAINING: ~35-45 hours (excluding Agent-SDK)
+
+### 🔧 VERIFICATION AFTER ALL TASKS
+
+```bash
+# 1. TypeScript compile check (all apps)
+cd apps/saas-backend && npx tsc --noEmit
+cd apps/landing && npx tsc --noEmit
+
+# 2. Build check
+npm run build
+
+# 3. Test check
+npm run test
+
+# 4. Landing build (includes sitemap generation)
+cd apps/landing && npx next build
+
+# 5. Lint check
+npm run lint
+```
+
+
 
 ---
 

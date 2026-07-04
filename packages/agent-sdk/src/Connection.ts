@@ -12,17 +12,33 @@ export class Connection {
     this.timeout = timeout;
   }
 
-  async send(event: string, payload: any): Promise<any> {
-    const url = `${this.endpoint}/api/${event}`;
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
+  async send(event: string, payload: any, method: "POST" | "GET" = "POST"): Promise<any> {
+    let url = `${this.endpoint}/api/${event}`;
+    const options: RequestInit = {
+      method,
+      headers: {},
       signal: AbortSignal.timeout(this.timeout),
-    });
+    };
+
+    if (method === "POST") {
+      options.headers = {
+        "Content-Type": "application/json",
+      };
+      options.body = JSON.stringify(payload);
+    } else if (method === "GET" && payload) {
+      const searchParams = new URLSearchParams();
+      for (const [key, val] of Object.entries(payload)) {
+        if (val !== undefined && val !== null) {
+          searchParams.append(key, String(val));
+        }
+      }
+      const queryString = searchParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+    }
+
+    const response = await fetch(url, options);
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "Unknown error");

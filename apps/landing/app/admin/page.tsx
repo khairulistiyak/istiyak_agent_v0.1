@@ -10,6 +10,7 @@ import {
   Ban,
   CheckCircle,
 } from "lucide-react";
+import { API_BASE_URL } from "../../lib/config";
 
 interface UserType {
   _id: string;
@@ -39,7 +40,7 @@ export default function AdminPage() {
     }
 
     try {
-      const res = await fetch("http://localhost:3002/api/admin/users", {
+      const res = await fetch(`${API_BASE_URL}/api/admin/users`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -61,7 +62,7 @@ export default function AdminPage() {
     } catch (err: unknown) {
       console.error(err);
       setError(
-        "Cannot connect to the backend server. Please make sure the SaaS Backend is running on port 3002."
+        "Cannot connect to the backend server. Please make sure the SaaS Backend is running."
       );
     } finally {
       setLoading(false);
@@ -78,7 +79,7 @@ export default function AdminPage() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch(`http://localhost:3002/api/admin/user/${endpoint}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/user/${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -108,58 +109,21 @@ export default function AdminPage() {
   const blockedUsers = users.filter((u) => u.isBlocked).length;
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#030712",
-        color: "#f3f4f6",
-        padding: "2rem 1.5rem",
-        fontFamily: "system-ui, -apple-system, sans-serif",
-      }}
-    >
-      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+    <div className="min-h-screen bg-[#030712] text-[#f3f4f6] px-6 py-8 font-sans">
+      <div className="max-w-[1100px] mx-auto">
         {/* Navigation & Header */}
-        <header
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "2rem",
-          }}
-        >
+        <header className="flex justify-between items-center mb-8">
           <div>
             <a
               href="/"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                color: "#9ca3af",
-                textDecoration: "none",
-                fontSize: "0.85rem",
-                marginBottom: "0.75rem",
-                transition: "color 0.2s",
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.color = "#fff")}
-              onMouseOut={(e) => (e.currentTarget.style.color = "#9ca3af")}
+              className="inline-flex items-center gap-2 text-gray-400 hover:text-white text-sm mb-3 transition-colors duration-200"
             >
               <ArrowLeft size={16} /> Back to Landing Page
             </a>
-            <h1
-              style={{
-                fontSize: "2rem",
-                fontWeight: 800,
-                margin: 0,
-                letterSpacing: "-0.02em",
-                color: "#fff",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.75rem",
-              }}
-            >
-              <ShieldAlert style={{ color: "#06b6d4" }} /> CENTRAL ADMIN PANEL
+            <h1 className="text-3xl font-extrabold tracking-tight text-white m-0 flex items-center gap-3">
+              <ShieldAlert className="text-[#06b6d4]" /> CENTRAL ADMIN PANEL
             </h1>
-            <p style={{ color: "#9ca3af", fontSize: "0.9rem", margin: "0.25rem 0 0 0" }}>
+            <p className="text-gray-400 text-sm mt-1">
               Manage user registrations, license activations, and system bans.
             </p>
           </div>
@@ -167,224 +131,85 @@ export default function AdminPage() {
           <button
             onClick={fetchUsers}
             disabled={loading}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              padding: "0.6rem 1.2rem",
-              borderRadius: "8px",
-              backgroundColor: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              color: "#fff",
-              cursor: "pointer",
-              fontSize: "0.85rem",
-              fontWeight: 600,
-              transition: "all 0.2s",
-            }}
-            onMouseOver={(e) =>
-              (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)")
-            }
-            onMouseOut={(e) =>
-              (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)")
-            }
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 active:scale-[0.98] transition-all text-white text-sm font-semibold cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh Data
           </button>
         </header>
 
         {/* Stats Grid */}
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "1.5rem",
-            marginBottom: "2.5rem",
-          }}
-        >
-          <div
-            className="card-glass"
-            style={{
-              padding: "1.5rem",
-              borderRadius: "14px",
-              border: "1px solid rgba(255,255,255,0.06)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                color: "#9ca3af",
-                marginBottom: "0.5rem",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "0.8rem",
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                }}
-              >
+        <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-10">
+          {/* Card 1 */}
+          <div className="card-glass p-6 rounded-xl border border-white/[0.06] bg-white/[0.01] backdrop-blur-xl">
+            <div className="flex justify-between items-center text-gray-400 mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wider">
                 Total Registrations
               </span>
-              <Users size={18} style={{ color: "#06b6d4" }} />
+              <Users size={18} className="text-[#06b6d4]" />
             </div>
-            <div style={{ fontSize: "2rem", fontWeight: 800, color: "#fff" }}>
+            <div className="text-3xl font-extrabold text-white">
               {loading ? "..." : totalUsers}
             </div>
           </div>
 
-          <div
-            className="card-glass"
-            style={{
-              padding: "1.5rem",
-              borderRadius: "14px",
-              border: "1px solid rgba(255,255,255,0.06)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                color: "#9ca3af",
-                marginBottom: "0.5rem",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "0.8rem",
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                }}
-              >
+          {/* Card 2 */}
+          <div className="card-glass p-6 rounded-xl border border-white/[0.06] bg-white/[0.01] backdrop-blur-xl">
+            <div className="flex justify-between items-center text-gray-400 mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wider">
                 Pro License Activations
               </span>
-              <ShieldCheck size={18} style={{ color: "#10b981" }} />
+              <ShieldCheck size={18} className="text-[#10b981]" />
             </div>
-            <div style={{ fontSize: "2rem", fontWeight: 800, color: "#10b981" }}>
+            <div className="text-3xl font-extrabold text-[#10b981]">
               {loading ? "..." : activePremium}
             </div>
           </div>
 
-          <div
-            className="card-glass"
-            style={{
-              padding: "1.5rem",
-              borderRadius: "14px",
-              border: "1px solid rgba(255,255,255,0.06)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                color: "#9ca3af",
-                marginBottom: "0.5rem",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "0.8rem",
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                }}
-              >
+          {/* Card 3 */}
+          <div className="card-glass p-6 rounded-xl border border-white/[0.06] bg-white/[0.01] backdrop-blur-xl">
+            <div className="flex justify-between items-center text-gray-400 mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wider">
                 Banned Accounts
               </span>
-              <Ban size={18} style={{ color: "#ef4444" }} />
+              <Ban size={18} className="text-[#ef4444]" />
             </div>
-            <div style={{ fontSize: "2rem", fontWeight: 800, color: "#ef4444" }}>
+            <div className="text-3xl font-extrabold text-[#ef4444]">
               {loading ? "..." : blockedUsers}
             </div>
           </div>
         </section>
 
         {/* Users Table Card */}
-        <main
-          className="card-glass"
-          style={{
-            borderRadius: "16px",
-            padding: "1.5rem",
-            border: "1px solid rgba(255,255,255,0.08)",
-            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.3)",
-          }}
-        >
-          <h2
-            style={{ fontSize: "1.2rem", fontWeight: 700, margin: "0 0 1.25rem 0", color: "#fff" }}
-          >
+        <main className="card-glass rounded-2xl p-6 border border-white/[0.08] bg-white/[0.01] backdrop-blur-xl shadow-2xl">
+          <h2 className="text-lg font-bold mb-5 text-white">
             Registered Accounts List
           </h2>
 
           {error && (
-            <div
-              style={{
-                backgroundColor: "rgba(239, 68, 68, 0.1)",
-                border: "1px solid rgba(239, 68, 68, 0.25)",
-                color: "#fca5a5",
-                padding: "1rem",
-                borderRadius: "10px",
-                fontSize: "0.85rem",
-                marginBottom: "1.5rem",
-                lineHeight: 1.5,
-              }}
-            >
+            <div className="bg-red-500/10 border border-red-500/20 text-red-200 p-4 rounded-xl text-sm mb-6 leading-relaxed">
               ⚠️ {error}
             </div>
           )}
 
           {loading ? (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "200px",
-                color: "#9ca3af",
-                gap: "0.5rem",
-              }}
-            >
+            <div className="flex justify-center items-center h-[200px] text-gray-400 gap-2">
               <RefreshCw className="animate-spin" size={18} /> Loading database records...
             </div>
           ) : users.length === 0 ? (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "200px",
-                color: "#9ca3af",
-                fontStyle: "italic",
-              }}
-            >
+            <div className="flex justify-center items-center h-[200px] text-gray-400 italic">
               No registered user accounts found in the database.
             </div>
           ) : (
-            <div style={{ overflowX: "auto" }}>
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  textAlign: "left",
-                  fontSize: "0.85rem",
-                }}
-              >
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left text-sm">
                 <thead>
-                  <tr
-                    style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", color: "#9ca3af" }}
-                  >
-                    <th style={{ padding: "0.75rem 1rem", fontWeight: 600 }}>Email Address</th>
-                    <th style={{ padding: "0.75rem 1rem", fontWeight: 600 }}>Registration IP</th>
-                    <th style={{ padding: "0.75rem 1rem", fontWeight: 600 }}>Signup Date</th>
-                    <th style={{ padding: "0.75rem 1rem", fontWeight: 600 }}>Tier Plan</th>
-                    <th style={{ padding: "0.75rem 1rem", fontWeight: 600 }}>Status</th>
-                    <th style={{ padding: "0.75rem 1rem", fontWeight: 600, textAlign: "right" }}>
-                      Actions
-                    </th>
+                  <tr className="border-b border-white/10 text-gray-400">
+                    <th className="px-4 py-3 font-semibold">Email Address</th>
+                    <th className="px-4 py-3 font-semibold">Registration IP</th>
+                    <th className="px-4 py-3 font-semibold">Signup Date</th>
+                    <th className="px-4 py-3 font-semibold">Tier Plan</th>
+                    <th className="px-4 py-3 font-semibold">Status</th>
+                    <th className="px-4 py-3 font-semibold text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -400,58 +225,31 @@ export default function AdminPage() {
                     return (
                       <tr
                         key={user._id}
-                        style={{
-                          borderBottom: "1px solid rgba(255,255,255,0.04)",
-                          transition: "background-color 0.2s",
-                        }}
-                        onMouseOver={(e) =>
-                          (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.01)")
-                        }
-                        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                        className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors duration-200"
                       >
-                        <td
-                          style={{
-                            padding: "1rem",
-                            fontWeight: 500,
-                            color: "#fff",
-                            fontFamily: "monospace",
-                          }}
-                        >
+                        <td className="px-4 py-4 font-semibold text-white font-mono">
                           {user.email}
                         </td>
-                        <td style={{ padding: "1rem", color: "#9ca3af", fontFamily: "monospace" }}>
+                        <td className="px-4 py-4 text-gray-400 font-mono">
                           {user.registeredIp || "Unknown"}
                         </td>
-                        <td style={{ padding: "1rem", color: "#9ca3af" }}>{signupDate}</td>
-                        <td style={{ padding: "1rem" }}>
+                        <td className="px-4 py-4 text-gray-400">{signupDate}</td>
+                        <td className="px-4 py-4">
                           <span
-                            style={{
-                              padding: "0.2rem 0.5rem",
-                              borderRadius: "6px",
-                              fontSize: "0.75rem",
-                              fontWeight: 700,
-                              backgroundColor: user.isActive
-                                ? "rgba(16, 185, 129, 0.15)"
-                                : "rgba(255, 255, 255, 0.05)",
-                              color: user.isActive ? "#34d399" : "#9ca3af",
-                              border: user.isActive
-                                ? "1px solid rgba(16, 185, 129, 0.3)"
-                                : "1px solid rgba(255,255,255,0.08)",
-                            }}
+                            className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold border ${
+                              user.isActive
+                                ? "bg-[#10b981]/15 text-[#34d399] border-[#10b981]/30"
+                                : "bg-white/5 text-gray-400 border-white/10"
+                            }`}
                           >
                             {user.isActive ? "PRO" : "FREE"}
                           </span>
                         </td>
-                        <td style={{ padding: "1rem" }}>
+                        <td className="px-4 py-4">
                           <span
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "0.25rem",
-                              fontSize: "0.8rem",
-                              fontWeight: 600,
-                              color: user.isBlocked ? "#f87171" : "#34d399",
-                            }}
+                            className={`inline-flex items-center gap-1 text-sm font-semibold ${
+                              user.isBlocked ? "text-red-400" : "text-emerald-400"
+                            }`}
                           >
                             {user.isBlocked ? (
                               <>
@@ -464,35 +262,15 @@ export default function AdminPage() {
                             )}
                           </span>
                         </td>
-                        <td style={{ padding: "1rem", textAlign: "right" }}>
+                        <td className="px-4 py-4 text-right">
                           <button
                             onClick={() => handleToggleBlock(user._id, user.isBlocked)}
                             disabled={actionLoadingId === user._id}
-                            style={{
-                              padding: "0.4rem 0.8rem",
-                              borderRadius: "6px",
-                              fontSize: "0.75rem",
-                              fontWeight: 600,
-                              cursor: "pointer",
-                              transition: "all 0.2s",
-                              backgroundColor: user.isBlocked
-                                ? "rgba(16, 185, 129, 0.1)"
-                                : "rgba(239, 68, 68, 0.1)",
-                              color: user.isBlocked ? "#34d399" : "#f87171",
-                              border: user.isBlocked
-                                ? "1px solid rgba(16, 185, 129, 0.3)"
-                                : "1px solid rgba(239, 68, 68, 0.3)",
-                            }}
-                            onMouseOver={(e) => {
-                              e.currentTarget.style.backgroundColor = user.isBlocked
-                                ? "rgba(16, 185, 129, 0.2)"
-                                : "rgba(239, 68, 68, 0.2)";
-                            }}
-                            onMouseOut={(e) => {
-                              e.currentTarget.style.backgroundColor = user.isBlocked
-                                ? "rgba(16, 185, 129, 0.1)"
-                                : "rgba(239, 68, 68, 0.1)";
-                            }}
+                            className={`px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer border transition-all duration-200 ${
+                              user.isBlocked
+                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20"
+                                : "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20"
+                            }`}
                           >
                             {actionLoadingId === user._id ? (
                               <RefreshCw size={12} className="animate-spin" />

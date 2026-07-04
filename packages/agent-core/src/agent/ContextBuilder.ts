@@ -73,8 +73,8 @@ export class ContextBuilder {
 
     if (messages.length === 0) return [];
 
-    // Separate system messages (always keep) from conversation messages
-    const systemMessages = messages.filter(m => m.role === "system");
+    // Separate system messages (always keep, excluding previous summaries) from conversation messages
+    const systemMessages = messages.filter(m => m.role === "system" && !m.content.startsWith("[Previous conversation summary]"));
     const conversationMessages = messages.filter(m => m.role !== "system");
 
     // Truncate very long tool results to prevent context explosion
