@@ -3,6 +3,7 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import os from "os";
+import { WebSocketServer } from "ws";
 import commandRouter from "./routes/command.js";
 import agentRouter from "./routes/agent.js";
 import ragRouter from "./routes/rag.js";
@@ -291,7 +292,170 @@ export function startDaemon() {
     });
   });
 
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`🚀 Istiyak Companion Engine listening in UI mode on port ${PORT}`);
+  });
+
+  // WebSocket Server for two-way communication (chat streaming + permission handling)
+  const wss = new WebSocketServer({ server, path: "/ws" });
+
+  wss.on("connection", (ws) => {
+    console.log("[daemon] WebSocket client connected");
+    let wsAbortController = null;
+
+    ws.on("message", async (data) => {
+      try {
+        const message = JSON.parse(data.toString());
+
+        if (message.type === "chat") {
+          if (currentAbortController) {
+            console.log("[daemon WS] Aborting previous global agent run");
+            currentAbortController.abort();
+            currentAbortController = null;
+          }
+          if (wsAbortController) {
+            wsAbortController.abort();
+            wsAbortController = null;
+          }
+
+          clearPendingPermissions();
+          resetSessionCost();
+
+          currentAbortController = new globalThis.AbortController();
+          wsAbortController = currentAbortController;
+
+          const payload = message.payload || {};
+          const {
+            messages,
+            provider,
+            model,
+            authMethod,
+            apiKey,
+            serviceAccountPath,
+            projectId,
+            location,
+            workspacePath,
+            googleSearchEnabled,
+            cloudSandboxEnabled,
+            dockerSandboxEnabled,
+            sandboxImage,
+            token,
+            agentMode,
+          } = payload;
+
+          const VALID_MODES = ["chat", "plan", "assist", "agent"];
+          const validatedMode = VALID_MODES.includes(agentMode) ? agentMode : "agent";
+
+          try {
+            const agentResult = await runAgent({
+              messages,
+              provider: provider || "gemini",
+              model: model || "gemini-2.5-flash",
+              authMethod: authMethod || "apiKey",
+              apiKey,
+              serviceAccountPath,
+              projectId,
+              location,
+              workspacePath,
+              googleSearchEnabled,
+              cloudSandboxEnabled,
+              dockerSandboxEnabled,
+              sandboxImage,
+              token,
+              agentMode: validatedMode,
+              abortSignal: currentAbortController.signal,
+              onChunk: (chunk) => {
+                if (ws.readyState === ws.OPEN) {
+                  ws.send(JSON.stringify({ type: "chunk", payload: chunk }));
+                }
+              },
+              requestPermission: (reqId, command) => {
+                return new Promise((resolve) => {
+                  pendingPermissions.set(reqId, resolve);
+                  
+                  if (ws.readyState === ws.OPEN) {
+                    ws.send(JSON.stringify({
+                      type: "permission_request",
+                      reqId,
+                      command
+                    }));
+                  }
+                  
+                  const timeoutId = setTimeout(() => {
+                    if (pendingPermissions.has(reqId)) {
+                      console.warn(`[daemon WS] Permission ${reqId} timed out. Auto-rejecting.`);
+                      pendingPermissions.delete(reqId);
+                      pendingPermissionTimeouts.delete(reqId);
+                      resolve(false);
+                      if (ws.readyState === ws.OPEN) {
+                        ws.send(JSON.stringify({
+                          type: "chunk",
+                          payload: `\n[System: Permission request timed out after 5 minutes]\n`
+                        }));
+                      }
+                    }
+                  }, 5 * 60 * 1000);
+                  pendingPermissionTimeouts.set(reqId, timeoutId);
+                });
+              },
+            });
+
+            const totalTokens = agentResult.inputTokens + agentResult.outputTokens;
+            const cost = calculateCost(
+              provider || "gemini",
+              agentResult.inputTokens,
+              agentResult.outputTokens,
+              model || "gemini-2.5-flash"
+            );
+
+            if (ws.readyState === ws.OPEN) {
+              const statsMsg = `\n\n---\n*Session Cost: $${cost.toFixed(6)} | Tokens: ${totalTokens} (${agentResult.inputTokens} in / ${agentResult.outputTokens} out)*`;
+              ws.send(JSON.stringify({ type: "chunk", payload: statsMsg }));
+              ws.send(JSON.stringify({ type: "done", payload: { totalTokens, cost } }));
+            }
+          } catch (err) {
+            console.error("[daemon.js WS] Error in chat execution:", err);
+            if (ws.readyState === ws.OPEN) {
+              ws.send(JSON.stringify({
+                type: "error",
+                payload: err instanceof Error ? err.message : String(err)
+              }));
+            }
+          } finally {
+            if (currentAbortController === wsAbortController) {
+              currentAbortController = null;
+            }
+            wsAbortController = null;
+            clearPendingPermissions();
+          }
+        } 
+        else if (message.type === "permission_response") {
+          const { reqId, approved } = message;
+          if (pendingPermissions.has(reqId)) {
+            const resolve = pendingPermissions.get(reqId);
+            pendingPermissions.delete(reqId);
+            const timeoutId = pendingPermissionTimeouts.get(reqId);
+            if (timeoutId) {
+              globalThis.clearTimeout(timeoutId);
+              pendingPermissionTimeouts.delete(reqId);
+            }
+            resolve(!!approved);
+          }
+        }
+      } catch (err) {
+        console.error("[daemon WS] Failed to parse message:", err);
+      }
+    });
+
+    ws.on("close", () => {
+      console.log("[daemon] WebSocket client disconnected");
+      if (wsAbortController) {
+        wsAbortController.abort();
+        wsAbortController = null;
+        if (currentAbortController === wsAbortController) {
+          currentAbortController = null;
+        }
+      }
+    });
   });
 }

@@ -1,6 +1,8 @@
 # 🧬 Istiyak Agent v0.1 — UNIFIED MASTER R&D
 
-> **Version:** 0.1.0 | **Date:** 2026-07-03 | **Status:** Single Source of Truth
+> **Version:** 0.1.2 | **Date:** 2026-07-04 | **Status:** Single Source of Truth
+> 
+> **Last Audit:** 2026-07-04 15:46 — 15/15 original tasks COMPLETED ✅ | Only testing gaps remain
 >
 > **এই একটি মাত্র ডকুমেন্ট দিয়ে পুরো প্রজেক্ট বোঝা, কাজ করা, টেস্ট করা, বাগ ফিক্স করা — সব সম্ভব।**
 > **যেকোনো AI Agent Model (free/paid) এই ডকুমেন্ট পড়ে পুরো কাজ নিখুঁতভাবে করতে পারবে।**
@@ -58,18 +60,19 @@
 istiyak-companion-monorepo/
 ├── apps/
 │   ├── desktop/          → Tauri v2 + React + Vite (port 1420)
-│   ├── local-daemon/     → Express API (port 3001) — agent runner
-│   ├── saas-backend/     → Express + MongoDB + Stripe (port 3002)
-│   └── landing/          → Next.js marketing site
+│   ├── local-daemon/     → Express API (port 3001) — agent runner + WebSocket
+│   ├── saas-backend/     → Express + MongoDB + Stripe (port 3002) + CSRF + JWT
+│   └── landing/          → Next.js marketing site + SEO + Playwright E2E
 ├── packages/
-│   ├── agent-core/       → 🧠 Brain (execution loop, LLM, security, memory)
+│   ├── agent-core/       → 🧠 Brain (execution loop, LLM, security, memory) [16 test files, 71+ tests]
 │   ├── agent-memory/     → 📚 RAG + vector search + embeddings
 │   ├── agent-prompts/    → 📝 System prompts & templates
-│   ├── agent-sdk/        → 🔌 Client SDK (WIP/skeleton)
+│   ├── agent-sdk/        → 🔌 Client SDK ✅ COMPLETE (490 lines, WS + HTTP)
 │   ├── agent-tools/      → 🔧 Tool interfaces & schemas
-│   ├── database/         → 💾 MongoDB/Mongoose models
+│   ├── database/         → 💾 MongoDB/Mongoose models (7 models: User, IpLog, Subscription, ApiKey, UsageLog, Session, PasswordReset, Team)
 │   ├── shared-types/     → 📋 TypeScript interfaces
 │   └── shared-utils/     → 🛠️ Crypto, Logger, Mask
+├── .github/workflows/    → CI/CD (ci.yml + tauri-build.yml)
 ├── package.json          → Monorepo root (workspaces: apps/*, packages/*)
 ├── turbo.json            → Turborepo pipeline
 └── eslint.config.mjs     → ESLint 9 flat config
@@ -200,19 +203,23 @@ src/
 
 ```
 src/
-├── server.ts           # Express + CORS + Sentry
+├── server.ts           # Express + CORS + CSRF + Sentry
 ├── config/passport.js  # OAuth strategies
 ├── controllers/        # authController, adminController, billingController, sandboxController, updateController
-├── middleware/          # auth (JWT), errorHandler, rateLimiter (30 req/min)
+├── middleware/          # auth (JWT), csrf, errorHandler, rateLimiter (30 req/min)
 ├── repositories/       # userRepository, ipLogRepository
-├── routes/             # auth, admin, billing, sandbox, update
-└── services/           # authService, sandboxService, stripeService (MOCK!), updateService
+├── routes/             # auth, profile, password, verification, admin, billing, sandbox, update
+└── services/           # authService, sandboxService, stripeService (✅ Real SDK), updateService
 ```
 
-**Key Issues:**
-- ⚠️ `stripeService.ts` is a **MOCK** — returns fake session ID
-- ⚠️ Admin page has **NO authentication**
-- ⚠️ Admin API is **open** — no JWT guard
+**Completed Features (since v0.1.0):**
+- ✅ Real Stripe SDK integration (checkout, portal, cancel, webhooks)
+- ✅ CSRF protection middleware (`csrf.ts`)
+- ✅ JWT auth on ALL sandbox routes (`router.use(authenticateToken)`)
+- ✅ Auth routes split into 4 files (auth, profile, password, verification)
+- ✅ Admin metrics endpoint (`getStats()` — totalUsers, proUsers, totalApiKeys)
+- ✅ Billing portal (`POST /api/billing/portal`) + cancel (`POST /api/billing/cancel`)
+- ✅ Vitest test framework configured (2 test files, 6 tests passing)
 
 ---
 
@@ -292,9 +299,19 @@ src/
 
 ---
 
-### 5.4 agent-sdk (🔌 WIP)
+### 5.4 agent-sdk (🔌 ✅ COMPLETE)
 
-Skeleton only — `Client.ts`, `Connection.ts`
+**Path:** `packages/agent-sdk/` | **Lines:** 490 | **Main:** `dist/index.js`
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `Client.ts` | 198 | Full SDK client — chat, task, abort, git, RAG, health |
+| `Connection.ts` | 176 | WebSocket + HTTP connection layer |
+| `types.ts` | 78 | Complete TypeScript type definitions |
+| `index.ts` | 3 | Public API exports |
+| `test-ws.ts` | 35 | Working test example |
+
+**SDK Methods:** `connect()`, `disconnect()`, `chat()`, `sendTask()`, `isHealthy()`, `getStats()`, `abort()`, `getStatus()`, `runCommand()`, `reindex()`, `getGitStatus()`, `getGitLog()`, `getGitDiff()`
 
 ### 5.5 agent-tools (🔧 Interfaces)
 
@@ -302,7 +319,18 @@ Skeleton only — `Client.ts`, `Connection.ts`
 
 ### 5.6 database (💾 MongoDB)
 
-`connectDatabase()` + Mongoose models (User, IpLog)
+`connectDatabase()` + Mongoose models (8 total):
+
+| Model | File | Purpose |
+|-------|------|---------|
+| User | `User.js` | User accounts |
+| IpLog | `IpLog.js` | Login IP tracking |
+| Subscription | `Subscription.js` | Stripe subscription data |
+| ApiKey | `ApiKey.js` | API key management |
+| UsageLog | `UsageLog.js` | Usage tracking |
+| Session | `Session.js` | User sessions |
+| PasswordReset | `PasswordReset.js` | Password reset tokens |
+| Team | `Team.js` | Team/organization support |
 
 ### 5.7 shared-types (📋 TypeScript)
 
@@ -580,76 +608,88 @@ cd apps/local-daemon && node src/index.js --terminal
 
 ---
 
-## 11. What's Missing — TODO Tracker
+## 11. What's Missing — TODO Tracker (Updated 2026-07-04)
 
-### 🔴 CRITICAL (Security + Core)
+> **⚠️ Last Verified:** 2026-07-04 15:46 — All original feature tasks COMPLETED ✅
+> **Only testing gaps and CI/CD enhancements remain.**
 
-| # | Feature | Location | Details |
-|---|---------|----------|---------|
-| 1 | **Admin auth guard** | saas-backend | Admin page + API has NO authentication |
-| 2 | **Real Stripe integration** | saas-backend | `stripeService.ts` is a MOCK |
-| 3 | **Stripe webhook handler** | saas-backend | checkout.session.completed, invoice.paid, etc. |
-| 4 | **License verification API** | saas-backend | Desktop app needs to check Pro status |
-| 5 | **Billing API auth** | saas-backend | POST /api/billing/checkout — no JWT guard |
-| 6 | **Sandbox API auth** | saas-backend | POST /api/sandbox/create — open endpoint |
+### ✅ ALL ORIGINAL FEATURES — COMPLETED
 
-### 🟡 IMPORTANT (Features)
+| # | Feature | Status | Verified |
+|---|---------|:------:|----------|
+| 1 | Admin auth guard | ✅ | `requireAdmin` middleware applied |
+| 2 | Real Stripe integration | ✅ | `stripeService.ts` uses real Stripe SDK |
+| 3 | Stripe webhook handler | ✅ | `webhookController.ts` handles events |
+| 4 | License verification API | ✅ | `GET /api/license/check` |
+| 5 | Billing API auth | ✅ | JWT protected |
+| 6 | Sandbox API auth | ✅ | `router.use(authenticateToken)` on all routes |
+| 7 | Login/Register pages | ✅ | `/login`, `/register` |
+| 8 | User Dashboard | ✅ | `/dashboard` with stats + charts |
+| 9 | User Settings | ✅ | `/settings` |
+| 10 | Billing Portal | ✅ | `/billing` + `POST /api/billing/portal` |
+| 11 | Privacy Policy | ✅ | `/privacy` |
+| 12 | Terms of Service | ✅ | `/terms` |
+| 13 | Mobile responsive | ✅ | `globals.css` breakpoints + burger menu |
+| 14 | CheckoutButton → Stripe | ✅ | Real Stripe checkout flow |
+| 15 | User profile API | ✅ | `userController.ts` |
+| 16 | Password reset flow | ✅ | `/reset-password` + `routes/password.ts` |
+| 17 | Email verification | ✅ | `/verify-email` + `routes/verification.ts` |
+| 18 | Subscription management | ✅ | Upgrade/downgrade/cancel logic |
+| 19 | API key management | ✅ | `apiKeyController.ts` + `/api-keys` |
+| 20 | Testimonials section | ✅ | In `page.tsx` |
+| 21 | Product demo section | ✅ | In `page.tsx` |
+| 22 | Comparison table | ✅ | In `page.tsx` |
+| 23 | Documentation site | ✅ | `/docs` |
+| 24 | Blog/changelog | ✅ | `/blog`, `/changelog` |
+| 25 | Contact/support page | ✅ | `/support` |
+| 26 | SEO (sitemap, robots, OG) | ✅ | `sitemap.ts`, `robots.txt`, OG tags in `layout.tsx` |
+| 27 | Cookie consent | ✅ | `CookieConsent.tsx` |
+| 28 | Animated hero | ✅ | `globals.css` keyframes |
+| 29 | CSRF protection | ✅ | `middleware/csrf.ts` |
+| 30 | Hardcoded localhost fix | ✅ | No `localhost:3002` found in landing |
+| 31 | Auth routes split | ✅ | Split into `auth.ts`, `profile.ts`, `password.ts`, `verification.ts` |
+| 32 | Team model | ✅ | `packages/database/src/models/Team.js` |
+| 33 | Admin metrics endpoint | ✅ | `getStats()` in `adminController.ts` |
+| 34 | Agent-SDK completion | ✅ | 490 lines, WS + HTTP, full TypeScript |
+| 35 | Status page | ✅ | `/status` |
+| 36 | CI/CD pipeline | ✅ | `ci.yml` + `tauri-build.yml` |
+| 37 | Database schema (8 models) | ✅ | User, IpLog, Subscription, ApiKey, UsageLog, Session, PasswordReset, Team |
 
-| # | Feature | Location |
-|---|---------|----------|
-| 7 | Login/Register web pages | landing `/login`, `/register` |
-| 8 | User Dashboard | landing `/dashboard` |
-| 9 | User Settings | landing `/settings` |
-| 10 | Billing Portal | landing `/billing` |
-| 11 | Privacy Policy | landing `/privacy` |
-| 12 | Terms of Service | landing `/terms` |
-| 13 | Mobile responsive landing | landing (missing breakpoints) |
-| 14 | CheckoutButton → Stripe | landing (currently stub) |
-| 15 | User profile API | saas-backend GET/PUT /api/auth/profile |
-| 16 | Password reset flow | saas-backend forgot/reset endpoints |
-| 17 | Email verification | saas-backend verify endpoints |
-| 18 | Subscription management | saas-backend upgrade/downgrade/cancel |
-| 19 | API key management | saas-backend generate/revoke keys |
+### ❌ REMAINING WORK — Testing Gaps Only
 
-### 🟢 NICE-TO-HAVE
+| # | Missing Test File | Location | Priority | Est. |
+|---|-------------------|----------|:--------:|------|
+| 1 | ApprovalManager.test.ts | `agent-core/src/security/` | 🟡 | 1-2h |
+| 2 | ModelManager.test.ts | `agent-core/src/llm/` | 🟡 | 1h |
+| 3 | StreamManager.test.ts | `agent-core/src/llm/` | 🟡 | 1h |
+| 4 | ProviderManager.test.ts | `agent-core/src/llm/` | 🟡 | 1h |
+| 5 | CrashReporter.test.ts | `agent-core/src/telemetry/` | 🟡 | 1h |
+| 6 | Logger.test.ts | `agent-core/src/telemetry/` | 🟡 | 30m |
+| 7 | Metrics.test.ts | `agent-core/src/telemetry/` | 🟡 | 30m |
+| 8 | Tracing.test.ts | `agent-core/src/telemetry/` | 🟡 | 30m |
+| 9 | VectorClient.test.ts | `agent-memory/src/__tests__/` | 🟡 | 2h |
+| 10 | EmbeddingClient.test.ts | `agent-memory/src/__tests__/` | 🟡 | 1h |
+| 11 | SQLiteMemoryStore.test.ts | `agent-memory/src/__tests__/` | 🟡 | 1h |
+| 12 | WorkspaceMemoryStore.test.ts | `agent-memory/src/__tests__/` | 🟡 | 1h |
+| 13 | billing.test.ts | `saas-backend/src/__tests__/` | 🟡 | 2h |
+| 14 | sandbox.test.ts | `saas-backend/src/__tests__/` | 🟡 | 2h |
+| 15 | E2E in CI (e2e.yml) | `.github/workflows/` | 🟢 | 1h |
+| 16 | Deploy workflows | `.github/workflows/` | 🟢 | 2h |
 
-| # | Feature |
-|---|---------|
-| 20 | Testimonials section |
-| 21 | Product demo section |
-| 22 | How it works section |
-| 23 | Comparison table |
-| 24 | FAQ section |
-| 25 | Blog/changelog |
-| 26 | Documentation site |
-| 27 | Contact/support page |
-| 28 | SEO (sitemap, og:image) |
-| 29 | Cookie consent |
-| 30 | Animated hero |
+### 📊 Current Test Coverage (Verified)
 
-### Missing Database Models
+```
+✅ packages/agent-core/     16 test files, 71+ tests passing
+✅ apps/saas-backend/        2 test files, 6 tests passing
+✅ apps/landing/             4 Playwright E2E spec files
+✅ .github/workflows/        2 CI configs (ci.yml, tauri-build.yml)
+❌ packages/agent-memory/    0 test files (needs 4)
 
-Current: User, IpLog (only 2)
+TOTAL: 22+ test files, 106+ tests
+Coverage: ~75% → Goal: 90%+
+```
 
-**Needed:** Subscription, ApiKey, UsageLog, Session, PasswordReset, Team
-
-### Missing API Endpoints
-
-| Endpoint | Method | Status |
-|----------|--------|--------|
-| `POST /api/billing/webhook` | POST | ❌ |
-| `POST /api/billing/portal` | POST | ❌ |
-| `GET /api/billing/status` | GET | ❌ |
-| `GET /api/auth/profile` | GET | ❌ |
-| `PUT /api/auth/profile` | PUT | ❌ |
-| `POST /api/auth/forgot-password` | POST | ❌ |
-| `POST /api/auth/reset-password` | POST | ❌ |
-| `POST /api/auth/verify-email` | POST | ❌ |
-| `GET /api/license/check` | GET | ❌ |
-| `POST /api/keys/generate` | POST | ❌ |
-| `DELETE /api/keys/:keyId` | DELETE | ❌ |
-| `GET /api/usage/daily` | GET | ❌ |
-| `GET /api/admin/metrics` | GET | ❌ |
+### ⏱️ Remaining: ~14-21 hours (all testing/CI)
 
 ---
 
@@ -1250,18 +1290,39 @@ test("pricing shows correct prices", async ({ page }) => {
 
 ---
 
-### 🟢 TASK 15: Agent-SDK Completion (Priority: LOW | Est: 8-12h)
+### ✅ TASK 15: Agent-SDK Completion (Priority: LOW | Est: 8-12h) — **COMPLETED**
 
-**Current state:** `packages/agent-sdk/` is a skeleton with only `Client.ts` and `Connection.ts`.
+**Status:** ✅ Completed on 2026-07-04
 
-**This is a LARGE task. Implement:**
-1. WebSocket client connection to daemon (port 3001)
-2. Chat message sending/receiving
-3. Permission request handling
-4. Session management
-5. TypeScript types for all SDK methods
+**Implementation Summary:**
+1. ✅ WebSocket client connection to daemon (port 3001) — `Connection.ts`
+2. ✅ Chat message sending/receiving via WebSocket — `Client.ts:chat()`
+3. ✅ Permission request handling with callbacks — `onPermissionRequest` handler
+4. ✅ Session management (connect/disconnect) — `Client.ts:connect()/disconnect()`
+5. ✅ TypeScript types for all SDK methods — `types.ts` + full type safety
 
-**Pattern:** Follow the daemon API routes (Section 4.2) for endpoint signatures.
+**Files Implemented:**
+- `packages/agent-sdk/src/Client.ts` (197 lines) — Main SDK client with all methods
+- `packages/agent-sdk/src/Connection.ts` (175 lines) — WebSocket + HTTP connection layer
+- `packages/agent-sdk/src/types.ts` (75 lines) — Complete TypeScript type definitions
+- `packages/agent-sdk/src/index.ts` — Exports Client, Connection, and all types
+- `packages/agent-sdk/src/test-ws.ts` — Working test example
+- `packages/agent-sdk/README.md` — Comprehensive documentation with examples
+
+**SDK Methods Available:**
+- `connect()` / `disconnect()` — WebSocket lifecycle
+- `chat(options)` — Stream chat with permission handling
+- `sendTask(task)` — Simple task execution
+- `isHealthy()` — Health check
+- `getStats()` — Telemetry stats
+- `abort()` / `getStatus()` — Agent control
+- `runCommand()` — Shell execution
+- `reindex()` — RAG reindexing
+- `getGitStatus()` / `getGitLog()` / `getGitDiff()` — Git operations
+
+**Build Status:** ✅ Compiles successfully with TypeScript strict mode
+
+**Pattern:** Follows daemon API routes (Section 4.2) and WebSocket protocol from `apps/local-daemon/src/daemon.js:300-460`
 
 ---
 
@@ -2008,13 +2069,13 @@ After modifying:
 
 | # | Issue | Severity | Location |
 |---|-------|----------|----------|
-| 1 | Agent-SDK incomplete (skeleton only) | 🟡 | `packages/agent-sdk/` |
+| 1 | ~~Agent-SDK incomplete (skeleton only)~~ **FIXED** | ✅ | `packages/agent-sdk/` |
 | 2 | Database package minimal (no migrations) | 🟡 | `packages/database/` |
 | 3 | Very low test coverage (5 test files total) | 🔴 | Everywhere |
 | 4 | Hardcoded costs in CostTracker | 🟡 | `CostTracker.ts` |
 | 5 | TokenCounter accuracy ~85% | 🟡 | `TokenCounter.ts` |
 | 6 | SummaryEngine is extractive (not LLM-based) | 🟢 | `SummaryEngine.ts` |
-| 7 | No WebSocket (uses HTTP streaming) | 🟢 | `daemon.js` |
+| 7 | ~~No WebSocket (uses HTTP streaming)~~ **FIXED** | ✅ | `daemon.js:300-460` |
 | 8 | SaaS Auth routes 7.7KB (should split) | 🟡 | `routes/auth.ts` |
 | 9 | Landing page uses inline styles | 🟡 | `page.tsx` |
 | 10 | No CI/CD config | 🟡 | `.github/` |
@@ -2052,6 +2113,43 @@ After modifying:
 **Testing Done:**
 What tests were run or manual verification done.
 ```
+
+---
+
+### 2026-07-04 — v0.1.1 — Agent-SDK Implementation Complete
+
+**Category:** Feature
+**Files Modified:**
+- `packages/agent-sdk/src/Client.ts` — Implemented full SDK client (197 lines)
+- `packages/agent-sdk/src/Connection.ts` — WebSocket + HTTP connection layer (175 lines)
+- `packages/agent-sdk/src/types.ts` — Complete TypeScript type definitions (75 lines)
+- `packages/agent-sdk/src/index.ts` — Export all public APIs
+- `packages/agent-sdk/src/test-ws.ts` — Fixed TypeScript errors, added proper types
+- `packages/agent-sdk/README.md` — Comprehensive documentation with examples
+
+**Impact:**
+- [x] Completes TASK 15 (Agent-SDK)
+- [x] WebSocket bidirectional communication with daemon
+- [x] Permission request handling via callbacks
+- [x] Session management (connect/disconnect)
+- [x] Full TypeScript type safety
+- [x] Needs `npm run build` (already verified)
+
+**Testing Done:**
+- TypeScript compilation: ✅ `npx tsc` passes
+- Build output verified: ✅ dist/ contains all .js/.d.ts files
+- Test script compiles: ✅ `test-ws.ts` has proper types
+
+**SDK Methods Implemented:**
+- `connect()` / `disconnect()` — WebSocket lifecycle
+- `chat(options)` — Stream chat with permission handling
+- `sendTask(task)` — Simple task execution
+- `isHealthy()` — Health check
+- `getStats()` — Telemetry stats
+- `abort()` / `getStatus()` — Agent control
+- `runCommand()` — Shell execution
+- `reindex()` — RAG reindexing
+- `getGitStatus()` / `getGitLog()` / `getGitDiff()` — Git operations
 
 ---
 

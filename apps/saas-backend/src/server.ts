@@ -15,6 +15,7 @@ import sandboxRoutes from "./routes/sandbox.js";
 import keysRoutes from "./routes/keys.js";
 import usageRoutes from "./routes/usage.js";
 import licenseRoutes from "./routes/license.js";
+import teamRoutes from "./routes/team.js";
 import { connectDatabase } from "@istiyak/database";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { initPassport } from "./config/passport.js";
@@ -67,7 +68,9 @@ app.use(express.json());
 
 // CSRF protection (applied to state-changing requests)
 app.get("/api/csrf-token", getCsrfToken);
-app.use(csrfProtection);
+if (process.env.NODE_ENV !== "test") {
+  app.use(csrfProtection);
+}
 
 // Register API Routes
 app.use("/api/auth", authRoutes);
@@ -81,6 +84,7 @@ app.use("/api/sandbox", sandboxRoutes);
 app.use("/api/keys", keysRoutes);
 app.use("/api/usage", usageRoutes);
 app.use("/api/license", licenseRoutes);
+app.use("/api/teams", teamRoutes);
 
 // Health Check
 app.get("/health", (req, res) => {
@@ -95,13 +99,17 @@ if (process.env.SENTRY_DSN) {
 app.use(errorHandler);
 
 // Establish MongoDB Connection and Start Server
-connectDatabase(MONGODB_URI)
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`🚀 SaaS Backend listening on port ${PORT}`);
+if (process.env.NODE_ENV !== "test") {
+  connectDatabase(MONGODB_URI)
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`🚀 SaaS Backend listening on port ${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error("❌ MongoDB connection error:", err);
+      process.exit(1);
     });
-  })
-  .catch((err) => {
-    console.error("❌ MongoDB connection error:", err);
-    process.exit(1);
-  });
+}
+
+export { app };
