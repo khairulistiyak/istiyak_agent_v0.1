@@ -41,7 +41,7 @@ export const ChatWorkspace: React.FC = () => {
             </GlassButton>
           )}
           <div className="flex flex-col text-left">
-            <h2 className="text-xs font-semibold text-gray-200 truncate max-w-[200px] sm:max-w-[400px]">
+            <h2 className="text-xs font-semibold text-gray-300 truncate max-w-[200px] sm:max-w-[400px]">
               {activeSession.title}
             </h2>
             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">

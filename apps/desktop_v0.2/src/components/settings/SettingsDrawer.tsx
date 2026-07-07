@@ -7,7 +7,7 @@ import { ModelTable } from "./ModelTable.js";
 import { GlassButton } from "../ui/GlassButton.js";
 
 export const SettingsDrawer: React.FC = () => {
-  const { isSettingsOpen, setSettingsOpen } = useChatStore();
+  const { isSettingsOpen, setSettingsOpen, viewMode, setViewMode } = useChatStore();
   const [activeTab, setActiveTab] = useState<"engine" | "providers" | "models">("engine");
 
   if (!isSettingsOpen) return null;
@@ -35,13 +35,26 @@ export const SettingsDrawer: React.FC = () => {
             <Settings2 className="w-4 h-4 text-gray-400" />
             <h2 className="text-sm font-bold text-gray-200">Settings Manager</h2>
           </div>
-          <GlassButton
-            onClick={() => setSettingsOpen(false)}
-            variant="ghost"
-            size="xs"
-          >
-            <X className="w-4 h-4" />
-          </GlassButton>
+          <div className="flex items-center gap-1.5">
+            <GlassButton
+              onClick={() => {
+                setViewMode(viewMode === "chat" ? "library" : "chat");
+                setSettingsOpen(false);
+              }}
+              variant="ghost"
+              size="xs"
+              className="!border-white/5 !bg-white/5 hover:!bg-white/10 text-gray-300"
+            >
+              {viewMode === "chat" ? "📐 UI Playground" : "💬 Back to Chat"}
+            </GlassButton>
+            <GlassButton
+              onClick={() => setSettingsOpen(false)}
+              variant="ghost"
+              size="xs"
+            >
+              <X className="w-4 h-4" />
+            </GlassButton>
+          </div>
         </div>
 
         {/* Tab Controls */}

@@ -23,19 +23,19 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
 
   const getVariantClasses = () => {
     if (active) {
-      return "bg-white/10 border-white/15 text-white shadow-sm";
+      return "bg-white/10 border-white/15 text-gray-300 shadow-sm";
     }
 
     switch (variant) {
       case "primary":
-        return "bg-white border-white text-black hover:bg-white/90";
+        return "bg-white/10 border-white/20 hover:bg-white/15 text-gray-300";
       case "danger":
-        return "bg-black/10 border-white/5 hover:border-white/10 text-gray-400 hover:text-white hover:bg-white/5";
+        return "bg-black/10 border-white/5 hover:border-white/10 text-gray-400 hover:text-gray-300 hover:bg-white/5";
       case "ghost":
-        return "bg-transparent border-transparent text-gray-500 hover:text-gray-200 hover:bg-white/5";
+        return "bg-transparent border-transparent text-gray-500 hover:text-gray-300 hover:bg-white/5";
       case "secondary":
       default:
-        return "bg-white/5 border-white/10 hover:bg-white/10 text-gray-300 hover:text-white";
+        return "bg-white/5 border-white/10 hover:bg-white/10 text-gray-400 hover:text-gray-300";
     }
   };
 

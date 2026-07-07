@@ -9,10 +9,12 @@ interface ChatState {
   engineConfig: EngineConfig;
   isSidebarOpen: boolean;
   isSettingsOpen: boolean;
+  viewMode: "chat" | "library";
   
   // Actions
   toggleSidebar: () => void;
   setSettingsOpen: (open: boolean) => void;
+  setViewMode: (mode: "chat" | "library") => void;
   
   // Session Actions
   addSession: () => void;
@@ -128,9 +130,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
   engineConfig: defaultEngineConfig,
   isSidebarOpen: true,
   isSettingsOpen: false,
+  viewMode: "chat",
 
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   setSettingsOpen: (open) => set({ isSettingsOpen: open }),
+  setViewMode: (mode) => set({ viewMode: mode }),
 
   addSession: () => set((state) => {
     const newId = `session-${Date.now()}`;

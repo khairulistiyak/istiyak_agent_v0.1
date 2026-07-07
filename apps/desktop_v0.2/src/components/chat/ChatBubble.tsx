@@ -1,6 +1,6 @@
 import React from "react";
 import { Message } from "../../types/index.js";
-import { Cpu, User } from "lucide-react";
+import { Sparkles, Terminal } from "lucide-react";
 
 interface ChatBubbleProps {
   message: Message;
@@ -13,7 +13,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
     <div className={`flex w-full gap-4 items-start ${isUser ? "justify-end" : "justify-start"} py-2`}>
       {!isUser && (
         <div className="w-6 h-6 rounded-md bg-white/[0.02] border border-white/[0.06] flex items-center justify-center text-gray-500 flex-shrink-0 mt-0.5">
-          <Cpu className="w-3.5 h-3.5" />
+          <Sparkles className="w-3.5 h-3.5" />
         </div>
       )}
 
@@ -29,8 +29,8 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
         <div
           className={`text-xs leading-relaxed whitespace-pre-wrap w-full ${
             isUser
-              ? "bg-white/[0.03] border border-white/[0.06] px-3.5 py-2.5 rounded-xl text-gray-200 max-w-2xl shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
-              : "text-gray-300 py-0.5"
+              ? "bg-white/[0.03] border border-white/[0.06] px-3.5 py-2.5 rounded-xl text-gray-300 max-w-2xl shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
+              : "text-gray-400 py-0.5"
           }`}
         >
           {message.content}
@@ -39,7 +39,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
 
       {isUser && (
         <div className="w-6 h-6 rounded-md bg-white/[0.02] border border-white/[0.06] flex items-center justify-center text-gray-500 flex-shrink-0 mt-0.5">
-          <User className="w-3.5 h-3.5" />
+          <Terminal className="w-3.5 h-3.5" />
         </div>
       )}
     </div>

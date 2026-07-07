@@ -48,10 +48,10 @@ export const Avatar: React.FC<AvatarProps> = ({
         <span
           className={`absolute bottom-0 right-0 block w-2 h-2 rounded-full border border-[#08090a] ${
             status === "online"
-              ? "bg-white"
+              ? "bg-emerald-500"
               : status === "away"
-              ? "bg-white/50"
-              : "bg-white/20"
+              ? "bg-amber-500"
+              : "bg-gray-500"
           }`}
         />
       )}

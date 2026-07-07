@@ -1,5 +1,5 @@
 import React, { useState, KeyboardEvent, useRef, useEffect } from "react";
-import { Send, Zap, FolderOpen, ChevronDown } from "lucide-react";
+import { ArrowUp, Cpu, FolderOpen, ChevronDown } from "lucide-react";
 import { useChatStore } from "../../store/useChatStore.js";
 import { GlassButton } from "../ui/GlassButton.js";
 
@@ -182,7 +182,7 @@ export const InputContainer: React.FC = () => {
 
         {/* Model Selection Dropdown */}
         <div className="flex items-center gap-1.5">
-          <Zap className="w-3.5 h-3.5 text-gray-400" />
+          <Cpu className="w-3.5 h-3.5 text-gray-400" />
           <select
             value={activeSession.activeModel}
             onChange={(e) => {
@@ -222,7 +222,7 @@ export const InputContainer: React.FC = () => {
           variant="primary"
           className="rounded-xl w-8 h-8 !p-0 shadow-lg cursor-pointer disabled:opacity-30 disabled:scale-100"
         >
-          <Send className="w-3.5 h-3.5" />
+          <ArrowUp className="w-3.5 h-3.5" />
         </GlassButton>
       </div>
     </div>

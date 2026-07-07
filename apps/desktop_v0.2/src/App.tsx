@@ -1,12 +1,13 @@
 import { SidebarContainer } from "./components/sidebar/SidebarContainer.js";
 import { ChatWorkspace } from "./components/chat/ChatWorkspace.js";
+import { ComponentLibrary } from "./components/library/ComponentLibrary.js";
 import { SettingsDrawer } from "./components/settings/SettingsDrawer.js";
 import { useChatStore } from "./store/useChatStore.js";
 import { PanelLeftOpen } from "lucide-react";
 import { GlassButton } from "./components/ui/GlassButton.js";
 
 export default function App() {
-  const { isSidebarOpen, toggleSidebar } = useChatStore();
+  const { isSidebarOpen, toggleSidebar, viewMode } = useChatStore();
 
   return (
     <div className="w-screen h-screen overflow-hidden flex bg-cyber-dark font-outfit text-gray-200 relative select-none">
@@ -14,8 +15,12 @@ export default function App() {
       {/* Collapsible Sidebar */}
       <SidebarContainer />
 
-      {/* Main chat Workspace */}
-      <ChatWorkspace />
+      {/* Main Workspace (Toggled between Chat and Library Playground) */}
+      {viewMode === "chat" ? (
+        <ChatWorkspace />
+      ) : (
+        <ComponentLibrary />
+      )}
 
       {/* Settings Drawer Modal */}
       <SettingsDrawer />
