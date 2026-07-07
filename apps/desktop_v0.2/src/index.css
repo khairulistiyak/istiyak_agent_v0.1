@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Glassmorphism Styling */
+.glass-capsule {
+  background: rgba(255, 255, 255, 0.02);
+  border: 0.75px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+}
+
+/* Zen Glow Animations */
+@keyframes zenglow {
+  0% {
+    opacity: 0.45;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+  }
+  50% {
+    opacity: 0.85;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+  }
+  100% {
+    opacity: 0.45;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+  }
+}
+
+.animate-zenglow {
+  animation: zenglow 3s infinite ease-in-out;
+}
+
+/* Utility to hide scrollbars */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
