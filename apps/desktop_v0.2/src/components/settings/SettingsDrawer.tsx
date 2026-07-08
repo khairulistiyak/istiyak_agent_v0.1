@@ -58,7 +58,7 @@ export const SettingsDrawer: React.FC = () => {
         </div>
 
         {/* Tab Controls */}
-        <div className="flex border-b border-cyber-card-border px-4 py-1 gap-2">
+        <div className="flex border-b border-cyber-card-border px-4 py-1 gap-2 overflow-x-auto scrollbar-none whitespace-nowrap">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;

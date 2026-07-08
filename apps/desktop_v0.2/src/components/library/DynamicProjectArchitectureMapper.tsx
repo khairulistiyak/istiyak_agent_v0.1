@@ -124,7 +124,7 @@ export const DynamicProjectArchitectureMapper: React.FC = () => {
         {/* Visual Map Grid */}
         <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3 bg-black/15 border border-white/[0.03] p-3 rounded-xl min-h-[220px]">
           {/* Column 1: Entry */}
-          <div className="flex flex-col gap-2 border-r border-white/[0.03] pr-2 last:border-0 last:pr-0">
+          <div className="flex flex-col gap-2 border-b sm:border-b-0 sm:border-r border-white/[0.03] pb-3 sm:pb-0 pr-0 sm:pr-2 last:border-0 last:pb-0 last:pr-0">
             <span className="text-[7.5px] text-gray-500 font-bold uppercase tracking-wider pl-1 flex items-center gap-1">
               <Globe className="w-2.5 h-2.5" /> Client Entry
             </span>
@@ -141,7 +141,7 @@ export const DynamicProjectArchitectureMapper: React.FC = () => {
           </div>
 
           {/* Column 2: Logic */}
-          <div className="flex flex-col gap-2 border-r border-white/[0.03] pr-2 last:border-0 last:pr-0">
+          <div className="flex flex-col gap-2 border-b sm:border-b-0 sm:border-r border-white/[0.03] pb-3 sm:pb-0 pr-0 sm:pr-2 last:border-0 last:pb-0 last:pr-0">
             <span className="text-[7.5px] text-gray-500 font-bold uppercase tracking-wider pl-1 flex items-center gap-1">
               <Network className="w-2.5 h-2.5" /> Controllers
             </span>
@@ -158,7 +158,7 @@ export const DynamicProjectArchitectureMapper: React.FC = () => {
           </div>
 
           {/* Column 3: Services */}
-          <div className="flex flex-col gap-2 border-r border-white/[0.03] pr-2 last:border-0 last:pr-0">
+          <div className="flex flex-col gap-2 border-b sm:border-b-0 sm:border-r border-white/[0.03] pb-3 sm:pb-0 pr-0 sm:pr-2 last:border-0 last:pb-0 last:pr-0">
             <span className="text-[7.5px] text-gray-500 font-bold uppercase tracking-wider pl-1 flex items-center gap-1">
               <Server className="w-2.5 h-2.5" /> Services Layer
             </span>

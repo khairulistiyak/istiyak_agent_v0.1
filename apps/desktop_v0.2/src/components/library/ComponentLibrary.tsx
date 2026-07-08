@@ -42,10 +42,18 @@ import {
   SystemArchitectureViewer,
   DynamicProjectArchitectureMapper,
   ProjectDiagnosticRadarMap,
-  DatabaseSchemaMindMap
+  DatabaseSchemaMindMap,
+  SemanticSearchExplorer,
+  AgentIdentityDashboard,
+  AgentFlowPreview,
+  AgentLifecycleSimulator,
+  LiveDeveloperSessionSimulator,
+  RealLifeChatWorkspacePreview,
+  DeveloperAgentCoWorkingSimulator,
+  DesktopMainUiLayoutPreview
 } from "./AgentAdvancedActions.js";
 import { CodeBlockPreview } from "./CodeBlockPreview.js";
-import { BookOpen, Code, Eye, Layers, Network, Activity, Database } from "lucide-react";
+import { BookOpen, Code, Eye, Layers, Network, Activity, Database, Search, Cpu, PlayCircle, Sliders, Sparkles } from "lucide-react";
 
 export const ComponentLibrary: React.FC = () => {
   const [dropdownValue, setDropdownValue] = useState("option1");
@@ -223,7 +231,7 @@ export const DatabaseSchema = () => {
   return (
     <div className="flex-1 flex flex-col h-full bg-[#08090a] overflow-y-auto p-6 scrollbar-thin select-text">
       {/* Title Header */}
-      <div className="flex items-center justify-between border-b border-white/[0.04] pb-4 mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/[0.04] pb-4 mb-6">
         <div className="flex flex-col text-left">
           <div className="flex items-center gap-2">
             <Layers className="w-5 h-5 text-gray-400" />
@@ -850,6 +858,70 @@ export const DatabaseSchema = () => {
               <Database className="w-3.5 h-3.5 text-gray-500" /> Database Schema Mind Map
             </h2>
             <DatabaseSchemaMindMap />
+          </div>
+
+          {/* Section: Semantic Codebase Search Explorer */}
+          <div className="flex flex-col gap-2 mt-2">
+            <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1 flex items-center gap-1.5 mb-1">
+              <Search className="w-3.5 h-3.5 text-gray-500" /> Semantic Codebase Search Explorer
+            </h2>
+            <SemanticSearchExplorer />
+          </div>
+
+          {/* Section: Agent Identity & Configuration Panel */}
+          <div className="flex flex-col gap-2 mt-2">
+            <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1 flex items-center gap-1.5 mb-1">
+              <Cpu className="w-3.5 h-3.5 text-gray-500" /> Agent Identity Dashboard
+            </h2>
+            <AgentIdentityDashboard />
+          </div>
+
+          {/* Section: Agent Execution Flow Preview */}
+          <div className="flex flex-col gap-2 mt-2">
+            <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1 flex items-center gap-1.5 mb-1">
+              <PlayCircle className="w-3.5 h-3.5 text-gray-500" /> Interactive Agent Workspace Flow
+            </h2>
+            <AgentFlowPreview />
+          </div>
+
+          {/* Section: Agent Session Lifecycle Simulator */}
+          <div className="flex flex-col gap-2 mt-2">
+            <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1 flex items-center gap-1.5 mb-1">
+              <Sliders className="w-3.5 h-3.5 text-gray-500" /> Agent Session Lifecycle Simulator
+            </h2>
+            <AgentLifecycleSimulator />
+          </div>
+
+          {/* Section: Live Developer Session Simulator */}
+          <div className="flex flex-col gap-2 mt-2">
+            <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1 flex items-center gap-1.5 mb-1">
+              <PlayCircle className="w-3.5 h-3.5 text-gray-500" /> Live Developer Workspace Simulation
+            </h2>
+            <LiveDeveloperSessionSimulator />
+          </div>
+
+          {/* Section: Developer-Agent Co-Working Simulator */}
+          <div className="flex flex-col gap-2 mt-2">
+            <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1 flex items-center gap-1.5 mb-1">
+              <Sparkles className="w-3.5 h-3.5 text-gray-500" /> Developer-Agent Co-Working Simulator
+            </h2>
+            <DeveloperAgentCoWorkingSimulator />
+          </div>
+
+          {/* Section: Desktop Main UI Layout Simulator */}
+          <div className="flex flex-col gap-2 mt-2">
+            <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1 flex items-center gap-1.5 mb-1">
+              <Sparkles className="w-3.5 h-3.5 text-gray-500" /> Desktop Main UI Layout Simulator
+            </h2>
+            <DesktopMainUiLayoutPreview />
+          </div>
+
+          {/* Section: Real Life Chat Workspace Preview */}
+          <div className="flex flex-col gap-2 mt-2">
+            <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1 flex items-center gap-1.5 mb-1">
+              <BookOpen className="w-3.5 h-3.5 text-gray-500" /> Real Life Chat Workspace Preview
+            </h2>
+            <RealLifeChatWorkspacePreview />
           </div>
 
           {/* Section: Minimal Code Block & Copy Box */}

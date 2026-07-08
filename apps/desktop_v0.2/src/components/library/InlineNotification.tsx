@@ -1,7 +1,7 @@
 import React from "react";
 
 interface InlineNotificationProps {
-  type: "info" | "warning" | "error";
+  type: "info" | "warning" | "error" | "success";
   title: string;
   message: string;
 }
@@ -25,6 +25,12 @@ export const InlineNotification: React.FC<InlineNotificationProps> = ({ type, ti
       bg: "bg-red-500/[0.02]",
       dot: "bg-red-400",
       text: "text-red-400"
+    },
+    success: {
+      border: "border-emerald-500/10",
+      bg: "bg-emerald-500/[0.02]",
+      dot: "bg-emerald-400",
+      text: "text-emerald-400"
     }
   };
 

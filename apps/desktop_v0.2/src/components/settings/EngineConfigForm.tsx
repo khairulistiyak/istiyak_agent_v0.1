@@ -65,7 +65,7 @@ export const EngineConfigForm: React.FC = () => {
         <p className="text-[10px] text-gray-500">Select active AI providers and endpoints.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Provider Select */}
         <Dropdown
           label="AI Provider"
@@ -108,7 +108,7 @@ export const EngineConfigForm: React.FC = () => {
 
       {/* Gemini Specific Auth Dropdowns */}
       {isGemini && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Dropdown
             label="Authentication"
             options={[
@@ -144,7 +144,7 @@ export const EngineConfigForm: React.FC = () => {
 
       {/* Google Cloud/Vertex AI specific items */}
       {isGemini && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <InputField
             label="GCP Project ID"
             placeholder="istiyak-companion-123"

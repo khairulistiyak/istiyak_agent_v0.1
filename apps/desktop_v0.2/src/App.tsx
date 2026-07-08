@@ -15,6 +15,14 @@ export default function App() {
       {/* Collapsible Sidebar */}
       <SidebarContainer />
 
+      {/* Sidebar Backdrop for Mobile */}
+      {isSidebarOpen && (
+        <div 
+          onClick={toggleSidebar}
+          className="md:hidden fixed inset-0 bg-black/60 z-20 backdrop-blur-sm transition-opacity duration-300"
+        />
+      )}
+
       {/* Main Workspace (Toggled between Chat and Library Playground) */}
       {viewMode === "chat" ? (
         <ChatWorkspace />
@@ -26,7 +34,7 @@ export default function App() {
       <SettingsDrawer />
 
       {/* Floating Toggle button when Sidebar is closed */}
-      {!isSidebarOpen && (
+      {!isSidebarOpen && viewMode !== "chat" && (
         <GlassButton
           onClick={toggleSidebar}
           variant="ghost"

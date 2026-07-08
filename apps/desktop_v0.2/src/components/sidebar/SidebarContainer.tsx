@@ -10,7 +10,7 @@ export const SidebarContainer: React.FC = () => {
 
   return (
     <div
-      className={`h-full border-r border-cyber-card-border bg-cyber-card flex flex-col justify-between transition-all duration-300 relative select-none ${
+      className={`h-full border-r border-cyber-card-border bg-[#090a0f] md:bg-cyber-card flex flex-col justify-between transition-all duration-300 absolute inset-y-0 left-0 z-30 md:relative select-none ${
         isSidebarOpen ? "w-64" : "w-0 overflow-hidden border-r-0"
       }`}
     >

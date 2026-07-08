@@ -17,3 +17,13 @@ export { SystemArchitectureViewer } from "./SystemArchitectureViewer.js";
 export { DynamicProjectArchitectureMapper } from "./DynamicProjectArchitectureMapper.js";
 export { ProjectDiagnosticRadarMap } from "./ProjectDiagnosticRadarMap.js";
 export { DatabaseSchemaMindMap } from "./DatabaseSchemaMindMap.js";
+export { SemanticSearchExplorer } from "./SemanticSearchExplorer.js";
+export { AgentIdentityDashboard } from "./AgentIdentityDashboard.js";
+export { AgentFlowPreview } from "./agent-preview/AgentFlowPreview.js";
+export { AgentLifecycleSimulator } from "./AgentLifecycleSimulator.js";
+export { LiveDeveloperSessionSimulator } from "./LiveDeveloperSessionSimulator.js";
+export { RealLifeChatWorkspacePreview } from "./RealLifeChatWorkspacePreview.js";
+export { DeveloperAgentCoWorkingSimulator } from "./DeveloperAgentCoWorkingSimulator.js";
+export { DesktopMainUiLayoutPreview } from "./DesktopMainUiLayoutPreview.js";
+
+

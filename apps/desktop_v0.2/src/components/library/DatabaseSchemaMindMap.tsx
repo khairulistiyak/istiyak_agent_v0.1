@@ -59,6 +59,16 @@ export const DatabaseSchemaMindMap: React.FC = () => {
   const [isPanning, setIsPanning] = useState<boolean>(false);
   const [panStart, setPanStart] = useState<NodePosition>({ x: 0, y: 0 });
 
+  useEffect(() => {
+    if (containerRef.current) {
+      const width = containerRef.current.clientWidth;
+      if (width < 600) {
+        setScale(width / 750);
+        setPan({ x: 10, y: 20 });
+      }
+    }
+  }, []);
+
   // 1. SQL Schema Table positions
   const [sqlPositions, setSqlPositions] = useState<Record<string, NodePosition>>({
     departments: { x: 40, y: 40 },

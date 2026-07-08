@@ -98,7 +98,7 @@ export const CustomProviderForm: React.FC = () => {
 
       {/* Basic Settings */}
       <div className="p-4 border border-white/10 bg-white/[0.02] rounded-xl flex flex-col gap-3">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <InputField 
             label="Provider ID" 
             placeholder="e.g. openrouter-dev" 
@@ -113,7 +113,7 @@ export const CustomProviderForm: React.FC = () => {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <InputField 
             label="Provider API Base URL" 
             placeholder="e.g. https://openrouter.ai/api/v1" 
@@ -134,7 +134,7 @@ export const CustomProviderForm: React.FC = () => {
       <div className="p-4 border border-white/10 bg-white/[0.02] rounded-xl flex flex-col gap-3">
         <h4 className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Supported Model Capabilities</h4>
         
-        <div className="grid grid-cols-3 gap-3 items-end">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
           <InputField 
             label="Model ID" 
             placeholder="e.g. deepseek/deepseek-chat" 
@@ -195,7 +195,7 @@ export const CustomProviderForm: React.FC = () => {
       <div className="p-4 border border-white/10 bg-white/[0.02] rounded-xl flex flex-col gap-3">
         <h4 className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Custom HTTP Headers</h4>
         
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <InputField 
             label="Header Key" 
             placeholder="e.g. X-Title" 

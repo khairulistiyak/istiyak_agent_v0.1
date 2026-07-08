@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ChevronDown, ChevronRight, AlertTriangle, CheckSquare, Square, FileCode } from "lucide-react";
+import { useChatStore } from "../../store/useChatStore.js";
 
 interface ProposedChange {
   type: "modify" | "new" | "delete";
@@ -21,8 +22,10 @@ interface AgentImplementationPlanCardProps {
   risks?: string[];
   proposedChanges: ProposedChange[];
   openQuestions?: (string | PlanQuestion)[];
-  onApprove: (answers: Record<string, string>, selectedFiles: string[], customInstructions: string) => void;
-  onReject: () => void;
+  onApprove?: (answers: Record<string, string>, selectedFiles: string[], customInstructions: string) => void;
+  onReject?: () => void;
+  showFooterActions?: boolean;
+  useGlobalStore?: boolean;
 }
 
 export const AgentImplementationPlanCard: React.FC<AgentImplementationPlanCardProps> = ({
@@ -32,13 +35,14 @@ export const AgentImplementationPlanCard: React.FC<AgentImplementationPlanCardPr
   proposedChanges,
   openQuestions = [],
   onApprove,
-  onReject
+  onReject,
+  showFooterActions = true,
+  useGlobalStore = false
 }) => {
   const [collapsed, setCollapsed] = useState(false);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  
-  // Set all files initially to true (checked/active in proposal changes list)
-  const [fileSelections, setFileSelections] = useState<Record<string, boolean>>(() => {
+  const [localAnswers, setLocalAnswers] = useState<Record<string, string>>({});
+  const [localCustomInstructions, setLocalCustomInstructions] = useState("");
+  const [localFileSelections, setLocalFileSelections] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     proposedChanges.forEach((change) => {
       initial[change.path] = true;
@@ -46,26 +50,66 @@ export const AgentImplementationPlanCard: React.FC<AgentImplementationPlanCardPr
     return initial;
   });
 
-  const [customInstructions, setCustomInstructions] = useState("");
+  const store = useChatStore();
+
+  const answers = useGlobalStore ? store.activePlanAnswers : localAnswers;
+  const customInstructions = useGlobalStore ? store.activePlanCustomInstructions : localCustomInstructions;
+  const activePlanFiles = useGlobalStore ? store.activePlanFiles : [];
+
+  const isFileSelected = (path: string) => {
+    if (useGlobalStore) {
+      return store.activePlanFiles.includes(path);
+    }
+    return localFileSelections[path] !== false;
+  };
 
   const toggleFileSelection = (path: string) => {
-    setFileSelections((prev) => ({
-      ...prev,
-      [path]: !prev[path]
-    }));
+    if (useGlobalStore) {
+      store.togglePlanFile(path);
+    } else {
+      setLocalFileSelections((prev) => ({
+        ...prev,
+        [path]: !prev[path]
+      }));
+    }
   };
 
   const handleSelectOption = (questionId: string, value: string) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: value
-    }));
+    if (useGlobalStore) {
+      store.updatePlanAnswer(questionId, value);
+    } else {
+      setLocalAnswers((prev) => ({
+        ...prev,
+        [questionId]: value
+      }));
+    }
   };
 
-  const activeFilesCount = Object.values(fileSelections).filter(Boolean).length;
+  const handleInputChange = (questionId: string, value: string) => {
+    if (useGlobalStore) {
+      store.updatePlanAnswer(questionId, value);
+    } else {
+      setLocalAnswers((prev) => ({
+        ...prev,
+        [questionId]: value
+      }));
+    }
+  };
+
+  const handleInstructionsChange = (value: string) => {
+    if (useGlobalStore) {
+      store.updatePlanCustomInstructions(value);
+    } else {
+      setLocalCustomInstructions(value);
+    }
+  };
+
+  const activeFilesCount = useGlobalStore
+    ? activePlanFiles.length
+    : Object.values(localFileSelections).filter(Boolean).length;
 
   return (
-    <div className="relative overflow-hidden border border-white/[0.06] bg-[#090a0f]/90 backdrop-blur-xl shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8)] rounded-2xl w-full max-w-sm text-left transition-all duration-300">
+    <div className="relative overflow-hidden border border-white/[0.06] bg-[#090a0f]/90 backdrop-blur-xl shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8)] rounded-2xl w-full text-left transition-all duration-300">
       {/* Top glowing accent line */}
       <div className="absolute top-0 left-0 right-0 h-[1.2px] bg-gradient-to-r from-sky-500/0 via-sky-400/30 to-sky-500/0" />
 
@@ -115,7 +159,7 @@ export const AgentImplementationPlanCard: React.FC<AgentImplementationPlanCardPr
           {/* Proposed Changes list with checkboxes & descriptions */}
           <div className="flex flex-col gap-2">
             <span className="text-[8.5px] text-gray-500 font-bold uppercase tracking-wider">Proposed Changes (Toggle to skip)</span>
-            <div className="flex flex-col gap-1.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {proposedChanges.map((change, idx) => {
                 const badgeStyle = 
                   change.type === "new" 
@@ -123,7 +167,7 @@ export const AgentImplementationPlanCard: React.FC<AgentImplementationPlanCardPr
                     : change.type === "delete" 
                     ? "text-red-400 bg-red-500/10 border-red-500/20" 
                     : "text-sky-400 bg-sky-500/10 border-sky-500/20";
-                const isSelected = fileSelections[change.path] !== false;
+                const isSelected = isFileSelected(change.path);
                 
                 return (
                   <div 
@@ -166,7 +210,7 @@ export const AgentImplementationPlanCard: React.FC<AgentImplementationPlanCardPr
           {openQuestions.length > 0 && (
             <div className="flex flex-col gap-2.5 border-t border-white/[0.03] pt-3">
               <span className="text-[8.5px] text-gray-550 font-bold uppercase tracking-wider">Required Feedback</span>
-              <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                 {openQuestions.map((q, idx) => {
                   const qId = typeof q === "string" ? `q-${idx}` : q.id;
                   const qText = typeof q === "string" ? q : q.text;
@@ -202,8 +246,8 @@ export const AgentImplementationPlanCard: React.FC<AgentImplementationPlanCardPr
                           type="text"
                           placeholder={qPlaceholder}
                           value={answers[qId] || ""}
-                          onChange={(e) => setAnswers({ ...answers, [qId]: e.target.value })}
-                          className="w-full bg-black/50 border border-white/5 focus:border-white/10 rounded-lg px-2.5 py-1 text-[9px] font-mono text-gray-350 outline-none placeholder:text-gray-650 transition-colors focus:bg-black/75"
+                          onChange={(e) => handleInputChange(qId, e.target.value)}
+                          className="w-full bg-black/50 border border-white/5 focus:border-white/10 rounded-lg px-2.5 py-1 text-[9px] font-mono text-gray-350 outline-none placeholder:text-gray-655 transition-colors focus:bg-black/75"
                         />
                       )}
                     </div>
@@ -219,7 +263,7 @@ export const AgentImplementationPlanCard: React.FC<AgentImplementationPlanCardPr
             <textarea 
               placeholder="e.g. Skip old_tests folder, use Tailwind v4, configure Indigo primary..."
               value={customInstructions}
-              onChange={(e) => setCustomInstructions(e.target.value)}
+              onChange={(e) => handleInstructionsChange(e.target.value)}
               className="w-full bg-black/50 border border-white/5 focus:border-white/10 rounded-lg px-2.5 py-1.5 text-[9px] font-mono text-gray-350 outline-none placeholder:text-gray-655 h-14 resize-none transition-all focus:bg-black/75 scrollbar-thin"
             />
           </div>
@@ -227,26 +271,30 @@ export const AgentImplementationPlanCard: React.FC<AgentImplementationPlanCardPr
       )}
 
       {/* Footer controls */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white/[0.01] border-t border-white/[0.03]">
-        <span className="text-[8.5px] text-gray-655 font-bold uppercase tracking-wider">Waiting for review</span>
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={onReject} 
-            className="px-2.5 py-1 text-[8.5px] font-bold uppercase tracking-wider text-gray-550 hover:text-red-400 hover:bg-red-500/[0.03] border border-transparent hover:border-red-500/10 rounded-lg cursor-pointer transition-all"
-          >
-            Request Edit
-          </button>
-          <button 
-            onClick={() => {
-              const activeFiles = Object.keys(fileSelections).filter(k => fileSelections[k] !== false);
-              onApprove(answers, activeFiles, customInstructions);
-            }} 
-            className="px-3.5 py-1 text-[8.5px] font-bold uppercase tracking-wider text-black bg-white hover:bg-gray-100 rounded-lg font-sans transition-all cursor-pointer shadow-[0_0_12px_rgba(255,255,255,0.06)] active:scale-95"
-          >
-            Approve Plan
-          </button>
+      {showFooterActions && (
+        <div className="flex items-center justify-between px-4 py-3 bg-white/[0.01] border-t border-white/[0.03]">
+          <span className="text-[8.5px] text-gray-655 font-bold uppercase tracking-wider">Waiting for review</span>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={onReject} 
+              className="px-2.5 py-1 text-[8.5px] font-bold uppercase tracking-wider text-gray-550 hover:text-red-400 hover:bg-red-500/[0.03] border border-transparent hover:border-red-500/10 rounded-lg cursor-pointer transition-all"
+            >
+              Request Edit
+            </button>
+            <button 
+              onClick={() => {
+                const activeFiles = useGlobalStore
+                  ? activePlanFiles
+                  : Object.keys(localFileSelections).filter(k => localFileSelections[k] !== false);
+                onApprove?.(answers, activeFiles, customInstructions);
+              }} 
+              className="px-3.5 py-1 text-[8.5px] font-bold uppercase tracking-wider text-black bg-white hover:bg-gray-100 rounded-lg font-sans transition-all cursor-pointer shadow-[0_0_12px_rgba(255,255,255,0.06)] active:scale-95"
+            >
+              Approve Plan
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

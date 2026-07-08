@@ -50,6 +50,16 @@ export const SystemArchitectureViewer: React.FC = () => {
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(true);
 
+  useEffect(() => {
+    if (canvasRef.current) {
+      const width = canvasRef.current.clientWidth;
+      if (width < 600) {
+        setScale(width / 650);
+        setPan({ x: 10, y: 20 });
+      }
+    }
+  }, []);
+
   const nodes: ArchitectureNode[] = [
     {
       id: "ui",
