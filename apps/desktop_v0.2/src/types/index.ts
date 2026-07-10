@@ -99,6 +99,49 @@ export interface Message {
   };
   editorTabs?: AgentEditorTab[];
   diffLines?: Array<{ type: "addition" | "deletion" | "normal"; content: string }>;
+  
+  // Additional library component fields
+  searchStatus?: {
+    query: string;
+    status: "searching" | "completed" | "failed";
+  };
+  commandExecution?: {
+    command: string;
+    status: "running" | "success" | "failed";
+    output?: string[];
+  };
+  codeBlock?: {
+    code: string;
+    language: string;
+    fileName?: string;
+    fileSize?: string;
+  };
+  tokenUsage?: {
+    inputTokens: number;
+    outputTokens: number;
+    cachedTokens?: number;
+    costUSD?: number;
+  };
+  apiHealth?: {
+    services: Array<{
+      name: string;
+      latencyMs: number;
+      status: "online" | "offline" | "degraded";
+    }>;
+  };
+  performanceStats?: {
+    tokensUsed: number;
+    latencySec: number;
+    speedTps: number;
+  };
+  budgetGauge?: {
+    spent: number;
+    limit: number;
+  };
+  timerStatus?: {
+    durationSeconds: number;
+    prompt: string;
+  };
 }
 
 export interface ChatSession {

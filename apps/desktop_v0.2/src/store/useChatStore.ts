@@ -78,6 +78,66 @@ const mockSessions: ChatSession[] = [
             { toolName: "view_file", status: "completed" }
           ]
         }
+      },
+      {
+        id: "m3",
+        role: "user",
+        content: "Show me all the new library components in action",
+        timestamp: "10:26 AM"
+      },
+      {
+        id: "m4",
+        role: "assistant",
+        content: "Here's a comprehensive demo of all the library components integrated into the chat UI:",
+        timestamp: "10:27 AM",
+        searchStatus: {
+          query: "React glassmorphism best practices",
+          status: "completed"
+        },
+        commandExecution: {
+          command: "npm run build",
+          status: "success",
+          output: [
+            "> tsc && vite build",
+            "vite v5.4.10 building for production...",
+            "✓ 245 modules transformed.",
+            "✓ built in 1.42s"
+          ]
+        },
+        codeBlock: {
+          code: `export const GlassButton = ({ children, variant = "primary" }) => {
+  return (
+    <button className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 backdrop-blur-md hover:bg-white/10 transition-all">
+      {children}
+    </button>
+  );
+};`,
+          language: "typescript",
+          fileName: "GlassButton.tsx",
+          fileSize: "0.3 KB"
+        },
+        tokenUsage: {
+          inputTokens: 12450,
+          outputTokens: 3200,
+          cachedTokens: 45000,
+          costUSD: 0.0842
+        },
+        performanceStats: {
+          tokensUsed: 15650,
+          latencySec: 2.34,
+          speedTps: 92
+        },
+        budgetGauge: {
+          spent: 1.24,
+          limit: 5.00
+        },
+        apiHealth: {
+          services: [
+            { name: "gemini-2.5-flash", latencyMs: 240, status: "online" },
+            { name: "claude-3.5-sonnet", latencyMs: 380, status: "online" },
+            { name: "local-cache", latencyMs: 15, status: "online" }
+          ]
+        }
       }
     ]
   },
@@ -157,7 +217,7 @@ const defaultEngineConfig: EngineConfig = {
 
 export const useChatStore = create<ChatState>((set, get) => ({
   sessions: mockSessions,
-  activeSessionId: "session-2",
+  activeSessionId: "session-1",
   models: mockModels,
   customProviders: [],
   engineConfig: defaultEngineConfig,

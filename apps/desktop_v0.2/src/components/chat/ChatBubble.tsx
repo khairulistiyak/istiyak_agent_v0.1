@@ -11,10 +11,18 @@ import {
   StagedTaskList,
   SubagentDelegationCard,
   InlineNotification,
-  AgentDiffViewer
-} from "../library/AgentActions.js";
-import { AgentPermissionRequestCard } from "../library/AgentPermissionRequestCard.js";
-import { AgentQuestionCard } from "../library/AgentQuestionCard.js";
+  AgentDiffViewer,
+  AgentPermissionRequestCard,
+  AgentQuestionCard,
+  AgentSearchStatus,
+  AgentCommandExecution,
+  CodeBlockPreview,
+  TokenCostBreakdown,
+  APIHealthMonitor,
+  AgentPerformanceStats,
+  BudgetGauge,
+  AgentTimerStatus
+} from "../library/index.js";
 
 interface ChatBubbleProps {
   message: Message;
@@ -214,6 +222,90 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
                 <span>{message.planReviewState}</span>
               </div>
             )}
+          </div>
+        )}
+
+        {/* 11. Agent Search Status */}
+        {!isUser && message.searchStatus && (
+          <div className="w-full max-w-md">
+            <AgentSearchStatus 
+              query={message.searchStatus.query} 
+              status={message.searchStatus.status} 
+            />
+          </div>
+        )}
+
+        {/* 12. Command Execution */}
+        {!isUser && message.commandExecution && (
+          <div className="w-full max-w-lg">
+            <AgentCommandExecution
+              command={message.commandExecution.command}
+              status={message.commandExecution.status}
+              output={message.commandExecution.output}
+            />
+          </div>
+        )}
+
+        {/* 13. Code Block Preview */}
+        {!isUser && message.codeBlock && (
+          <div className="w-full max-w-2xl">
+            <CodeBlockPreview
+              code={message.codeBlock.code}
+              language={message.codeBlock.language}
+              fileName={message.codeBlock.fileName}
+              fileSize={message.codeBlock.fileSize}
+            />
+          </div>
+        )}
+
+        {/* 14. Token Cost Breakdown */}
+        {!isUser && message.tokenUsage && (
+          <div className="w-full max-w-md">
+            <TokenCostBreakdown
+              inputTokens={message.tokenUsage.inputTokens}
+              outputTokens={message.tokenUsage.outputTokens}
+              cachedTokens={message.tokenUsage.cachedTokens}
+              costUSD={message.tokenUsage.costUSD}
+            />
+          </div>
+        )}
+
+        {/* 15. API Health Monitor */}
+        {!isUser && message.apiHealth && (
+          <div className="w-full max-w-md">
+            <APIHealthMonitor services={message.apiHealth.services} />
+          </div>
+        )}
+
+        {/* 16. Performance Stats */}
+        {!isUser && message.performanceStats && (
+          <div className="w-full max-w-md">
+            <AgentPerformanceStats
+              tokensUsed={message.performanceStats.tokensUsed}
+              latencySec={message.performanceStats.latencySec}
+              speedTps={message.performanceStats.speedTps}
+            />
+          </div>
+        )}
+
+        {/* 17. Budget Gauge */}
+        {!isUser && message.budgetGauge && (
+          <div className="w-full max-w-md">
+            <BudgetGauge
+              spent={message.budgetGauge.spent}
+              limit={message.budgetGauge.limit}
+            />
+          </div>
+        )}
+
+        {/* 18. Timer Status */}
+        {!isUser && message.timerStatus && (
+          <div className="w-full max-w-md">
+            <AgentTimerStatus
+              durationSeconds={message.timerStatus.durationSeconds}
+              prompt={message.timerStatus.prompt}
+              onCancel={() => {/* Timer cancelled */}}
+            />
           </div>
         )}
       </div>

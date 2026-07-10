@@ -57,27 +57,7 @@ export const ChatWorkspace: React.FC = () => {
     <div className="flex-1 flex flex-col h-full bg-cyber-dark relative">
       {/* Workspace Bar */}
       <div className="border-b border-cyber-card-border bg-cyber-dark/80 backdrop-blur-md z-10">
-        <div className="h-14 px-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {!isSidebarOpen && (
-              <GlassButton
-                onClick={toggleSidebar}
-                variant="ghost"
-                size="xs"
-                title="Show Sidebar"
-              >
-                <PanelLeftOpen className="w-4.5 h-4.5" />
-              </GlassButton>
-            )}
-            <div className="flex flex-col text-left">
-              <h2 className="text-xs font-semibold text-gray-300 truncate max-w-[200px] sm:max-w-[400px]">
-                {activeSession.title}
-              </h2>
-              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
-                Active: {activeSession.activeModel} ({activeSession.activeMode})
-              </p>
-            </div>
-          </div>
+
 
         {/* Editor Tabs Row — shown when agent is editing files */}
         {openTabs && openTabs.length > 0 && (
